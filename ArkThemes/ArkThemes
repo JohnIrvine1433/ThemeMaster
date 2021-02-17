@@ -170,7 +170,6 @@ function UpdateArkThemes() {
 		printf "\nUnzipping archive..."
 		sudo unzip -qo /dev/shm/payload_temp/update.zip -d /dev/shm/payload_temp/ #unzip directly in RAM
 		rm /dev/shm/payload_temp/update.zip
-		sudo rm -rf ./ArkThemes/scripts
 		printf "\nOverwritting existing files..."
 		cp -rf $PAYLOAD ./
 		sudo chmod 777 ./*.sh #make sure newly downloaded scripts have right permission
