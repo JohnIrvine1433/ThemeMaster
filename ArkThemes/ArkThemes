@@ -102,8 +102,8 @@ function UninstallMenu() {
                 options+=($theme "Uninstall")
         done
 
-   	cmd=(dialog --clear --backtitle "ArkThemes" --title "[ Remove Themes ]" --menu "Select theme from the list:" "15" "56" "15")
-    	choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
+  cmd=(dialog --clear --backtitle "ArkThemes" --title "[ Remove Themes ]" --menu "Select theme from the list:" "15" "56" "15")
+  choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
 
 	retval=$?
 	case $retval in
@@ -114,50 +114,48 @@ function UninstallMenu() {
 
 function InstallMenu() {
 
-	while true; do
-		local options=()
+	local options=()
 
-		local themes=(
-		'es-theme-arkos-carbon'
-		'es-theme-ChicueloAP'
-		'es-theme-custom-box'
-		'es-theme-epicnoir'
-		'es-theme-freeplay'
-		'es-theme-gbz35_mod'
-		'es-theme-magical-pixel'
-		'es-theme-minimal-arkos'
-		'es-theme-nes-box'
-		'es-theme-pixel'
-		'es-theme-solo-horizontal-arkos-ed'
-		'es-theme-switch'
-		)
+	local themes=(
+	'es-theme-arkos-carbon'
+	'es-theme-ChicueloAP'
+	'es-theme-custom-box'
+	'es-theme-epicnoir'
+	'es-theme-freeplay'
+	'es-theme-gbz35_mod'
+	'es-theme-magical-pixel'
+	'es-theme-minimal-arkos'
+	'es-theme-nes-box'
+	'es-theme-pixel'
+	'es-theme-solo-horizontal-arkos-ed'
+	'es-theme-switch'
+	)
 
-		for theme in "${themes[@]}"; do
-    	if [ -d "/roms/themes/$theme" ]
-			then
-      	options+=($theme "Update")
-    	else
-    		options+=($theme "Install")
-    	fi
-  	done
+	for theme in "${themes[@]}"; do
+  	if [ -d "/roms/themes/$theme" ]
+		then
+    	options+=($theme "Update")
+  	else
+  		options+=($theme "Install")
+  	fi
+  done
 
-		cmd=(dialog --clear --backtitle "ArkThemes" --title "[ Install Themes ]" --menu "Select theme from the list:" "15" "56" "15")
-		choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
+	cmd=(dialog --clear --backtitle "ArkThemes" --title "[ Install Themes ]" --menu "Select theme from the list:" "15" "56" "15")
+	choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
 
-		retval=$?
-		case $retval in
-			0)
-				for choice in $choices; do
-					case $choice in
-						A) InstallTheme "${choices[0]}" ;;
-						B) MainMenu ;;
-					esac
-				done
-				;;
-			1)
-				InstallTheme "${choices[0]}" ;;
-		esac
-	done
+	retval=$?
+	case $retval in
+		0)
+			for choice in $choices; do
+				case $choice in
+					A) InstallTheme "${choices[0]}" ;;
+					B) MainMenu ;;
+				esac
+			done
+			;;
+		1)
+			MainMenu ;;
+	esac
 }
 
 function ExitMenu() {
