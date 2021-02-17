@@ -226,6 +226,7 @@ function MainMenu () {
 		1)
 			ExitMenu ;;
 	esac
+done
 }
 
 MainMenu
