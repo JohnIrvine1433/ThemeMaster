@@ -154,7 +154,7 @@ function InstallMenu() {
 						esac
 					done
 					;;
-				1)
+			1)
 					MainMenu ;;
 			esac
 	done
@@ -212,22 +212,24 @@ function MainMenu () {
 			D "Exit to emulationstation"
 			)
 
-			choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
+		choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
 
-			retval=$?
-			case $retval in
-				0)
-					for choice in $choices; do
-						case $choice in
-							A) InstallMenu ;;
-							B) UninstallMenu ;;
-							C) UpdateArkThemes ;;
-							D) ExitMenu ;;
-						esac
-					done
-					;;
-				1)
-					ExitMenu ;;
-			esac
+		retval=$?
+		case $retval in
+			0)
+				for choice in $choices; do
+					case $choice in
+						A) InstallMenu ;;
+						B) UninstallMenu ;;
+						C) UpdateArkThemes ;;
+						D) ExitMenu ;;
+					esac
+				done
+				;;
+			1)
+				ExitMenu ;;
+		esac
 	done
 }
+
+MainMenu
