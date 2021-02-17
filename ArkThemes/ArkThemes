@@ -145,16 +145,8 @@ function InstallMenu() {
 
 	retval=$?
 	case $retval in
-		0)
-			for choice in $choices; do
-				case $choice in
-					A) InstallTheme "${choices[0]}" ;;
-					B) MainMenu ;;
-				esac
-			done
-			;;
-		1)
-			MainMenu ;;
+		0) InstallTheme "${choices[0]}" ;;
+		1) MainMenu ;;
 	esac
 }
 
