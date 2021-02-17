@@ -12,10 +12,10 @@ Contributions from **JohnIrvine**
 Added an uninstaller. Be mindful that you can remove stock themes with this. Currently no way to reinstall them via AnberThemes.
 
 ## Installation  
-Place *AnberThemes.sh* and *AnberThemes* folder in `/roms/tools`
+Place *ArkThemes.sh* and *ArkThemes* folder in `/roms/tools`
 You can do this over your network, or by plugging the sdcard into your PC. In that case the location would be `EASYROMS/tools`.
 
-Now in ArkOS Options menu there will be a folder called **Tools** and AnberThemes can be run from there.  
+Now in ArkOS Options menu there will be a folder called **Tools** and ArkThemes can be run from there.  
 
 ##    
 
