@@ -9,7 +9,7 @@ Contributions from **JohnIrvine**
 
 
 ## Updates  
-Added an uninstaller. Be mindful that you can remove stock themes with this. Currently no way to reinstall them via AnberThemes.
+Added an uninstaller. Be mindful that you can remove stock themes with this. Currently no way to reinstall them via ArkThemes.
 
 ## Installation  
 Place *ArkThemes.sh* and *ArkThemes* folder in `/roms/tools`
