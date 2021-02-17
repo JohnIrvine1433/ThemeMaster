@@ -140,22 +140,24 @@ function InstallMenu() {
             fi
        done
 
-	cmd=(dialog --clear --backtitle "ArkThemes" --title "[ Install Themes ]" --menu "Select theme from the list:" "15" "56" "15")
-	choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
+	while true; do
+		cmd=(dialog --clear --backtitle "ArkThemes" --title "[ Install Themes ]" --menu "Select theme from the list:" "15" "56" "15")
+		choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
 
-	retval=$?
-	case $retval in
-		0)
-			for choice in $chocies; do
-					case $choice in
-						A) InstallTheme "${choices[0]}" ;;
-						B) MainMenu ;;
-					esac
-				done
-				;;
-		1)
-				ExitMenu ;;
-	esac
+		retval=$?
+		case $retval in
+			0)
+				for choice in $chocies; do
+						case $choice in
+							A) InstallTheme "${choices[0]}" ;;
+							B) MainMenu ;;
+						esac
+					done
+					;;
+				1)
+					ExitMenu ;;
+			esac
+	done
 }
 
 function ExitMenu() {
@@ -200,33 +202,34 @@ function UpdateArkThemes() {
 
 function MainMenu () {
 
-	cmd=(dialog --clear --backtitle "ArkThemes" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "10" "60" "10")
+	while true; do
+		cmd=(dialog --clear --backtitle "ArkThemes" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "10" "60" "10")
 
-	options=(
-		A "Install or update a theme"
-		B "Uninstall a theme"
-		C "Update ArkThemes"
-		D "Exit to emulationstation"
-	)
+		options=(
+			A "Install or update a theme"
+			B "Uninstall a theme"
+			C "Update ArkThemes"
+			D "Exit to emulationstation"
+			)
 
-	choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
+			choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
 
-	retval=$?
-	case $retval in
-		0)
-			for choice in $choices; do
-				case $choice in
-					A) InstallMenu ;;
-					B) UninstallMenu ;;
-					C) UpdateArkThemes ;;
-					D) ExitMenu ;;
-				esac
-			done
-			;;
-		1)
-			ExitMenu ;;
-	esac
-done
+			retval=$?
+			case $retval in
+				0)
+				for choice in $choices; do
+					case $choice in
+						A) InstallMenu ;;
+						B) UninstallMenu ;;
+						C) UpdateArkThemes ;;
+						D) ExitMenu ;;
+					esac
+				done
+				;;
+				1)
+				ExitMenu ;;
+			esac
+	done
 }
 
 MainMenu
