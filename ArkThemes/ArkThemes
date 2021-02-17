@@ -1,0 +1,216 @@
+#!/bin/bash
+
+# Notes
+#
+# https://github.com/TadMSTR/AnberThemes
+#
+
+export TERM=linux
+sudo chmod 666 /dev/tty1 > /dev/null 2>&1
+
+source ./helper
+
+#
+# Joystick controls
+#
+sudo ./oga_controls & > /dev/null 2>&1
+
+function InstallTheme () {
+
+	for choice in $choices; do
+		case $choice in
+		es-theme-arkos-carbon) REP_URL="https://github.com/Jetup13/es-theme-arkos-carbon/archive/master.zip" ;;
+		es-theme-ChicueloAP) REP_URL="https://github.com/Jetup13/es-theme-ChicueloAP/archive/master.zip" ;;
+		es-theme-custom-box) REP_URL="https://github.com/Jetup13/es-theme-custom-box/archive/main.zip" ;;
+		es-theme-epicnoir) REP_URL="https://github.com/Jetup13/es-theme-epicnoir/archive/master.zip" ;;
+		es-theme-freeplay) REP_URL="https://github.com/Jetup13/es-theme-freeplay/archive/master.zip" ;;
+		es-theme-gbz35_mod) REP_URL="https://github.com/Jetup13/es-theme-gbz35_mod/archive/master.zip" ;;
+		es-theme-magical-pixel) REP_URL="https://github.com/Jetup13/es-theme-magical-pixel/archive/main.zip" ;;
+		es-theme-minimal-arkos) REP_URL="https://github.com/Jetup13/es-theme-minimal-arkos/archive/master.zip" ;;
+		es-theme-nes-box) REP_URL="https://github.com/Jetup13/es-theme-nes-box/archive/master.zip" ;;
+		es-theme-pixel) REP_URL="https://github.com/Jetup13/es-theme-pixel/archive/master.zip" ;;
+		es-theme-solo-horizontal-arkos-ed) REP_URL="https://github.com/Jetup13/es-theme-solo-horizontal-arkos-ed/archive/main.zip" ;;
+		es-theme-switch) REP_URL="https://github.com/Jetup13/es-theme-switch/archive/master.zip" ;;
+		esac
+	done
+
+	#extract the branch name from the provided URL
+	REP_BRANCH=$(grep -oP "[^\/]+(?=\.zip)" <<< "$REP_URL")
+	#extract the repository name from the provided URL
+	REP_NAME=$(grep -oP "[^\/]+(?=\/archive)" <<< "$REP_URL")
+	REP_DIR=$REP_NAME-$REP_BRANCH
+	ABS_PATH=$(readlink -f "$0")
+	ABS_DIR=$(dirname "$ABS_PATH")
+	THEME_CONTENT=/dev/shm/theme_update_temp/$REP_DIR/*
+
+	sudo sh -c 'printf "\033c" > /dev/tty1'
+	printf "\nStarting update of $REP_NAME..."
+	mkdir -p /dev/shm/theme_update_temp #create a temp folder in RAM
+
+	printf "\nDownloading archive for the $REP_BRANCH branch...\n"
+	sudo wget -q "$REP_URL" -O /dev/shm/theme_update_temp/update.zip
+	if unzip -qt /dev/shm/theme_update_temp/update.zip | grep 'No errors detected';then
+		printf "\nUnzipping archive..."
+		sudo unzip -qo /dev/shm/theme_update_temp/update.zip -d /dev/shm/theme_update_temp/ #unzip directly in RAM
+		mkdir -p /roms/themes/$REP_NAME
+		printf "\nOverwritting existing files..."
+		cp -rf $THEME_CONTENT /roms/themes/$REP_NAME
+		printf "\nTheme $REP_NAME updated successfully."
+		sleep 3
+	else
+		printf "\nTheme update have failed because the archive did not download correctly."
+		printf "\nCheck your connection and try again.\n"
+		sleep 6
+	fi
+	printf "\nDeleting temporary files...\n"
+	sudo rm -rf /dev/shm/theme_update_temp #remove the temp folder from RAM
+
+	sleep 3
+
+	MainMenu
+}
+
+function RemoveTheme () {
+	local theme="$1"
+
+	sudo sh -c 'printf "\033c" > /dev/tty1'
+	printf "\nRemoving $theme ..."
+    	sudo rm -rf "/roms/themes/$theme"
+	printf "\n$theme removed !"
+
+	sleep 3
+
+	MainMenu
+}
+
+function UninstallMenu() {
+
+	theme=(/roms/themes/*/)    # This creates an array of the full paths to all subdirs
+	theme=("${theme[@]%/}")      # This removes the trailing slash on each item
+	theme=("${theme[@]##*/}")    # This removes the path prefix, leaving just the dir names
+
+	local options=()
+
+	for theme in "${theme[@]}"; do
+                options+=($theme "Uninstall")
+        done
+
+   	cmd=(dialog --clear --backtitle "AnberThemes" --title "[ Remove Themes ]" --menu "Select theme from the list:" "15" "56" "15")
+    	choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
+
+	retval=$?
+	case $retval in
+		0) RemoveTheme "${choices[0]}" ;;
+		1) MainMenu ;;
+	esac
+}
+
+function InstallMenu() {
+
+	local options=()
+
+	local themes=(
+	'es-theme-arkos-carbon'
+	'es-theme-ChicueloAP'
+	'es-theme-custom-box'
+	'es-theme-epicnoir'
+	'es-theme-freeplay'
+	'es-theme-gbz35_mod'
+	'es-theme-magical-pixel'
+	'es-theme-minimal-arkos'
+	'es-theme-nes-box'
+	'es-theme-pixel'
+	'es-theme-solo-horizontal-arkos-ed'
+	'es-theme-switch'
+	)
+
+	for theme in "${themes[@]}"; do
+            if [ -d "/roms/themes/$theme" ]
+		then
+                	options+=($theme "Update")
+           	 else
+                	options+=($theme "Install")
+            fi
+       done
+
+	cmd=(dialog --clear --backtitle "AnberThemes" --title "[ Install Themes ]" --menu "Select theme from the list:" "15" "56" "15")
+	choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
+
+	retval=$?
+	case $retval in
+		0) InstallTheme "${choices[0]}" ;;
+		1) MainMenu ;;
+	esac
+}
+
+function ExitMenu() {
+	pgrep -f oga_controls | sudo xargs kill -9 > /dev/null 2>&1
+	sudo systemctl restart emulationstation
+}
+
+function UpdateAnberThemes() {
+
+	UPDATE_URL="https://github.com/TadMSTR/AnberThemes/releases/download/update/AnberThemes.zip"
+	PAYLOAD=/dev/shm/payload_temp/*
+	cd /roms/tools
+	sudo sh -c 'printf "\033c" > /dev/tty1'
+	printf "\nStarting update of AnberThemes..."
+	mkdir -p /dev/shm/payload_temp #create a temp folder in RAM
+
+	printf "\nDownloading archive for AnberThemes...\n"
+	sudo wget -q "$UPDATE_URL" -O /dev/shm/payload_temp/update.zip
+	if unzip -qt /dev/shm/payload_temp/update.zip | grep 'No errors detected';then
+		printf "\nUnzipping archive..."
+		sudo unzip -qo /dev/shm/payload_temp/update.zip -d /dev/shm/payload_temp/ #unzip directly in RAM
+		rm /dev/shm/payload_temp/update.zip
+		sudo rm -rf ./AnberThemes/scripts
+		printf "\nOverwritting existing files..."
+		cp -rf $PAYLOAD ./
+		sudo chmod 777 ./*.sh #make sure newly downloaded scripts have right permission
+		printf "\nAnberThemes updated successfully."
+		sleep 3
+	else
+		printf "\nTheme update have failed because the archive did not download correctly."
+		printf "\nCheck your connection and try again.\n"
+		sleep 6
+	fi
+	printf "\nDeleting temporary files...\n"
+	sudo rm -rf /dev/shm/payload_temp #remove the temp folder from RAM
+
+	dialog --backtitle "System" --infobox "\nPlease launch AnberThemes again and enjoy ..." 5 55 > /dev/tty1
+	sleep 3
+
+	ExitMenu
+}
+
+function MainMenu () {
+
+	cmd=(dialog --clear --backtitle "AnberThemes" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "10" "60" "10")
+
+	options=(
+		A "Install or update a theme"
+		B "Uninstall a theme"
+		C "Update AnberThemes"
+		D "Exit to emulationstation"
+	)
+
+	choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
+
+	retval=$?
+	case $retval in
+		0)
+			for choice in $choices; do
+				case $choice in
+					A) InstallMenu ;;
+					B) UninstallMenu ;;
+					C) UpdateAnberThemes ;;
+					D) ExitMenu ;;
+				esac
+			done
+			;;
+		1)
+			ExitMenu ;;
+	esac
+}
+
+MainMenu

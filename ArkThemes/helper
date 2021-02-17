@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Description : helper
+# Author      : Kris Henriksen <krishenriksen.work@gmail.com>
+#
+
+if ! dpkg -s "dialog" >/dev/null 2>&1; then
+	whiptail --backtitle "System" --infobox "Installing dependency dialog ..." 7 55 > /dev/tty1
+	sudo apt update && sudo apt install -y "dialog"
+fi
+
+if ! dpkg -s "unzip" >/dev/null 2>&1; then
+	dialog --backtitle "System" --infobox "\nInstalling dependency unzip ..." 5 55 > /dev/tty1
+	sudo apt update && sudo apt install -y "unzip"
+fi
+
+if ! dpkg -s "wget" >/dev/null 2>&1; then
+	dialog --backtitle "System" --infobox "\nInstalling dependency wget ..." 5 55 > /dev/tty1
+	sudo apt update && sudo apt install -y "wget"
+fi
+
+if ! dpkg -s "libevdev2" >/dev/null 2>&1; then
+	dialog --backtitle "System" --infobox "\nInstalling dependency libevdev2 ..." 5 55 > /dev/tty1
+	sudo apt update && sudo apt install -y "libevdev2"
+fi
