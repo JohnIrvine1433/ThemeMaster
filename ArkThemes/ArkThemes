@@ -155,7 +155,7 @@ function InstallMenu() {
 					done
 					;;
 				1)
-					ExitMenu ;;
+					MainMenu ;;
 			esac
 	done
 }
@@ -217,19 +217,17 @@ function MainMenu () {
 			retval=$?
 			case $retval in
 				0)
-				for choice in $choices; do
-					case $choice in
-						A) InstallMenu ;;
-						B) UninstallMenu ;;
-						C) UpdateArkThemes ;;
-						D) ExitMenu ;;
-					esac
-				done
-				;;
+					for choice in $choices; do
+						case $choice in
+							A) InstallMenu ;;
+							B) UninstallMenu ;;
+							C) UpdateArkThemes ;;
+							D) ExitMenu ;;
+						esac
+					done
+					;;
 				1)
-				ExitMenu ;;
+					ExitMenu ;;
 			esac
 	done
 }
-
-MainMenu
