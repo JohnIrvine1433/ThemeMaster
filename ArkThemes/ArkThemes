@@ -2,7 +2,7 @@
 
 # Notes
 #
-# https://github.com/TadMSTR/AnberThemes
+# https://github.com/TadMSTR/ArkThemes
 #
 
 export TERM=linux
@@ -95,7 +95,7 @@ function UninstallMenu() {
                 options+=($theme "Uninstall")
         done
 
-   	cmd=(dialog --clear --backtitle "AnberThemes" --title "[ Remove Themes ]" --menu "Select theme from the list:" "15" "56" "15")
+   	cmd=(dialog --clear --backtitle "ArkThemes" --title "[ Remove Themes ]" --menu "Select theme from the list:" "15" "56" "15")
     	choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
 
 	retval=$?
@@ -133,7 +133,7 @@ function InstallMenu() {
             fi
        done
 
-	cmd=(dialog --clear --backtitle "AnberThemes" --title "[ Install Themes ]" --menu "Select theme from the list:" "15" "56" "15")
+	cmd=(dialog --clear --backtitle "ArkThemes" --title "[ Install Themes ]" --menu "Select theme from the list:" "15" "56" "15")
 	choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
 
 	retval=$?
@@ -148,22 +148,22 @@ function ExitMenu() {
 	sudo systemctl restart emulationstation
 }
 
-function UpdateAnberThemes() {
+function UpdateArkThemes() {
 
-	UPDATE_URL="https://github.com/TadMSTR/AnberThemes/releases/download/update/AnberThemes.zip"
+	UPDATE_URL="https://github.com/TadMSTR/ArkThemes/releases/download/update/ArkThemes.zip"
 	PAYLOAD=/dev/shm/payload_temp/*
 	cd /roms/tools
 	sudo sh -c 'printf "\033c" > /dev/tty1'
-	printf "\nStarting update of AnberThemes..."
+	printf "\nStarting update of ArkThemes..."
 	mkdir -p /dev/shm/payload_temp #create a temp folder in RAM
 
-	printf "\nDownloading archive for AnberThemes...\n"
+	printf "\nDownloading archive for ArkThemes...\n"
 	sudo wget -q "$UPDATE_URL" -O /dev/shm/payload_temp/update.zip
 	if unzip -qt /dev/shm/payload_temp/update.zip | grep 'No errors detected';then
 		printf "\nUnzipping archive..."
 		sudo unzip -qo /dev/shm/payload_temp/update.zip -d /dev/shm/payload_temp/ #unzip directly in RAM
 		rm /dev/shm/payload_temp/update.zip
-		sudo rm -rf ./AnberThemes/scripts
+		sudo rm -rf ./ArkThemes/scripts
 		printf "\nOverwritting existing files..."
 		cp -rf $PAYLOAD ./
 		sudo chmod 777 ./*.sh #make sure newly downloaded scripts have right permission
@@ -177,7 +177,7 @@ function UpdateAnberThemes() {
 	printf "\nDeleting temporary files...\n"
 	sudo rm -rf /dev/shm/payload_temp #remove the temp folder from RAM
 
-	dialog --backtitle "System" --infobox "\nPlease launch AnberThemes again and enjoy ..." 5 55 > /dev/tty1
+	dialog --backtitle "System" --infobox "\nPlease launch ArkThemes again and enjoy ..." 5 55 > /dev/tty1
 	sleep 3
 
 	ExitMenu
@@ -185,12 +185,12 @@ function UpdateAnberThemes() {
 
 function MainMenu () {
 
-	cmd=(dialog --clear --backtitle "AnberThemes" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "10" "60" "10")
+	cmd=(dialog --clear --backtitle "ArkThemes" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "10" "60" "10")
 
 	options=(
 		A "Install or update a theme"
 		B "Uninstall a theme"
-		C "Update AnberThemes"
+		C "Update ArkThemes"
 		D "Exit to emulationstation"
 	)
 
@@ -203,7 +203,7 @@ function MainMenu () {
 				case $choice in
 					A) InstallMenu ;;
 					B) UninstallMenu ;;
-					C) UpdateAnberThemes ;;
+					C) UpdateArkThemes ;;
 					D) ExitMenu ;;
 				esac
 			done
