@@ -13,7 +13,14 @@ source ./helper
 #
 # Joystick controls
 #
+# sudo ./oga_controls & > /dev/null 2>&1
+
+isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
+if [ ! -z "$isitoga" ]; then
 sudo ./oga_controls & > /dev/null 2>&1
+else
+sudo ./rg351_controls & > /dev/null 2>&1
+fi
 
 function InstallTheme () {
 
