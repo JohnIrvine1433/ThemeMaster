@@ -13,7 +13,6 @@ source ./helper
 #
 # Joystick controls
 #
-# sudo ./oga_controls & > /dev/null 2>&1
 
 isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
 if [ ! -z "$isitoga" ]; then
@@ -151,7 +150,7 @@ function InstallMenu() {
 }
 
 function ExitMenu() {
-	pgrep -f oga_controls | sudo xargs kill -9 > /dev/null 2>&1
+	pgrep -f oga_controls,rg351_controls | sudo xargs kill -9 > /dev/null 2>&1
 	sudo systemctl restart emulationstation
 }
 
