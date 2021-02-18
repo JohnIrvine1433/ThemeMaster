@@ -12,6 +12,7 @@ Contributions from **JohnIrvine**
 Added an uninstaller. Be mindful that you can remove stock themes with this. Currently no way to reinstall them via ArkThemes.
 
 ## Installation  
+Need to be on ArkOS 2021-02-13 (02132021) or newer.  
 Place *ArkThemes.sh* and *ArkThemes* folder in `/roms/tools`
 You can do this over your network, or by plugging the sdcard into your PC. In that case the location would be `EASYROMS/tools`.
 
