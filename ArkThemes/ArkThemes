@@ -26,6 +26,7 @@ function InstallTheme () {
 	for choice in $choices; do
 		case $choice in
 		es-theme-arkos-carbon) REP_URL="https://github.com/Jetup13/es-theme-arkos-carbon/archive/master.zip" ;;
+		es-theme-art-book-3-2) REP_URL="https://github.com/Jetup13/es-theme-art-book-3-2/archive/main.zip" ;;
 		es-theme-ChicueloAP) REP_URL="https://github.com/Jetup13/es-theme-ChicueloAP/archive/master.zip" ;;
 		es-theme-custom-box) REP_URL="https://github.com/Jetup13/es-theme-custom-box/archive/main.zip" ;;
 		es-theme-epicnoir) REP_URL="https://github.com/Jetup13/es-theme-epicnoir/archive/master.zip" ;;
@@ -117,6 +118,7 @@ function InstallMenu() {
 
 	local themes=(
 	'es-theme-arkos-carbon'
+	'es-theme-art-book-3-2'
 	'es-theme-ChicueloAP'
 	'es-theme-custom-box'
 	'es-theme-epicnoir'
