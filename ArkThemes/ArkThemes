@@ -175,7 +175,7 @@ function UpdateArkThemes() {
 		printf "\nOverwritting existing files..."
 		cp -rf $PAYLOAD ./
 		sudo chmod 777 ./*.sh #make sure newly downloaded scripts have right permission
-		printf "\nAnberThemes updated successfully."
+		printf "\nArkThemes updated successfully."
 		sleep 3
 	else
 		printf "\nTheme update have failed because the archive did not download correctly."
