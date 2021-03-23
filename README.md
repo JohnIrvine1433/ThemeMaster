@@ -7,10 +7,6 @@ Adapted [AnberPorts](https://github.com/krishenriksen/AnberPorts) by [kreal](htt
 Thanks to **choo t** for the theme update script used to install/update the supported themes  
 Contributions from **JohnIrvine**
 
-
-## Updates  
-Added an uninstaller. Be mindful that you can remove stock themes with this. Currently no way to reinstall them via ArkThemes.
-
 ## Regarding [JohnIrvine](https://github.com/JohnIrvine1433) ArkThemes Fork
 Fork evolutions :
 - Automatic theme collection management from GitHub repository (default set to Jetup13).
@@ -23,6 +19,7 @@ Fork evolutions :
 NOTA BENE :
 - Themes are pulled from GitHub based on repositories starting with "es-theme"
 - Beware that name duplicates (between different GitHub owner) is currently not managed ; this could lead to unwanted behaviour if you choose to swap between theme collections (e.g. replace a theme with another)
+- Uninstaller allows removal of stock themes which cannot be reinstalled via ArkThemes.
 
 ## Installation  
 Need to be on ArkOS 2021-02-13 (02132021) or newer.  
