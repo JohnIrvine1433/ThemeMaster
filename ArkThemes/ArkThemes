@@ -6,7 +6,7 @@
 #
 
 export TERM=linux
-sudo chmod 666 /dev/tty1 > /dev/null 2>&1
+sudo chmod 666 /dev/tty >/dev/null 2>&1
 
 source ./helper
 
@@ -16,211 +16,767 @@ source ./helper
 
 isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
 if [ ! -z "$isitoga" ]; then
-sudo ./oga_controls & > /dev/null 2>&1
+  sudo ./oga_controls &
+  >/dev/null 2>&1
 else
-sudo ./rg351_controls & > /dev/null 2>&1
+  sudo ./rg351_controls &
+  >/dev/null 2>&1
 fi
 
-function InstallTheme () {
+#
+# ArkThemes Configuration
+#
+github_ark_owner="JohnIrvine1433" #Used for ArkThemes update function
+github_ark_repo="ArkThemes"       #Used for ArkThemes update function
+current_ark_version="v1.0.0"
 
-	for choice in $choices; do
-		case $choice in
-		es-theme-arkos-carbon) REP_URL="https://github.com/Jetup13/es-theme-arkos-carbon/archive/master.zip" ;;
-		es-theme-art-book-3-2) REP_URL="https://github.com/Jetup13/es-theme-art-book-3-2/archive/main.zip" ;;
-		es-theme-ChicueloAP) REP_URL="https://github.com/Jetup13/es-theme-ChicueloAP/archive/master.zip" ;;
-		es-theme-custom-box) REP_URL="https://github.com/Jetup13/es-theme-custom-box/archive/main.zip" ;;
-		es-theme-epicnoir) REP_URL="https://github.com/Jetup13/es-theme-epicnoir/archive/master.zip" ;;
-		es-theme-freeplay) REP_URL="https://github.com/Jetup13/es-theme-freeplay/archive/master.zip" ;;
-		es-theme-gbz35_mod) REP_URL="https://github.com/Jetup13/es-theme-gbz35_mod/archive/master.zip" ;;
-		es-theme-magical-pixel) REP_URL="https://github.com/Jetup13/es-theme-magical-pixel/archive/main.zip" ;;
-		es-theme-minimal-arkos) REP_URL="https://github.com/Jetup13/es-theme-minimal-arkos/archive/master.zip" ;;
-		es-theme-nes-box) REP_URL="https://github.com/Jetup13/es-theme-nes-box/archive/master.zip" ;;
-		es-theme-pixel) REP_URL="https://github.com/Jetup13/es-theme-pixel/archive/master.zip" ;;
-		es-theme-solo-horizontal-arkos-ed) REP_URL="https://github.com/Jetup13/es-theme-solo-horizontal-arkos-ed/archive/main.zip" ;;
-		es-theme-switch) REP_URL="https://github.com/Jetup13/es-theme-switch/archive/master.zip" ;;
-		esac
-	done
+themes_location="/roms/themes/" #ES themes location path with trailing slash
+temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
+ark_location="/roms/tools/"     #ArkThemes installation path with trailing slash
 
-	#extract the branch name from the provided URL
-	REP_BRANCH=$(grep -oP "[^\/]+(?=\.zip)" <<< "$REP_URL")
-	#extract the repository name from the provided URL
-	REP_NAME=$(grep -oP "[^\/]+(?=\/archive)" <<< "$REP_URL")
-	REP_DIR=$REP_NAME-$REP_BRANCH
-	ABS_PATH=$(readlink -f "$0")
-	ABS_DIR=$(dirname "$ABS_PATH")
-	THEME_CONTENT=/dev/shm/theme_update_temp/$REP_DIR/*
+#
+# ArkThemes Default Settings
+#
+if [ -e "arkthemes.cfg" ]; then
+  source arkthemes.cfg
+else
+  # Do not check for updates at startup
+  arkthemes_autocheckupdate="off"
+  themes_autocheckupdate="off"
+  # Default themes collection - github repositories must start with es-theme
+  collections=("Jetup13" "EmuELEC" "RetroPie")
+  github_user="Jetup13" #github user's name
+fi
 
-	sudo sh -c 'printf "\033c" > /dev/tty1'
-	printf "\nStarting update of $REP_NAME..."
-	mkdir -p /dev/shm/theme_update_temp #create a temp folder in RAM
+#
+# Reused global variables
+#
+onlinethemes=()
+installedthemes=()
+outdatedthemes=()
+changelog=()
+themes_updates_checked=0
+arkthemes_updates_checked=0
+latest_ark_version=""
+arkthemes_outdated=""
 
-	printf "\nDownloading archive for the $REP_BRANCH branch...\n"
-	sudo wget -q "$REP_URL" -O /dev/shm/theme_update_temp/update.zip
-	if unzip -qt /dev/shm/theme_update_temp/update.zip | grep 'No errors detected';then
-		printf "\nUnzipping archive..."
-		sudo unzip -qo /dev/shm/theme_update_temp/update.zip -d /dev/shm/theme_update_temp/ #unzip directly in RAM
-		mkdir -p /roms/themes/$REP_NAME
-		printf "\nOverwritting existing files..."
-		cp -rf $THEME_CONTENT /roms/themes/$REP_NAME
-		printf "\nTheme $REP_NAME updated successfully."
-		sleep 3
-	else
-		printf "\nTheme update have failed because the archive did not download correctly."
-		printf "\nCheck your connection and try again.\n"
-		sleep 6
-	fi
-	printf "\nDeleting temporary files...\n"
-	sudo rm -rf /dev/shm/theme_update_temp #remove the temp folder from RAM
+#
+# Options
+#
+shopt -s extglob # required for extented pattern recognition
 
-	sleep 3
+#######################
+# ARKTHEMES FUNCTIONS #
+#######################
 
-	MainMenu
+function InitLoader() {
+  local cmd
+  local retval
+  local temparr
+
+  dialog --clear
+  dialog --infobox "Initialization... Please wait !" 5 50
+  sleep 1
+
+  wget -q --spider http://google.com
+
+  if [ $? -eq 0 ]; then
+    LoadOnlineThemes
+    LoadInstalledThemes
+    if [[ "$themes_autocheckupdate" == "on" ]]; then
+      CheckThemesUpdates
+    fi
+    if [[ "$arkthemes_autocheckupdate" == "on" ]]; then
+      CheckArkThemesUpdates
+    fi
+    MainMenu
+  else
+    cmd=$(dialog --backtitle "ArkThemes - $github_user" --yes-label "Try again" --no-label "Exit" --yesno "Internet connection required!" 5 50 2>&1 >/dev/tty1)
+
+    retval=$?
+    case $retval in
+    0)
+      InitLoader
+      ;;
+    1)
+      ExitApp
+      ;;
+    esac
+  fi
 }
 
-function RemoveTheme () {
-	local theme="$1"
+function CheckArkThemesUpdates() {
 
-	sudo sh -c 'printf "\033c" > /dev/tty1'
-	printf "\nRemoving $theme ..."
-    	sudo rm -rf "/roms/themes/$theme"
-	printf "\n$theme removed !"
+  dialog --clear
+  dialog --infobox "Checking for ArkThemes updates...\nPlease wait !" 5 50
+  sleep 1
+  #Get latest ArkThemes tag version
+  latest_ark_version=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_ark_owner}/${github_ark_repo}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+  arkthemes_updates_checked=1
 
-	sleep 3
+  if [[ "$latest_ark_version" != "$current_ark_version" ]]; then
+    arkthemes_outdated=1
+    dialog --clear
+    dialog --infobox "A new release is available !!" 5 50
+    sleep 1
+  else
+    arkthemes_outdated=0
+    dialog --clear
+    dialog --infobox "ArkThemes is up to date..." 5 50
+    sleep 1
+  fi
 
-	MainMenu
-}
-
-function UninstallMenu() {
-
-	theme=(/roms/themes/*/)    # This creates an array of the full paths to all subdirs
-	theme=("${theme[@]%/}")      # This removes the trailing slash on each item
-	theme=("${theme[@]##*/}")    # This removes the path prefix, leaving just the dir names
-
-	local options=()
-
-	for theme in "${theme[@]}"; do
-                options+=($theme "Uninstall")
-        done
-
-  cmd=(dialog --clear --backtitle "ArkThemes" --title "[ Remove Themes ]" --menu "Select theme from the list:" "15" "56" "15")
-  choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
-
-	retval=$?
-	case $retval in
-		0) RemoveTheme "${choices[0]}" ;;
-		1) MainMenu ;;
-	esac
-}
-
-function InstallMenu() {
-
-	local options=()
-
-	local themes=(
-	'es-theme-arkos-carbon'
-	'es-theme-art-book-3-2'
-	'es-theme-ChicueloAP'
-	'es-theme-custom-box'
-	'es-theme-epicnoir'
-	'es-theme-freeplay'
-	'es-theme-gbz35_mod'
-	'es-theme-magical-pixel'
-	'es-theme-minimal-arkos'
-	'es-theme-nes-box'
-	'es-theme-pixel'
-	'es-theme-solo-horizontal-arkos-ed'
-	'es-theme-switch'
-	)
-
-	for theme in "${themes[@]}"; do
-  	if [ -d "/roms/themes/$theme" ]
-		then
-    	options+=($theme "Update")
-  	else
-  		options+=($theme "Install")
-  	fi
-  done
-
-	cmd=(dialog --clear --backtitle "ArkThemes" --title "[ Install Themes ]" --menu "Select theme from the list:" "15" "56" "15")
-	choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
-
-	retval=$?
-	case $retval in
-		0) InstallTheme "${choices[0]}" ;;
-		1) MainMenu ;;
-	esac
-}
-
-function ExitMenu() {
-	pgrep -f oga_controls | sudo xargs kill -9 > /dev/null 2>&1
-	pgrep -f rg351_controls | sudo xargs kill -9 > /dev/null 2>&1
-	sudo systemctl restart emulationstation
 }
 
 function UpdateArkThemes() {
+  local UPDATE_URL="https://api.github.com/repos/${github_ark_owner}/${github_ark_repo}/zipball"
+  local package_folder
 
-	UPDATE_URL="https://github.com/TadMSTR/ArkThemes/releases/download/update/ArkThemes.zip"
-	PAYLOAD=/dev/shm/payload_temp/*
-	cd /roms/tools
-	sudo sh -c 'printf "\033c" > /dev/tty1'
-	printf "\nStarting update of ArkThemes..."
-	mkdir -p /dev/shm/payload_temp #create a temp folder in RAM
+  dialog --clear
+  dialog --infobox "Downloading ArkThemes update..." 5 50
 
-	printf "\nDownloading archive for ArkThemes...\n"
-	sudo wget -q "$UPDATE_URL" -O /dev/shm/payload_temp/update.zip
-	if unzip -qt /dev/shm/payload_temp/update.zip | grep 'No errors detected';then
-		printf "\nUnzipping archive..."
-		sudo unzip -qo /dev/shm/payload_temp/update.zip -d /dev/shm/payload_temp/ #unzip directly in RAM
-		rm /dev/shm/payload_temp/update.zip
-		printf "\nOverwritting existing files..."
-		cp -rf $PAYLOAD ./
-		sudo chmod 777 ./*.sh #make sure newly downloaded scripts have right permission
-		printf "\nArkThemes updated successfully."
-		sleep 3
-	else
-		printf "\nTheme update have failed because the archive did not download correctly."
-		printf "\nCheck your connection and try again.\n"
-		sleep 6
-	fi
-	printf "\nDeleting temporary files...\n"
-	sudo rm -rf /dev/shm/payload_temp #remove the temp folder from RAM
+  mkdir -p ${temp_ram_folder}ark_update_temp #create a temp folder in RAM
 
-	dialog --backtitle "System" --infobox "\nPlease launch ArkThemes again and enjoy ..." 5 55 > /dev/tty1
-	sleep 3
+  # sudo
+  wget -q "$UPDATE_URL" -O ${temp_ram_folder}ark_update_temp/update.zip
+  if unzip -qt ${temp_ram_folder}ark_update_temp/update.zip | grep 'No errors detected'; then
+    dialog --clear
+    dialog --infobox "Installing ArkThemes update..." 5 50
+    #Unzipping archive
+    # sudo
+    unzip -qo ${temp_ram_folder}ark_update_temp/update.zip -d ${temp_ram_folder}ark_update_temp/ #unzip directly in RAM
+    #Getting unzipped package folder's name
+    package_folder=$(find ${temp_ram_folder}ark_update_temp -maxdepth 1 -type d -name "${github_ark_owner}*")
+    package_folder="${package_folder##*/}"
+    #Backing up themes configuration and installation log files
+    cp ${ark_location}ArkThemes/*.log ${temp_ram_folder}ark_update_temp/${package_folder}/ArkThemes/ 2>/dev/null
+    cp ${ark_location}ArkThemes/*.cfg ${temp_ram_folder}ark_update_temp/${package_folder}ArkThemes/ 2>/dev/null
+    #Overwritting existing files
+    cp -rf ${temp_ram_folder}ark_update_temp/${package_folder}/* $ark_location
+    # sudo
+    chmod 777 ${ark_location}*.sh #make sure newly downloaded scripts have right permission
+    #Deleting temporary files...
+    # sudo
+    rm -rf ${temp_ram_folder}ark_update_temp #remove the temp folder from RAM
 
-	ExitMenu
+    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "ArkThemes successfully updated !\nQuit and relaunch ArkThemes." 10 50 2>&1 >/dev/tty1
+
+    ExitApp
+  else
+    #Deleting temporary files...
+    # sudo
+    rm -rf ${temp_ram_folder}ark_update_temp #remove the temp folder from RAM
+
+    cmd=$(dialog --yes-label "Try again" --no-label "Quit ArkThemes" --yesno "Update have failed because the archive did not download correctly. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
+    retval=$?
+    case $retval in
+    0)
+      UpdateArkThemes
+      ;;
+    1)
+      ExitApp
+      ;;
+    esac
+  fi
 }
 
-function MainMenu () {
-
-	while true; do
-		cmd=(dialog --clear --backtitle "ArkThemes" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "10" "60" "10")
-
-		options=(
-			A "Install or update a theme"
-			B "Uninstall a theme"
-			C "Update ArkThemes"
-			D "Exit to emulationstation"
-			)
-
-		choices=$("${cmd[@]}" "${options[@]}" 2>&1 > /dev/tty1)
-
-		retval=$?
-		case $retval in
-			0)
-				for choice in $choices; do
-					case $choice in
-						A) InstallMenu ;;
-						B) UninstallMenu ;;
-						C) UpdateArkThemes ;;
-						D) ExitMenu ;;
-					esac
-				done
-				;;
-			1)
-				ExitMenu ;;
-		esac
-	done
+function SaveSettings() {
+  echo "arkthemes_autocheckupdate=\"${arkthemes_autocheckupdate}\"" >arkthemes.cfg
+  echo "themes_autocheckupdate=\"${themes_autocheckupdate}\"" >>arkthemes.cfg
+  echo "github_user=\"${github_user}\"" >>arkthemes.cfg
+  echo "collections=(${collections[@]})" >>arkthemes.cfg
 }
 
-MainMenu
+function ExitApp() {
+  clear
+  if id "ark" &>/dev/null; then
+    pgrep -f oga_controls | sudo xargs kill -9  >/dev/null 2>&1
+    sudo systemctl restart emulationstation
+  else
+    pgrep -f oga_controls | xargs kill -9 >/dev/null 2>&1
+    pgrep -f ArkThemes | xargs kill -9 >/dev/null 2>&1
+    systemctl restart emustation
+  fi
+}
+
+function CheckThemesUpdates() {
+  local theme
+  local latest
+  local current
+  local retval
+
+  dialog --clear
+  dialog --infobox "Checking for themes updates... Please wait !" 5 50
+  sleep 1
+
+  #(re)Load installed themes with new release
+  unset outdatedthemes
+  for theme in "${onlinethemes[@]}"; do
+    if [ -d "${themes_location}$theme" ]; then
+      latest=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"date\":/!d;q' | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
+      if [ -e "${theme}.log" ]; then
+        current=$(cat "${theme}.log")
+        #current=$(head -n 1 ${theme}.log) #Alternative when every version installed is kept - see file creation
+      fi
+      if [[ "$current" != "$latest" ]]; then
+        outdatedthemes+=("$theme")
+      fi
+    fi
+  done
+
+  themes_updates_checked=1
+
+  if [[ -z $outdatedthemes ]]; then
+    dialog --clear
+    dialog --infobox "All themes are up to date..." 5 50
+    sleep 1
+  else
+    dialog --clear
+    dialog --infobox "New theme update available !!" 5 50
+    sleep 1
+  fi
+}
+
+function GetChangeLog {
+  local theme=$1
+  local temparr=()
+  unset changelog
+
+  SAVEIFS=$IFS
+  IFS=$'\n' temparr=($(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | grep '"message": \|"date": ' | sed -e 's/.*\"message\": \"//' | sed -e 's/.*\"date\": \"//'))
+  IFS=$SAVEIFS
+  temparr=("${temparr[@]%,}")
+  temparr=("${temparr[@]//\"/}")
+
+  i=0
+  for value in "${temparr[@]}"; do
+    if [[ $i -eq 0 ]]; then
+      i=1
+      echo $i
+    elif [[ $i -eq 1 ]]; then
+      changelog+=("$value")
+      i=2
+      echo $i
+    elif [[ $i -eq 2 ]]; then
+      changelog+=("$value")
+      i=0
+      echo $i
+    fi
+  done
+}
+
+function LoadInstalledThemes {
+  #(re)Load already installed themes
+  unset installedthemes
+
+  installedthemes=(${themes_location}*)         # This creates an array of the full paths to all subdirs
+  installedthemes=("${installedthemes[@]##*/}") # This removes the path prefix, leaving just the dir names
+}
+
+function LoadOnlineThemes() {
+  #(re)Load online es-theme repositories
+  unset onlinethemes
+
+  SAVEIFS=$IFS
+  IFS=$'\n'
+  onlinethemes=($(wget --no-check-certificate -qO - "https://api.github.com/users/${github_user}/repos" | grep '\"name\": \"es-theme' | sed -e 's/\"name\": \"\(.*\)\",/\1/'))
+  IFS=$SAVEIFS
+  onlinethemes=("${onlinethemes[@]/#+([[:blank:]])/}") # remove leading space/tab from each element
+  onlinethemes=("${onlinethemes[@]/%+([[:blank:]])/}") # remove trailing space/tab from each element
+}
+
+function InstallTheme() {
+  local theme=$1
+  local latest
+  local REP_URL
+  local temp
+  local THEME_CONTENT
+  local cmd
+  local retval
+
+  dialog --clear
+  dialog --infobox "Downloading theme's package..." 5 50 >/dev/tty1
+
+  latest=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"date\":/!d;q' | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
+
+  REP_URL="https://api.github.com/repos/${github_user}/${theme}/zipball"
+
+  mkdir -p ${temp_ram_folder}theme_update_temp #create a temp folder in RAM
+
+  #Downloading archive
+  # sudo
+  wget -q "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip
+
+  if unzip -qt "${temp_ram_folder}theme_update_temp/update.zip" | grep 'No errors detected'; then
+    dialog --clear
+    dialog --infobox "Theme's installation in progess..." 5 50 >/dev/tty1
+    sleep 1
+
+    #Unzipping archive
+    # sudo
+    unzip -qo "${temp_ram_folder}theme_update_temp/update.zip" -d "${temp_ram_folder}theme_update_temp/" #unzip directly in RAM
+    #Extract the folder's name created from the archive
+    temp=$(find ${temp_ram_folder}theme_update_temp -maxdepth 1 -type d -name "${github_user}*")
+    temp="${temp##*/}"
+    #Init the variable
+    THEME_CONTENT="${temp_ram_folder}theme_update_temp/${temp}/*"
+    #Create folder if necessary
+    mkdir -p ${themes_location}$theme
+    #Overwritting existing files
+    cp -rf $THEME_CONTENT ${themes_location}$theme
+    #Create the theme's log file for version management
+    echo $latest >${theme}.log
+    #echo $latest >> ${theme}.log #alternative to keep every version installed, reading also need to be modified
+    #Deleting temporary files
+    # sudo
+    rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
+
+    LoadInstalledThemes                               #reload liste of installed themes (in case of install)
+    outdatedthemes=("${outdatedthemes[@]/${theme}/}") #in case of update, remove theme from outdated themes list
+
+    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "Theme $theme successfully installed!" 10 50 2>&1 >/dev/tty1
+
+    MainMenu
+
+  else
+    #Install failed
+    #Deleting temporary files
+    # sudo
+    rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
+
+    cmd=$(dialog --yes-label "Try again" --no-label "Exit" --yesno "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
+    retval=$?
+    case $retval in
+    0)
+      UpdateMenu
+      ;;
+    1)
+      ExitApp
+      ;;
+    esac
+  fi
+}
+
+function RemoveTheme() {
+  local theme="$1"
+
+  dialog --clear
+  dialog --infobox "Removing $theme ..." 5 50
+
+  # sudo
+  rm -rf ${themes_location}$theme
+  # sudo
+  rm -f ${theme}.log
+
+  LoadInstalledThemes
+
+  dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "Theme $theme successfully removed!" 10 50 2>&1 >/dev/tty1
+
+  UninstallMenu
+}
+
+################
+# ARKTHEMES UI #
+################
+
+function UninstallMenu() {
+  local themes2remove
+  local theme
+  local options
+  local title
+  local cmd
+  local choice
+  local retval
+
+  if [[ -z "$1" ]]; then
+    # Uninstall managed themes
+    themes2remove=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    for theme in "${themes2remove[@]}"; do
+      options+=($theme "Uninstall")
+    done
+    options+=(Other "System themes")
+    title="[ Remove Themes ]"
+  else
+    # Uninstall non managed themes
+    themes2remove=($(comm -13 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    for theme in "${themes2remove[@]}"; do
+      options+=($theme "Uninstall")
+    done
+    if [[ -z $options ]]; then
+      dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
+      UninstallMenu
+    fi
+    title="\Zb\Z1[ Caution - Themes not from current $github_user collection ]"
+  fi
+
+  cmd=(dialog --colors --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    if [ "$choice" == "Other" ]; then
+      UninstallMenu "$choice"
+    else
+      RemoveTheme "$choice"
+    fi
+    ;;
+  1)
+    MainMenu
+    ;;
+  esac
+}
+
+function UpdateSubMenu {
+  local theme="$1"
+  local commitmsg
+  local cmd
+  local retval
+
+  theme=${theme/HELP /}
+  commitmsg=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"message\":/!d;q' | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
+
+  cmd=$(dialog --backtitle "ArkThemes - $github_user" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    themes_updates_checked=0
+    InstallTheme "$theme"
+    ;;
+  1)
+    UpdateMenu
+    ;;
+  esac
+}
+
+function UpdateMenu() {
+  local theme
+  local options
+  local cmd
+  local choice
+  local retval
+
+  if [[ $themes_updates_checked -eq 0 ]]; then
+    CheckThemesUpdates
+  fi
+
+  if [[ -z "$outdatedthemes" ]]; then
+    dialog --backtitle "ArkThemes - $github_user" --yesno "No updates available... Check again for updates ?" 10 50 2>&1 >/dev/tty1
+    retval=$?
+    case $retval in
+    0)
+      themes_updates_checked=0
+      UpdateMenu
+      ;;
+    1)
+      MainMenu
+      ;;
+    esac
+  fi
+
+  # Select themes to update
+  for theme in "${outdatedthemes[@]}"; do
+    options+=($theme "Update")
+  done
+
+  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "[ New releases ]" --menu "Select theme to update:" "15" "50" "15")
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    themes_updates_checked=0
+    InstallTheme "$choice"
+    ;;
+  1)
+    MainMenu
+    ;;
+  2)
+    UpdateSubMenu "$choice"
+    ;;
+  esac
+}
+
+function InstallSubMenu {
+  local theme="$1"
+  local description
+  local cmd
+  local retval
+
+  theme=${theme/HELP /}
+  description=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}" | sed '/\"description\":/!d;q' | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
+
+  cmd=$(dialog --backtitle "${backtitle}" --yes-label "Install" --no-label "Back" --yesno "${theme} description :\n ${description}" 10 50 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    InstallTheme "$theme"
+    ;;
+  1)
+    InstallMenu
+    ;;
+  esac
+}
+
+function InstallMenu() {
+  local theme
+  local options
+  local cmd
+  local choice
+  local retval
+
+  # Get themes not currently installed
+  for theme in "${onlinethemes[@]}"; do
+    if [ ! -d "${themes_location}$theme" ]; then
+      options+=($theme "Install")
+    fi
+  done
+  title="[ Install Themes ]"
+
+  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    InstallTheme "$choice"
+    ;;
+  1)
+    MainMenu
+    ;;
+  2)
+    InstallSubMenu "$choice"
+    ;;
+  esac
+}
+
+function ChangeLogMenu() {
+  local theme
+  local options
+  local cmd
+  local choice
+  local retval
+  local themes
+
+  if [[ -z $1 ]]; then
+    # Load installed and managed themes
+    themes=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    for theme in "${themes[@]}"; do
+      options+=($theme "See Changelog")
+    done
+
+    cmd=(dialog --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "[ Themes Changelog ]" --menu "Select theme to update:" "15" "50" "15")
+    choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+    retval=$?
+    case $retval in
+    0)
+      ChangeLogMenu "$choice"
+      ;;
+    1)
+      AdvancedMenu
+      ;;
+    esac
+  else
+    GetChangeLog $1
+
+    SAVEIFS=$IFS
+    IFS=$'\n'
+    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "$theme changelog :\n${changelog[*]}" 15 50 2>&1 >/dev/tty1
+    IFS=$SAVEIFS
+
+    AdvancedMenu
+  fi
+}
+
+function ReinstallMenu() {
+  local theme
+  local options
+  local cmd
+  local choice
+  local retval
+
+  # Get themes alrady installed
+  for theme in "${onlinethemes[@]}"; do
+    if [ -d "${themes_location}$theme" ]; then
+      options+=($theme "Reinstall")
+    fi
+  done
+  if [[ -z $options ]]; then
+    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No theme to be reinstalled !" 10 50 2>&1 >/dev/tty1
+    AdvancedMenu
+  fi
+  title="[ Reinstall Themes ]"
+
+  cmd=(dialog --ok-label "OK" --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    InstallTheme "$choice"
+    ;;
+  1)
+    AdvancedMenu
+    ;;
+  esac
+}
+
+function StartupSettings() {
+  local cmd
+  local options
+  local choice
+  local choices
+  local retval
+
+  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ArkThemes - $github_user" --title " [ Startup Options ] " --checklist "NB : ArkThemes initialisation will take longer espacially if check for themes updates is activated :" "15" "50" "15")
+
+  options=(
+    ArkThemes "Check for updates" $arkthemes_autocheckupdate
+    Themes "Check for update" $themes_autocheckupdate
+  )
+
+  choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    arkthemes_autocheckupdate="off"
+    themes_autocheckupdate="off"
+    for choice in $choices; do
+      case $choice in
+      ArkThemes) arkthemes_autocheckupdate="on" ;;
+      Themes) themes_autocheckupdate="on" ;;
+      esac
+    done
+    SaveSettings
+    AdvancedMenu
+    ;;
+  1)
+    AdvancedMenu
+    ;;
+  esac
+}
+
+function SelectCollection() {
+  local cmd
+  local options
+  local choice
+  local retval
+  local temp
+
+  cmd=(dialog --backtitle "ArkThemes - $github_user" --title " [ Themes Configuration ] " --radiolist "Set the themes collection to be used with ArkThemes :" "15" "50" "15")
+
+  for temp in "${collections[@]}"; do
+    if [ "$temp" == "$github_user" ]; then
+      options+=($temp "Themes collection" "on")
+    else
+      options+=($temp "Themes collection" "off")
+    fi
+  done
+
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    if [ "$choice" != "$github_user" ]; then
+      github_user=$choice
+      dialog --clear
+      dialog --infobox "Reloading parameters... Please wait !" 5 50
+      themes_updates_checked=0
+      SaveSettings
+      LoadOnlineThemes
+      LoadInstalledThemes
+    fi
+    MainMenu
+    ;;
+  1)
+    AdvancedMenu
+    ;;
+  esac
+}
+
+function AdvancedMenu() {
+  local cmd
+  local options
+  local choice
+  local retval
+
+  cmd=(dialog --cancel-label "Back" --backtitle "ArkThemes - $github_user" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+
+  options=(
+    A "Update ArkThemes"
+    B "Themes Changelog"
+    C "Reinstall a theme"
+    D "Startup Configuration"
+    E "Collection Selection"
+  )
+
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    case $choice in
+    A)
+      if [[ $arkthemes_updates_checked -eq 0 ]]; then
+        CheckArkThemesUpdates
+      fi
+      if [[ $arkthemes_outdated -eq 0 ]]; then
+        dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "ArkThemes is up to date." 5 50 2>&1 >/dev/tty1
+        AdvancedMenu
+      else
+        UpdateArkThemes
+      fi
+      ;;
+    B) ChangeLogMenu ;;
+    C) ReinstallMenu ;;
+    D) StartupSettings ;;
+    E) SelectCollection ;;
+    esac
+    ;;
+  1)
+    MainMenu
+    ;;
+  esac
+}
+
+function MainMenu() {
+  local cmd
+  local options
+  local choice
+  local retval
+
+  cmd=(dialog --no-cancel --backtitle "ArkThemes - $github_user" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+
+  options=(
+    A "Install a theme"
+    B "Update a theme"
+    C "Uninstall a theme"
+    D "Advanced Menu"
+    E "Exit to emulationstation"
+  )
+
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    case $choice in
+    A) InstallMenu ;;
+    B) UpdateMenu ;;
+    C) UninstallMenu ;;
+    D) AdvancedMenu ;;
+    E) ExitApp ;;
+    esac
+    ;;
+  1)
+    ExitApp ;;
+  esac
+}
+
+InitLoader
