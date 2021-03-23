@@ -16,11 +16,9 @@ source ./helper
 
 isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
 if [ ! -z "$isitoga" ]; then
-  sudo ./oga_controls &
-  >/dev/null 2>&1
+  sudo ./oga_controls & >/dev/null 2>&1
 else
-  sudo ./rg351_controls &
-  >/dev/null 2>&1
+  sudo ./rg351_controls & >/dev/null 2>&1
 fi
 
 #
@@ -28,7 +26,7 @@ fi
 #
 github_ark_owner="JohnIrvine1433" #Used for ArkThemes update function
 github_ark_repo="ArkThemes"       #Used for ArkThemes update function
-current_ark_version="v1.0.0"
+current_ark_version="1.0.0"
 
 themes_location="/roms/themes/" #ES themes location path with trailing slash
 temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
@@ -189,14 +187,9 @@ function SaveSettings() {
 
 function ExitApp() {
   clear
-  if id "ark" &>/dev/null; then
-    pgrep -f oga_controls | sudo xargs kill -9  >/dev/null 2>&1
-    sudo systemctl restart emulationstation
-  else
-    pgrep -f oga_controls | xargs kill -9 >/dev/null 2>&1
-    pgrep -f ArkThemes | xargs kill -9 >/dev/null 2>&1
-    systemctl restart emustation
-  fi
+  pgrep -f oga_controls | sudo xargs kill -9 >/dev/null 2>&1
+  pgrep -f rg351_controls | sudo xargs kill -9 >/dev/null 2>&1
+  sudo systemctl restart emulationstation
 }
 
 function CheckThemesUpdates() {
