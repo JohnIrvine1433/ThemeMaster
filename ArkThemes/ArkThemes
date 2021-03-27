@@ -1,24 +1,27 @@
 #!/bin/bash
 
-# Notes
 #
+# ArkThemes
 # https://github.com/JohnIrvine1433/ArkThemes-fork
 #
 
+#
+# Environment settings
+#
 export TERM=linux
-sudo chmod 666 /dev/tty >/dev/null 2>&1
-
+if id "ark" &>/dev/null; then
+  sudo chmod 666 /dev/tty1 >/dev/null 2>&1
+fi
 source ./helper
+shopt -s extglob # required for extented pattern recognition
 
 #
 # Joystick controls
 #
-
-isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
-if [ ! -z "$isitoga" ]; then
-  sudo ./oga_controls & >/dev/null 2>&1
+if id "ark" &>/dev/null; then
+  sudo ./oga_controls &
 else
-  sudo ./rg351_controls & >/dev/null 2>&1
+  ./oga_controls &
 fi
 
 #
@@ -26,7 +29,7 @@ fi
 #
 github_ark_owner="JohnIrvine1433" #Used for ArkThemes update function
 github_ark_repo="ArkThemes"       #Used for ArkThemes update function
-current_ark_version="1.0.0"
+current_ark_version="1.0.1"
 
 themes_location="/roms/themes/" #ES themes location path with trailing slash
 temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
@@ -42,8 +45,9 @@ else
   arkthemes_autocheckupdate="off"
   themes_autocheckupdate="off"
   # Default themes collection - github repositories must start with es-theme
-  collections=("Jetup13" "EmuELEC" "RetroPie")
-  github_user="Jetup13" #github user's name
+  collections=("Jetup13" "CodyV59" "EmuELEC" "RetroPie")
+  github_user="Jetup13" #Default collection
+  SaveSettings
 fi
 
 #
@@ -57,11 +61,6 @@ themes_updates_checked=0
 arkthemes_updates_checked=0
 latest_ark_version=""
 arkthemes_outdated=""
-
-#
-# Options
-#
-shopt -s extglob # required for extented pattern recognition
 
 #######################
 # ARKTHEMES FUNCTIONS #
@@ -89,7 +88,7 @@ function InitLoader() {
     fi
     MainMenu
   else
-    cmd=$(dialog --backtitle "ArkThemes - $github_user" --yes-label "Try again" --no-label "Exit" --yesno "Internet connection required!" 5 50 2>&1 >/dev/tty1)
+    cmd=$(dialog --backtitle "ArkThemes" --yes-label "Try again" --no-label "Exit" --yesno "Internet connection required!" 5 50 2>&1 >/dev/tty1)
 
     retval=$?
     case $retval in
@@ -146,9 +145,9 @@ function UpdateArkThemes() {
     #Getting unzipped package folder's name
     package_folder=$(find ${temp_ram_folder}ark_update_temp -maxdepth 1 -type d -name "${github_ark_owner}*")
     package_folder="${package_folder##*/}"
-    #Backing up themes configuration and installation log files
-    cp ${ark_location}ArkThemes/*.log ${temp_ram_folder}ark_update_temp/${package_folder}/ArkThemes/ 2>/dev/null
-    cp ${ark_location}ArkThemes/*.cfg ${temp_ram_folder}ark_update_temp/${package_folder}ArkThemes/ 2>/dev/null
+    #When backing up themes configuration and installation log files is required
+    #cp ${ark_location}ArkThemes/*.log ${temp_ram_folder}ark_update_temp/${package_folder}/ArkThemes/ 2>/dev/null
+    #cp ${ark_location}ArkThemes/*.cfg ${temp_ram_folder}ark_update_temp/${package_folder}ArkThemes/ 2>/dev/null
     #Overwritting existing files
     cp -rf ${temp_ram_folder}ark_update_temp/${package_folder}/* $ark_location
     # sudo
@@ -187,9 +186,13 @@ function SaveSettings() {
 
 function ExitApp() {
   clear
-  pgrep -f oga_controls | sudo xargs kill -9 >/dev/null 2>&1
-  pgrep -f rg351_controls | sudo xargs kill -9 >/dev/null 2>&1
-  sudo systemctl restart emulationstation
+  if id "ark" &>/dev/null; then
+    pgrep -f oga_controls | sudo xargs kill -9 >/dev/null 2>&1
+    sudo systemctl restart emulationstation
+  else
+    pgrep -f oga_controls | xargs kill -9 >/dev/null 2>&1
+    pgrep -f ArkThemes | xargs kill -9; systemctl restart emustation
+  fi
 }
 
 function CheckThemesUpdates() {
@@ -327,7 +330,7 @@ function InstallTheme() {
     LoadInstalledThemes                               #reload liste of installed themes (in case of install)
     outdatedthemes=("${outdatedthemes[@]/${theme}/}") #in case of update, remove theme from outdated themes list
 
-    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "Theme $theme successfully installed!" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "Theme $theme successfully installed!" 8 50 2>&1 >/dev/tty1
 
     MainMenu
 
@@ -337,7 +340,7 @@ function InstallTheme() {
     # sudo
     rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
 
-    cmd=$(dialog --yes-label "Try again" --no-label "Exit" --yesno "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
+    cmd=$(dialog --yes-label "Try again" --no-label "Exit" --yesno "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 10 50 2>&1 >/dev/tty1)
     retval=$?
     case $retval in
     0)
@@ -372,51 +375,56 @@ function RemoveTheme() {
 # ARKTHEMES UI #
 ################
 
-function UninstallMenu() {
-  local themes2remove
+function InstallSubMenu {
+  local theme="$1"
+  local description
+  local cmd
+  local retval
+
+  theme=${theme/HELP /}
+  description=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}" | sed '/\"description\":/!d;q' | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
+
+  cmd=$(dialog --backtitle "${backtitle}" --yes-label "Install" --no-label "Back" --yesno "${theme} description :\n ${description}" 10 50 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    InstallTheme "$theme"
+    ;;
+  1)
+    InstallMenu
+    ;;
+  esac
+}
+
+function InstallMenu() {
   local theme
   local options
-  local title
   local cmd
   local choice
   local retval
 
-  if [[ -z "$1" ]]; then
-    # Uninstall managed themes
-    themes2remove=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
-    for theme in "${themes2remove[@]}"; do
-      options+=($theme "Uninstall")
-    done
-    options+=(Other "System themes")
-    title="[ Remove Themes ]"
-  else
-    # Uninstall non managed themes
-    themes2remove=($(comm -13 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
-    for theme in "${themes2remove[@]}"; do
-      options+=($theme "Uninstall")
-    done
-    if [[ -z $options ]]; then
-      dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
-      UninstallMenu
+  # Get themes not currently installed
+  for theme in "${onlinethemes[@]}"; do
+    if [ ! -d "${themes_location}$theme" ]; then
+      options+=($theme "Install")
     fi
-    title="\Zb\Z1[ Caution - Themes not from current $github_user collection ]"
-  fi
+  done
+  title="[ Install Themes ]"
 
-  cmd=(dialog --colors --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
-
+  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
   case $retval in
   0)
-    if [ "$choice" == "Other" ]; then
-      UninstallMenu "$choice"
-    else
-      RemoveTheme "$choice"
-    fi
+    InstallTheme "$choice"
     ;;
   1)
     MainMenu
+    ;;
+  2)
+    InstallSubMenu "$choice"
     ;;
   esac
 }
@@ -492,60 +500,6 @@ function UpdateMenu() {
   esac
 }
 
-function InstallSubMenu {
-  local theme="$1"
-  local description
-  local cmd
-  local retval
-
-  theme=${theme/HELP /}
-  description=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}" | sed '/\"description\":/!d;q' | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
-
-  cmd=$(dialog --backtitle "${backtitle}" --yes-label "Install" --no-label "Back" --yesno "${theme} description :\n ${description}" 10 50 2>&1 >/dev/tty1)
-
-  retval=$?
-  case $retval in
-  0)
-    InstallTheme "$theme"
-    ;;
-  1)
-    InstallMenu
-    ;;
-  esac
-}
-
-function InstallMenu() {
-  local theme
-  local options
-  local cmd
-  local choice
-  local retval
-
-  # Get themes not currently installed
-  for theme in "${onlinethemes[@]}"; do
-    if [ ! -d "${themes_location}$theme" ]; then
-      options+=($theme "Install")
-    fi
-  done
-  title="[ Install Themes ]"
-
-  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
-  retval=$?
-  case $retval in
-  0)
-    InstallTheme "$choice"
-    ;;
-  1)
-    MainMenu
-    ;;
-  2)
-    InstallSubMenu "$choice"
-    ;;
-  esac
-}
-
 function ChangeLogMenu() {
   local theme
   local options
@@ -560,6 +514,12 @@ function ChangeLogMenu() {
     for theme in "${themes[@]}"; do
       options+=($theme "See Changelog")
     done
+
+    if [[ -z $options ]]; then
+      dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No installed theme from $github_user" 5 50 2>&1 >/dev/tty1
+      AdvancedMenu
+    fi
+
 
     cmd=(dialog --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "[ Themes Changelog ]" --menu "Select theme to update:" "15" "50" "15")
     choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
@@ -585,6 +545,55 @@ function ChangeLogMenu() {
   fi
 }
 
+function UninstallMenu() {
+  local themes2remove
+  local theme
+  local options
+  local title
+  local cmd
+  local choice
+  local retval
+
+  if [[ -z "$1" ]]; then
+    # Uninstall managed themes
+    themes2remove=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    for theme in "${themes2remove[@]}"; do
+      options+=($theme "Uninstall")
+    done
+    options+=(Other "System themes")
+    title="[ Remove Themes ]"
+  else
+    # Uninstall non managed themes
+    themes2remove=($(comm -13 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    for theme in "${themes2remove[@]}"; do
+      options+=($theme "Uninstall")
+    done
+    if [[ -z $options ]]; then
+      dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
+      UninstallMenu
+    fi
+    title="\Zb\Z1[ Caution - not from $github_user collection ]"
+  fi
+
+  cmd=(dialog --colors --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    if [ "$choice" == "Other" ]; then
+      UninstallMenu "$choice"
+    else
+      RemoveTheme "$choice"
+    fi
+    ;;
+  1)
+    AdvancedMenu
+    ;;
+  esac
+}
+
 function ReinstallMenu() {
   local theme
   local options
@@ -599,7 +608,7 @@ function ReinstallMenu() {
     fi
   done
   if [[ -z $options ]]; then
-    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No theme to be reinstalled !" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No theme to be reinstalled !" 5 50 2>&1 >/dev/tty1
     AdvancedMenu
   fi
   title="[ Reinstall Themes ]"
@@ -616,6 +625,46 @@ function ReinstallMenu() {
     AdvancedMenu
     ;;
   esac
+}
+
+function AdvancedMenu() {
+  local cmd
+  local options
+  local choice
+  local retval
+
+  cmd=(dialog --cancel-label "Back" --backtitle "ArkThemes - $github_user" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+
+  options=(
+    A "Themes Changelog"
+    B "Uninstall a theme"
+    C "Reinstall a theme"
+  )
+
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    case $choice in
+    A) ChangeLogMenu ;;
+    B) UninstallMenu ;;
+    C) ReinstallMenu ;;
+    esac
+    ;;
+  1)
+    MainMenu
+    ;;
+  esac
+}
+
+function ArkChangeLog() {
+  local temp
+
+  temp=$(<changelog)
+  dialog --clear --backtitle "ArkThemes - v$current_ark_version" --msgbox "$temp" 15 50 2>&1 >/dev/tty1
+
+  SettingsMenu
 }
 
 function StartupSettings() {
@@ -646,10 +695,10 @@ function StartupSettings() {
       esac
     done
     SaveSettings
-    AdvancedMenu
+    SettingsMenu
     ;;
   1)
-    AdvancedMenu
+    SettingsMenu
     ;;
   esac
 }
@@ -688,12 +737,12 @@ function SelectCollection() {
     MainMenu
     ;;
   1)
-    AdvancedMenu
+    SettingsMenu
     ;;
   esac
 }
 
-function AdvancedMenu() {
+function SettingsMenu() {
   local cmd
   local options
   local choice
@@ -703,10 +752,9 @@ function AdvancedMenu() {
 
   options=(
     A "Update ArkThemes"
-    B "Themes Changelog"
-    C "Reinstall a theme"
-    D "Startup Configuration"
-    E "Collection Selection"
+    B "View changelog"
+    C "Startup Configuration"
+    D "Collection Selection"
   )
 
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
@@ -721,15 +769,14 @@ function AdvancedMenu() {
       fi
       if [[ $arkthemes_outdated -eq 0 ]]; then
         dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "ArkThemes is up to date." 5 50 2>&1 >/dev/tty1
-        AdvancedMenu
+        SettingsMenu
       else
         UpdateArkThemes
       fi
       ;;
-    B) ChangeLogMenu ;;
-    C) ReinstallMenu ;;
-    D) StartupSettings ;;
-    E) SelectCollection ;;
+    B) ArkChangeLog;;
+    C) StartupSettings ;;
+    D) SelectCollection ;;
     esac
     ;;
   1)
@@ -744,13 +791,13 @@ function MainMenu() {
   local choice
   local retval
 
-  cmd=(dialog --no-cancel --backtitle "ArkThemes - $github_user" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --no-cancel --backtitle "ArkThemes v$current_ark_version - Active collection : $github_user" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
 
   options=(
     A "Install a theme"
     B "Update a theme"
-    C "Uninstall a theme"
-    D "Advanced Menu"
+    C "Advanced menu"
+    D "ArkThemes Settings"
     E "Exit to emulationstation"
   )
 
@@ -762,8 +809,8 @@ function MainMenu() {
     case $choice in
     A) InstallMenu ;;
     B) UpdateMenu ;;
-    C) UninstallMenu ;;
-    D) AdvancedMenu ;;
+    C) AdvancedMenu ;;
+    D) SettingsMenu ;;
     E) ExitApp ;;
     esac
     ;;

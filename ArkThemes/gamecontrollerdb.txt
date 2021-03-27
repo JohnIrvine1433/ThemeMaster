@@ -1,0 +1,25 @@
+# quit
+back = 311
+start = esc
+a = enter
+b = space
+x = enter
+y = space
+l1 = space
+l2 = space
+l3 = space
+r1 = enter
+r2 = enter
+r3 = enter
+up = up
+down = down
+left = left
+right = right
+left_analog_up = up
+left_analog_down = down
+left_analog_left = left
+left_analog_right = right
+right_analog_up = up
+right_analog_down = down
+right_analog_left = left
+right_analog_right = right

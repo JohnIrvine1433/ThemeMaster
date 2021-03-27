@@ -1,0 +1,15 @@
+v1.0.1
+- Fix selection within radiolist and checklist menus (update oga_controls from AnberPorts)
+- Initialize arkthemes.cfg with default configuration (allows to manually edit collections list)
+- Add CodyV59 themes collection
+- Add ArkThemes changelog
+- Menu reorganisation
+- Bug fix : fix theme changelog display when list empty
+v1.0.0
+Fork evolutions
+- Automatic theme collection management from GitHub repositories starting with "es-theme" (default collection set to GitHub owner Jetup13).
+- Themes update management based on latest commit.
+- Access theme description from install menu and latest commit message from update menu.
+- ArkThemes version management.
+- Advanced functions and settings (view theme change log, startup options, user defined themes collection)
+- Various code optimisation
