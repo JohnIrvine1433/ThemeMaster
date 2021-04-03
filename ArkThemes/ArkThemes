@@ -29,7 +29,7 @@ fi
 #
 github_ark_owner="JohnIrvine1433" #Used for ArkThemes update function
 github_ark_repo="ArkThemes"       #Used for ArkThemes update function
-current_ark_version="1.2.0"
+current_ark_version="1.2.1"
 
 themes_location="/roms/themes/" #ES themes location path with trailing slash
 temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
@@ -51,7 +51,6 @@ else
   arkthemes_colorscheme="Default"
   SaveSettings
 fi
-SetColorScheme
 
 #
 # Reused global variables
@@ -73,6 +72,8 @@ function InitLoader() {
   local cmd
   local retval
   local temparr
+
+  SetColorScheme
 
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50
@@ -382,6 +383,7 @@ function SetColorScheme() {
   else
     export DIALOGRC=${ark_location}ArkThemes/${arkthemes_colorscheme}.dialogrc
   fi
+  dialog --infobox "TEST" 0 0
 }
 
 ################

@@ -1,3 +1,5 @@
+v1.2.1
+- Fix loader to set user's color scheme
 v1.2.0
 - Add a gauge display while downloading theme's package
 - Add a function to customise UI color scheme (based on files with .dialogrc extension within ArkThemes folder)
