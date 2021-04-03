@@ -1,6 +1,6 @@
 v1.2.0
 - Add a gauge display while downloading theme's package
-- Add a function to customisation UI color scheme (based on files with .dialogrc extension within ArkThemes folder)
+- Add a function to customise UI color scheme (based on files with .dialogrc extension within ArkThemes folder)
 v1.1.0
 - Fix selection within radiolist and checklist menus (update oga_controls from AnberPorts)
 - Initialize arkthemes.cfg with default configuration (allows to manually edit collections list)
