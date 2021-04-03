@@ -1,6 +1,7 @@
+v1.2.2
+- Fix "Install a theme" menu to manage an exception when all themes from a collection have already been installed
 v1.2.1
 - Fix loader to set user's color scheme at startup
-- Fix "Install a theme" menu to manage an exception when all themes from a collection have already been installed
 v1.2.0
 - Add a gauge display while downloading theme's package
 - Add a function to customise UI color scheme (based on files with .dialogrc extension within ArkThemes folder)
