@@ -9,8 +9,8 @@
 # Environment settings
 #
 export TERM=linux
-if id "ark" &>/dev/null; then
-  sudo chmod 666 /dev/tty1 >/dev/null 2>&1
+if id "ark" & >/dev/null; then
+  sudo chmod 666 /dev/tty1
 fi
 source ./helper
 shopt -s extglob # required for extented pattern recognition
@@ -18,12 +18,12 @@ shopt -s extglob # required for extented pattern recognition
 #
 # Joystick controls
 #
-if id "ark" &>/dev/null; then
+if id "ark" & >/dev/null; then
   sudo ./oga_controls &
 else
   ./oga_controls &
 fi
-
+clear
 #
 # ArkThemes Configuration
 #
@@ -190,13 +190,15 @@ function SaveSettings() {
 }
 
 function ExitApp() {
-  clear
   if id "ark" &>/dev/null; then
-    pgrep -f oga_controls | sudo xargs kill -9 >/dev/null 2>&1
+    pgrep -f oga_controls | sudo xargs kill -9
+    clear
     sudo systemctl restart emulationstation
   else
-    pgrep -f oga_controls | xargs kill -9 >/dev/null 2>&1
-    pgrep -f ArkThemes | xargs kill -9; systemctl restart emustation
+    pgrep -f oga_controls | xargs kill -9
+    pgrep -f ArkThemes | xargs kill -9
+    clear
+    systemctl restart emustation
   fi
 }
 
@@ -383,7 +385,6 @@ function SetColorScheme() {
   else
     export DIALOGRC=${ark_location}ArkThemes/${arkthemes_colorscheme}.dialogrc
   fi
-  dialog --infobox "TEST" 0 0
 }
 
 ################
@@ -425,6 +426,12 @@ function InstallMenu() {
       options+=($theme "Install")
     fi
   done
+  # Check whether there is still at least a theme from the collection to be installed
+  if [[ -z $options ]]; then
+    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No more theme from $github_user to be installed" 10 50 2>&1 >/dev/tty1
+    MainMenu
+  fi
+
   title="[ Install Themes ]"
 
   cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
