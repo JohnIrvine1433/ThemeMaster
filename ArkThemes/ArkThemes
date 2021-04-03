@@ -29,7 +29,7 @@ clear
 #
 github_ark_owner="JohnIrvine1433" #Used for ArkThemes update function
 github_ark_repo="ArkThemes"       #Used for ArkThemes update function
-current_ark_version="1.2.1"
+current_ark_version="1.2.2"
 
 themes_location="/roms/themes/" #ES themes location path with trailing slash
 temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
