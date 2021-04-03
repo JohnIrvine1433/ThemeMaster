@@ -12,6 +12,7 @@ NOTA BENE :
 - List of GitHub accounts to be used can be manually configured via editing the collections variable from the arkthemes.cfg file
 - Beware that name duplicates (between different GitHub accounts) is currently not managed ; this could lead to unwanted behaviour if you choose to swap between theme collections (e.g. replace a theme with another)
 - Uninstaller allows removal of stock themes which cannot be reinstalled via ArkThemes.
+- Customised dialogrc file can be added to ArkThemes folder (no space in filename with dialogrc file's extension)
 
 ## Installation on ArkOS
 Need to be on ArkOS 2021-02-13 (02132021) or newer.  

@@ -1,10 +1,13 @@
-v1.0.1
+v1.2.0
+- Add a gauge display while downloading theme's package
+- Add a function to customisation UI color scheme (based on files with .dialogrc extension within ArkThemes folder)
+v1.1.0
 - Fix selection within radiolist and checklist menus (update oga_controls from AnberPorts)
 - Initialize arkthemes.cfg with default configuration (allows to manually edit collections list)
 - Add CodyV59 themes collection
 - Add ArkThemes changelog
 - Menu reorganisation
-- Bug fix : fix theme changelog display when list empty
+- Fix theme changelog display when list empty
 v1.0.0
 Fork evolutions
 - Automatic theme collection management from GitHub repositories starting with "es-theme" (default collection set to GitHub owner Jetup13).

@@ -29,14 +29,14 @@ fi
 #
 github_ark_owner="JohnIrvine1433" #Used for ArkThemes update function
 github_ark_repo="ArkThemes"       #Used for ArkThemes update function
-current_ark_version="1.1.0"
+current_ark_version="1.2.0"
 
 themes_location="/roms/themes/" #ES themes location path with trailing slash
 temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
 ark_location="/roms/tools/"     #ArkThemes installation path with trailing slash
 
 #
-# ArkThemes Default Settings
+# ArkThemes settings initialisation
 #
 if [ -e "arkthemes.cfg" ]; then
   source arkthemes.cfg
@@ -47,8 +47,11 @@ else
   # Default themes collection - github repositories must start with es-theme
   collections=("Jetup13" "CodyV59" "EmuELEC" "RetroPie")
   github_user="Jetup13" #Default collection
+  # Default color scheme
+  arkthemes_colorscheme="Default"
   SaveSettings
 fi
+SetColorScheme
 
 #
 # Reused global variables
@@ -182,6 +185,7 @@ function SaveSettings() {
   echo "themes_autocheckupdate=\"${themes_autocheckupdate}\"" >>arkthemes.cfg
   echo "github_user=\"${github_user}\"" >>arkthemes.cfg
   echo "collections=(${collections[@]})" >>arkthemes.cfg
+  echo "arkthemes_colorscheme=\"${arkthemes_colorscheme}\""  >>arkthemes.cfg
 }
 
 function ExitApp() {
@@ -290,8 +294,8 @@ function InstallTheme() {
   local cmd
   local retval
 
-  dialog --clear
-  dialog --infobox "Downloading theme's package..." 5 50 >/dev/tty1
+  # dialog --clear
+  # dialog --infobox "Installation is about to start..." 5 50 >/dev/tty1
 
   latest=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"date\":/!d;q' | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
 
@@ -301,7 +305,8 @@ function InstallTheme() {
 
   #Downloading archive
   # sudo
-  wget -q "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip
+  # wget -q "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip
+  wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+%" | grep -o "[0-9]\+" | dialog --gauge "Downloading ${theme} package..." 10 50 0
 
   if unzip -qt "${temp_ram_folder}theme_update_temp/update.zip" | grep 'No errors detected'; then
     dialog --clear
@@ -369,6 +374,14 @@ function RemoveTheme() {
   dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "Theme $theme successfully removed!" 10 50 2>&1 >/dev/tty1
 
   UninstallMenu
+}
+
+function SetColorScheme() {
+  if [ "$arkthemes_colorscheme" == "Default" ]; then
+    export -n DIALORGRC
+  else
+    export DIALOGRC=${ark_location}ArkThemes/${arkthemes_colorscheme}.dialogrc
+  fi
 }
 
 ################
@@ -667,6 +680,51 @@ function ArkChangeLog() {
   SettingsMenu
 }
 
+function ColorSchemeMenu() {
+  local cmd
+  local options
+  local choice
+  local retval
+  local dialog_config
+  local temp
+
+  dialog_config=(${ark_location}ArkThemes/*.dialogrc)         # This creates an array of the full paths to all .dialogrc files
+  dialog_config=("${dialog_config[@]##*/}") #Remove path prefix
+  dialog_config=("${dialog_config[@]%.*}") #Get filename without extension
+
+  cmd=(dialog --backtitle "ArkThemes - $github_user" --title " [ Color Scheme Selection ] " --radiolist "Select the ArkThemes UI color scheme :" "15" "50" "15")
+
+  if [[ "$arkthemes_colorscheme" == "Default" || -z $arkthemes_colorscheme ]]; then
+    options+=(Default "System's color scheme" "on")
+  else
+    options+=(Default "System's scheme" "off")
+  fi
+  for temp in "${dialog_config[@]}"; do
+    if [ "$temp" == "$arkthemes_colorscheme" ]; then
+      options+=($temp "Customized color scheme" "on")
+    else
+      options+=($temp "Customized color scheme" "off")
+    fi
+  done
+
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    if [ "$choice" != "$arkthemes_colorscheme" ]; then
+      arkthemes_colorscheme=$choice
+      SaveSettings
+      SetColorScheme
+    fi
+    SettingsMenu
+    ;;
+  1)
+    SettingsMenu
+    ;;
+  esac
+}
+
 function StartupSettings() {
   local cmd
   local options
@@ -753,8 +811,9 @@ function SettingsMenu() {
   options=(
     A "Update ArkThemes"
     B "View changelog"
-    C "Startup Configuration"
-    D "Collection Selection"
+    C "UI color scheme"
+    D "Startup configuration"
+    E "Collection selection"
   )
 
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
@@ -775,8 +834,9 @@ function SettingsMenu() {
       fi
       ;;
     B) ArkChangeLog;;
-    C) StartupSettings ;;
-    D) SelectCollection ;;
+    C) ColorSchemeMenu ;;
+    D) StartupSettings ;;
+    E) SelectCollection ;;
     esac
     ;;
   1)
