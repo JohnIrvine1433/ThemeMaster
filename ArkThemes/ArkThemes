@@ -29,7 +29,7 @@ clear
 #
 github_ark_owner="JohnIrvine1433" #Used for ArkThemes update function
 github_ark_repo="ArkThemes"       #Used for ArkThemes update function
-current_ark_version="1.2.2"
+current_ark_version="1.2.3"
 
 themes_location="/roms/themes/" #ES themes location path with trailing slash
 temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
@@ -76,7 +76,7 @@ function InitLoader() {
   SetColorScheme
 
   dialog --clear
-  dialog --infobox "Initialization... Please wait !" 5 50
+  dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   sleep 1
 
   wget -q --spider http://google.com
@@ -109,7 +109,7 @@ function InitLoader() {
 function CheckArkThemesUpdates() {
 
   dialog --clear
-  dialog --infobox "Checking for ArkThemes updates...\nPlease wait !" 5 50
+  dialog --infobox "Checking for ArkThemes updates...\nPlease wait !" 5 50 >/dev/tty1
   sleep 1
   #Get latest ArkThemes tag version
   latest_ark_version=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_ark_owner}/${github_ark_repo}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
@@ -118,12 +118,12 @@ function CheckArkThemesUpdates() {
   if [[ "$latest_ark_version" != "$current_ark_version" ]]; then
     arkthemes_outdated=1
     dialog --clear
-    dialog --infobox "A new release is available !!" 5 50
+    dialog --infobox "A new release is available !!" 5 50 >/dev/tty1
     sleep 1
   else
     arkthemes_outdated=0
     dialog --clear
-    dialog --infobox "ArkThemes is up to date..." 5 50
+    dialog --infobox "ArkThemes is up to date..." 5 50 >/dev/tty1
     sleep 1
   fi
 
@@ -134,7 +134,7 @@ function UpdateArkThemes() {
   local package_folder
 
   dialog --clear
-  dialog --infobox "Downloading ArkThemes update..." 5 50
+  dialog --infobox "Downloading ArkThemes update..." 5 50 >/dev/tty1
 
   mkdir -p ${temp_ram_folder}ark_update_temp #create a temp folder in RAM
 
@@ -142,7 +142,7 @@ function UpdateArkThemes() {
   wget -q "$UPDATE_URL" -O ${temp_ram_folder}ark_update_temp/update.zip
   if unzip -qt ${temp_ram_folder}ark_update_temp/update.zip | grep 'No errors detected'; then
     dialog --clear
-    dialog --infobox "Installing ArkThemes update..." 5 50
+    dialog --infobox "Installing ArkThemes update..." 5 50 >/dev/tty1
     #Unzipping archive
     # sudo
     unzip -qo ${temp_ram_folder}ark_update_temp/update.zip -d ${temp_ram_folder}ark_update_temp/ #unzip directly in RAM
@@ -209,7 +209,7 @@ function CheckThemesUpdates() {
   local retval
 
   dialog --clear
-  dialog --infobox "Checking for themes updates... Please wait !" 5 50
+  dialog --infobox "Checking for themes updates... Please wait !" 5 50 >/dev/tty1
   sleep 1
 
   #(re)Load installed themes with new release
@@ -231,11 +231,11 @@ function CheckThemesUpdates() {
 
   if [[ -z $outdatedthemes ]]; then
     dialog --clear
-    dialog --infobox "All themes are up to date..." 5 50
+    dialog --infobox "All themes are up to date..." 5 50 >/dev/tty1
     sleep 1
   else
     dialog --clear
-    dialog --infobox "New theme update available !!" 5 50
+    dialog --infobox "New theme update available !!" 5 50 >/dev/tty1
     sleep 1
   fi
 }
@@ -365,7 +365,7 @@ function RemoveTheme() {
   local theme="$1"
 
   dialog --clear
-  dialog --infobox "Removing $theme ..." 5 50
+  dialog --infobox "Removing $theme ..." 5 50 >/dev/tty1
 
   # sudo
   rm -rf ${themes_location}$theme
@@ -795,7 +795,7 @@ function SelectCollection() {
     if [ "$choice" != "$github_user" ]; then
       github_user=$choice
       dialog --clear
-      dialog --infobox "Reloading parameters... Please wait !" 5 50
+      dialog --infobox "Reloading parameters... Please wait !" 5 50 >/dev/tty1
       themes_updates_checked=0
       SaveSettings
       LoadOnlineThemes
