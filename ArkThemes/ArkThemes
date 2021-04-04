@@ -29,7 +29,7 @@ clear
 #
 github_ark_owner="JohnIrvine1433" #Used for ArkThemes update function
 github_ark_repo="ArkThemes"       #Used for ArkThemes update function
-current_ark_version="1.2.3"
+current_ark_version="1.2.4"
 
 themes_location="/roms/themes/" #ES themes location path with trailing slash
 temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
@@ -296,6 +296,7 @@ function InstallTheme() {
   local THEME_CONTENT
   local cmd
   local retval
+  local estimated_size
 
   # dialog --clear
   # dialog --infobox "Installation is about to start..." 5 50 >/dev/tty1
@@ -307,9 +308,13 @@ function InstallTheme() {
   mkdir -p ${temp_ram_folder}theme_update_temp #create a temp folder in RAM
 
   #Downloading archive
-  # sudo
-  # wget -q "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip
-  wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+%" | grep -o "[0-9]\+" | dialog --gauge "Downloading ${theme} package..." 10 50 0
+  # Only works if content-length header is provided
+  # wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+%" | grep -o "[0-9]\+" | dialog --gauge "Downloading ${theme} package..." 10 50 0
+  # Alternative for chunked encoding if file size can be known/estimated
+  # estimated_size=($(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}" | grep -m 1 '\"size\": ' | sed -e 's/.*\"size\": \(.*\),/\1/'))
+  # wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+K \." | stdbuf -oL grep -o "[0-9]\+" | stdbuf -oL awk "{print int(\$1*100/$estimated_size)}" | dialog --gauge "Downloading package..." 10 50 0 >/dev/tty1
+  # Display download progress directly form wget
+  wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox "Downloading package..." 10 50 >/dev/tty1
 
   if unzip -qt "${temp_ram_folder}theme_update_temp/update.zip" | grep 'No errors detected'; then
     dialog --clear

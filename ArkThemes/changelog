@@ -1,3 +1,5 @@
+v1.2.4
+- Change downloading dialog from gauge to progressbox in order to work with chunked transfer encoding
 v1.2.3
 - Fix infoboxes not being centered
 v1.2.2
