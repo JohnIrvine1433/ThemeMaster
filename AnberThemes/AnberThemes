@@ -1,54 +1,56 @@
 #!/bin/bash
 
 #
-# ArkThemes
-# https://github.com/JohnIrvine1433/ArkThemes-fork
+# AnberThemes
+# https://github.com/JohnIrvine1433/AnberThemes
 #
 
 #
 # Environment settings
 #
 export TERM=linux
-if id "ark" & >/dev/null; then
-  sudo chmod 666 /dev/tty1
-fi
+sudo chmod 666 /dev/tty1
 source ./helper
 shopt -s extglob # required for extented pattern recognition
 
 #
 # Joystick controls
 #
-if id "ark" & >/dev/null; then
-  sudo ./oga_controls &
-else
-  ./oga_controls &
-fi
+sudo ./oga_controls &
 clear
 #
-# ArkThemes Configuration
+# AnberThemes Configuration
 #
-github_ark_owner="JohnIrvine1433" #Used for ArkThemes update function
-github_ark_repo="ArkThemes"       #Used for ArkThemes update function
-current_ark_version="1.2.4"
-
-themes_location="/roms/themes/" #ES themes location path with trailing slash
-temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
-ark_location="/roms/tools/"     #ArkThemes installation path with trailing slash
+github_app_owner="JohnIrvine1433"   #Used for AnberThemes update function
+github_app_repo="AnberThemes"       #Used for AnberThemes update function
+current_app_version="2.0.0"
 
 #
-# ArkThemes settings initialisation
+# AnberThemes settings initialisation
 #
-if [ -e "arkthemes.cfg" ]; then
-  source arkthemes.cfg
+if [ -e "anberthemes.cfg" ]; then
+  source anberthemes.cfg
+  # anberthemes.cfg content management between versions
+  if [[ -z "$app_conf_version" || "$app_conf_version" != "$current_app_version" ]]; then
+    # Export variables to anberthemes.cfg from v1.3.0 and create an app_conf_version variable for future update management
+    themes_location="/roms/themes/" #ES themes location path with trailing slash
+    temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
+    app_location="/roms/tools/"     #AnberThemes installation path with trailing slash
+    SaveSettings
+  fi
 else
+  # Environment settings
+  themes_location="/roms/themes/" #ES themes location path with trailing slash
+  temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
+  app_location="/roms/tools/"     #AnberThemes installation path with trailing slash
   # Do not check for updates at startup
-  arkthemes_autocheckupdate="off"
+  app_autocheckupdate="off"
   themes_autocheckupdate="off"
   # Default themes collection - github repositories must start with es-theme
   collections=("Jetup13" "CodyV59" "EmuELEC" "RetroPie")
   github_user="Jetup13" #Default collection
   # Default color scheme
-  arkthemes_colorscheme="Default"
+  app_colorscheme="Default"
   SaveSettings
 fi
 
@@ -60,12 +62,12 @@ installedthemes=()
 outdatedthemes=()
 changelog=()
 themes_updates_checked=0
-arkthemes_updates_checked=0
-latest_ark_version=""
-arkthemes_outdated=""
+app_updates_checked=0
+latest_app_version=""
+app_outdated=""
 
 #######################
-# ARKTHEMES FUNCTIONS #
+# ANBERTHEMES FUNCTIONS #
 #######################
 
 function InitLoader() {
@@ -79,20 +81,23 @@ function InitLoader() {
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   sleep 1
 
+  dialog --infobox "Initialization... Checking internet access" 5 50 >/dev/tty1
   wget -q --spider http://google.com
 
   if [ $? -eq 0 ]; then
+    dialog --infobox "Initialization... Loading $github_user online themes" 5 50 >/dev/tty1
     LoadOnlineThemes
+    dialog --infobox "Initialization... Loading local themes" 5 50 >/dev/tty1
     LoadInstalledThemes
     if [[ "$themes_autocheckupdate" == "on" ]]; then
       CheckThemesUpdates
     fi
-    if [[ "$arkthemes_autocheckupdate" == "on" ]]; then
-      CheckArkThemesUpdates
+    if [[ "$app_autocheckupdate" == "on" ]]; then
+      CheckAppUpdates
     fi
     MainMenu
   else
-    cmd=$(dialog --backtitle "ArkThemes" --yes-label "Try again" --no-label "Exit" --yesno "Internet connection required!" 5 50 2>&1 >/dev/tty1)
+    cmd=$(dialog --backtitle "AnberThemes" --yes-label "Try again" --no-label "Exit" --yesno "Internet connection required!" 5 50 2>&1 >/dev/tty1)
 
     retval=$?
     case $retval in
@@ -106,73 +111,73 @@ function InitLoader() {
   fi
 }
 
-function CheckArkThemesUpdates() {
+function CheckAppUpdates() {
 
   dialog --clear
-  dialog --infobox "Checking for ArkThemes updates...\nPlease wait !" 5 50 >/dev/tty1
+  dialog --infobox "Checking for AnberThemes updates...\nPlease wait !" 5 50 >/dev/tty1
   sleep 1
-  #Get latest ArkThemes tag version
-  latest_ark_version=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_ark_owner}/${github_ark_repo}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-  arkthemes_updates_checked=1
+  #Get latest AnberThemes tag version
+  latest_app_version=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+  app_updates_checked=1
 
-  if [[ "$latest_ark_version" != "$current_ark_version" ]]; then
-    arkthemes_outdated=1
+  if [[ "$latest_app_version" != "$current_app_version" ]]; then
+    app_outdated=1
     dialog --clear
     dialog --infobox "A new release is available !!" 5 50 >/dev/tty1
     sleep 1
   else
-    arkthemes_outdated=0
+    app_outdated=0
     dialog --clear
-    dialog --infobox "ArkThemes is up to date..." 5 50 >/dev/tty1
+    dialog --infobox "AnberThemes is up to date..." 5 50 >/dev/tty1
     sleep 1
   fi
 
 }
 
-function UpdateArkThemes() {
-  local UPDATE_URL="https://api.github.com/repos/${github_ark_owner}/${github_ark_repo}/zipball"
+function UpdateApp() {
+  local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
   local package_folder
 
   dialog --clear
-  dialog --infobox "Downloading ArkThemes update..." 5 50 >/dev/tty1
+  dialog --infobox "Downloading AnberThemes update..." 5 50 >/dev/tty1
 
-  mkdir -p ${temp_ram_folder}ark_update_temp #create a temp folder in RAM
+  mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
 
   # sudo
-  wget -q "$UPDATE_URL" -O ${temp_ram_folder}ark_update_temp/update.zip
-  if unzip -qt ${temp_ram_folder}ark_update_temp/update.zip | grep 'No errors detected'; then
+  wget -q "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
+  if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
     dialog --clear
-    dialog --infobox "Installing ArkThemes update..." 5 50 >/dev/tty1
+    dialog --infobox "Installing AnberThemes update..." 5 50 >/dev/tty1
     #Unzipping archive
     # sudo
-    unzip -qo ${temp_ram_folder}ark_update_temp/update.zip -d ${temp_ram_folder}ark_update_temp/ #unzip directly in RAM
+    unzip -qo ${temp_ram_folder}app_update_temp/update.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
     #Getting unzipped package folder's name
-    package_folder=$(find ${temp_ram_folder}ark_update_temp -maxdepth 1 -type d -name "${github_ark_owner}*")
+    package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
     package_folder="${package_folder##*/}"
     #When backing up themes configuration and installation log files is required
-    #cp ${ark_location}ArkThemes/*.log ${temp_ram_folder}ark_update_temp/${package_folder}/ArkThemes/ 2>/dev/null
-    #cp ${ark_location}ArkThemes/*.cfg ${temp_ram_folder}ark_update_temp/${package_folder}ArkThemes/ 2>/dev/null
+    #cp ${app_location}AnberThemes/*.log ${temp_ram_folder}app_update_temp/${package_folder}/AnberThemes/ 2>/dev/null
+    #cp ${app_location}AnberThemes/*.cfg ${temp_ram_folder}app_update_temp/${package_folder}AnberThemes/ 2>/dev/null
     #Overwritting existing files
-    cp -rf ${temp_ram_folder}ark_update_temp/${package_folder}/* $ark_location
+    cp -rf ${temp_ram_folder}app_update_temp/${package_folder}/* $app_location
     # sudo
-    chmod 777 ${ark_location}*.sh #make sure newly downloaded scripts have right permission
+    chmod 777 ${app_location}*.sh #make sure newly downloaded scripts have right permission
     #Deleting temporary files...
     # sudo
-    rm -rf ${temp_ram_folder}ark_update_temp #remove the temp folder from RAM
+    rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
 
-    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "ArkThemes successfully updated !\nQuit and relaunch ArkThemes." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "AnberThemes successfully updated !\nQuit and relaunch AnberThemes." 10 50 2>&1 >/dev/tty1
 
     ExitApp
   else
     #Deleting temporary files...
     # sudo
-    rm -rf ${temp_ram_folder}ark_update_temp #remove the temp folder from RAM
+    rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
 
-    cmd=$(dialog --yes-label "Try again" --no-label "Quit ArkThemes" --yesno "Update have failed because the archive did not download correctly. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
+    cmd=$(dialog --yes-label "Try again" --no-label "Quit AnberThemes" --yesno "Update have failed because the archive did not download correctly. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
     retval=$?
     case $retval in
     0)
-      UpdateArkThemes
+      UpdateApp
       ;;
     1)
       ExitApp
@@ -182,24 +187,20 @@ function UpdateArkThemes() {
 }
 
 function SaveSettings() {
-  echo "arkthemes_autocheckupdate=\"${arkthemes_autocheckupdate}\"" >arkthemes.cfg
-  echo "themes_autocheckupdate=\"${themes_autocheckupdate}\"" >>arkthemes.cfg
-  echo "github_user=\"${github_user}\"" >>arkthemes.cfg
-  echo "collections=(${collections[@]})" >>arkthemes.cfg
-  echo "arkthemes_colorscheme=\"${arkthemes_colorscheme}\""  >>arkthemes.cfg
+  echo "app_conf_version=\"${current_app_version}\"" >anberthemes.cfg
+  echo "themes_location=\"${themes_location}\"" >>anberthemes.cfg
+  echo "temp_ram_folder=\"${temp_ram_folder}\"" >>anberthemes.cfg
+  echo "app_location=\"${app_location}\"" >>anberthemes.cfg
+  echo "app_autocheckupdate=\"${app_autocheckupdate}\"" >>anberthemes.cfg
+  echo "themes_autocheckupdate=\"${themes_autocheckupdate}\"" >>anberthemes.cfg
+  echo "github_user=\"${github_user}\"" >>anberthemes.cfg
+  echo "collections=(${collections[@]})" >>anberthemes.cfg
+  echo "app_colorscheme=\"${app_colorscheme}\""  >>anberthemes.cfg
 }
 
 function ExitApp() {
-  if id "ark" &>/dev/null; then
-    pgrep -f oga_controls | sudo xargs kill -9
-    clear
-    sudo systemctl restart emulationstation
-  else
-    pgrep -f oga_controls | xargs kill -9
-    pgrep -f ArkThemes | xargs kill -9
-    clear
-    systemctl restart emustation
-  fi
+  pgrep -f oga_controls | sudo xargs kill -9
+  exit
 }
 
 function CheckThemesUpdates() {
@@ -216,6 +217,7 @@ function CheckThemesUpdates() {
   unset outdatedthemes
   for theme in "${onlinethemes[@]}"; do
     if [ -d "${themes_location}$theme" ]; then
+      dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50 >/dev/tty1
       latest=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"date\":/!d;q' | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
       if [ -e "${theme}.log" ]; then
         current=$(cat "${theme}.log")
@@ -343,7 +345,7 @@ function InstallTheme() {
     LoadInstalledThemes                               #reload liste of installed themes (in case of install)
     outdatedthemes=("${outdatedthemes[@]/${theme}/}") #in case of update, remove theme from outdated themes list
 
-    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "Theme $theme successfully installed!" 8 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "Theme $theme successfully installed!" 8 50 2>&1 >/dev/tty1
 
     MainMenu
 
@@ -379,22 +381,22 @@ function RemoveTheme() {
 
   LoadInstalledThemes
 
-  dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "Theme $theme successfully removed!" 10 50 2>&1 >/dev/tty1
+  dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "Theme $theme successfully removed!" 10 50 2>&1 >/dev/tty1
 
   UninstallMenu
 }
 
 function SetColorScheme() {
-  if [ "$arkthemes_colorscheme" == "Default" ]; then
+  if [ "$app_colorscheme" == "Default" ]; then
     export -n DIALORGRC
   else
-    export DIALOGRC=${ark_location}ArkThemes/${arkthemes_colorscheme}.dialogrc
+    export DIALOGRC=${app_location}AnberThemes/${app_colorscheme}.dialogrc
   fi
 }
 
-################
-# ARKTHEMES UI #
-################
+##################
+# ANBERTHEMES UI #
+##################
 
 function InstallSubMenu {
   local theme="$1"
@@ -433,13 +435,13 @@ function InstallMenu() {
   done
   # Check whether there is still at least a theme from the collection to be installed
   if [[ -z $options ]]; then
-    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No more theme from $github_user to be installed" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "No more theme from $github_user to be installed" 10 50 2>&1 >/dev/tty1
     MainMenu
   fi
 
   title="[ Install Themes ]"
 
-  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "AnberThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
@@ -465,7 +467,7 @@ function UpdateSubMenu {
   theme=${theme/HELP /}
   commitmsg=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"message\":/!d;q' | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
 
-  cmd=$(dialog --backtitle "ArkThemes - $github_user" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1)
+  cmd=$(dialog --backtitle "AnberThemes - $github_user" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1)
 
   retval=$?
   case $retval in
@@ -491,7 +493,7 @@ function UpdateMenu() {
   fi
 
   if [[ -z "$outdatedthemes" ]]; then
-    dialog --backtitle "ArkThemes - $github_user" --yesno "No updates available... Check again for updates ?" 10 50 2>&1 >/dev/tty1
+    dialog --backtitle "AnberThemes - $github_user" --yesno "No updates available... Check again for updates ?" 10 50 2>&1 >/dev/tty1
     retval=$?
     case $retval in
     0)
@@ -509,7 +511,7 @@ function UpdateMenu() {
     options+=($theme "Update")
   done
 
-  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "[ New releases ]" --menu "Select theme to update:" "15" "50" "15")
+  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "AnberThemes - $github_user" --title "[ New releases ]" --menu "Select theme to update:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
@@ -543,12 +545,12 @@ function ChangeLogMenu() {
     done
 
     if [[ -z $options ]]; then
-      dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No installed theme from $github_user" 5 50 2>&1 >/dev/tty1
+      dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "No installed theme from $github_user" 5 50 2>&1 >/dev/tty1
       AdvancedMenu
     fi
 
 
-    cmd=(dialog --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "[ Themes Changelog ]" --menu "Select theme to update:" "15" "50" "15")
+    cmd=(dialog --cancel-label "Cancel" --backtitle "AnberThemes - $github_user" --title "[ Themes Changelog ]" --menu "Select theme to update:" "15" "50" "15")
     choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
     retval=$?
@@ -565,7 +567,7 @@ function ChangeLogMenu() {
 
     SAVEIFS=$IFS
     IFS=$'\n'
-    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "$theme changelog :\n${changelog[*]}" 15 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "$theme changelog :\n${changelog[*]}" 15 50 2>&1 >/dev/tty1
     IFS=$SAVEIFS
 
     AdvancedMenu
@@ -596,13 +598,13 @@ function UninstallMenu() {
       options+=($theme "Uninstall")
     done
     if [[ -z $options ]]; then
-      dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
+      dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
       UninstallMenu
     fi
     title="\Zb\Z1[ Caution - not from $github_user collection ]"
   fi
 
-  cmd=(dialog --colors --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  cmd=(dialog --colors --backtitle "AnberThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
 
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
@@ -635,12 +637,12 @@ function ReinstallMenu() {
     fi
   done
   if [[ -z $options ]]; then
-    dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "No theme to be reinstalled !" 5 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "No theme to be reinstalled !" 5 50 2>&1 >/dev/tty1
     AdvancedMenu
   fi
   title="[ Reinstall Themes ]"
 
-  cmd=(dialog --ok-label "OK" --cancel-label "Cancel" --backtitle "ArkThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  cmd=(dialog --ok-label "OK" --cancel-label "Cancel" --backtitle "AnberThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
@@ -660,7 +662,7 @@ function AdvancedMenu() {
   local choice
   local retval
 
-  cmd=(dialog --cancel-label "Back" --backtitle "ArkThemes - $github_user" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --cancel-label "Back" --backtitle "AnberThemes - $github_user" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
 
   options=(
     A "Themes Changelog"
@@ -685,11 +687,11 @@ function AdvancedMenu() {
   esac
 }
 
-function ArkChangeLog() {
+function AppChangeLog() {
   local temp
 
   temp=$(<changelog)
-  dialog --clear --backtitle "ArkThemes - v$current_ark_version" --msgbox "$temp" 15 50 2>&1 >/dev/tty1
+  dialog --clear --backtitle "AnberThemes - v$current_app_version" --msgbox "$temp" 15 50 2>&1 >/dev/tty1
 
   SettingsMenu
 }
@@ -702,19 +704,19 @@ function ColorSchemeMenu() {
   local dialog_config
   local temp
 
-  dialog_config=(${ark_location}ArkThemes/*.dialogrc)         # This creates an array of the full paths to all .dialogrc files
+  dialog_config=(${app_location}AnberThemes/*.dialogrc)         # This creates an array of the full paths to all .dialogrc files
   dialog_config=("${dialog_config[@]##*/}") #Remove path prefix
   dialog_config=("${dialog_config[@]%.*}") #Get filename without extension
 
-  cmd=(dialog --backtitle "ArkThemes - $github_user" --title " [ Color Scheme Selection ] " --radiolist "Select the ArkThemes UI color scheme :" "15" "50" "15")
+  cmd=(dialog --backtitle "AnberThemes - $github_user" --title " [ Color Scheme Selection ] " --radiolist "Select the AnberThemes UI color scheme :" "15" "50" "15")
 
-  if [[ "$arkthemes_colorscheme" == "Default" || -z $arkthemes_colorscheme ]]; then
+  if [[ "$app_colorscheme" == "Default" || -z $app_colorscheme ]]; then
     options+=(Default "System's color scheme" "on")
   else
     options+=(Default "System's scheme" "off")
   fi
   for temp in "${dialog_config[@]}"; do
-    if [ "$temp" == "$arkthemes_colorscheme" ]; then
+    if [ "$temp" == "$app_colorscheme" ]; then
       options+=($temp "Customized color scheme" "on")
     else
       options+=($temp "Customized color scheme" "off")
@@ -726,8 +728,8 @@ function ColorSchemeMenu() {
   retval=$?
   case $retval in
   0)
-    if [ "$choice" != "$arkthemes_colorscheme" ]; then
-      arkthemes_colorscheme=$choice
+    if [ "$choice" != "$app_colorscheme" ]; then
+      app_colorscheme=$choice
       SaveSettings
       SetColorScheme
     fi
@@ -746,10 +748,10 @@ function StartupSettings() {
   local choices
   local retval
 
-  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ArkThemes - $github_user" --title " [ Startup Options ] " --checklist "NB : ArkThemes initialisation will take longer espacially if check for themes updates is activated :" "15" "50" "15")
+  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "AnberThemes - $github_user" --title " [ Startup Options ] " --checklist "NB : AnberThemes initialisation will take longer espacially if check for themes updates is activated :" "15" "50" "15")
 
   options=(
-    ArkThemes "Check for updates" $arkthemes_autocheckupdate
+    AnberThemes "Check for updates" $app_autocheckupdate
     Themes "Check for update" $themes_autocheckupdate
   )
 
@@ -758,11 +760,11 @@ function StartupSettings() {
   retval=$?
   case $retval in
   0)
-    arkthemes_autocheckupdate="off"
+    app_autocheckupdate="off"
     themes_autocheckupdate="off"
     for choice in $choices; do
       case $choice in
-      ArkThemes) arkthemes_autocheckupdate="on" ;;
+      AnberThemes) app_autocheckupdate="on" ;;
       Themes) themes_autocheckupdate="on" ;;
       esac
     done
@@ -782,7 +784,7 @@ function SelectCollection() {
   local retval
   local temp
 
-  cmd=(dialog --backtitle "ArkThemes - $github_user" --title " [ Themes Configuration ] " --radiolist "Set the themes collection to be used with ArkThemes :" "15" "50" "15")
+  cmd=(dialog --backtitle "AnberThemes - $github_user" --title " [ Themes Configuration ] " --radiolist "Set the themes collection to be used with AnberThemes :" "15" "50" "15")
 
   for temp in "${collections[@]}"; do
     if [ "$temp" == "$github_user" ]; then
@@ -820,10 +822,10 @@ function SettingsMenu() {
   local choice
   local retval
 
-  cmd=(dialog --cancel-label "Back" --backtitle "ArkThemes - $github_user" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --cancel-label "Back" --backtitle "AnberThemes - $github_user" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
 
   options=(
-    A "Update ArkThemes"
+    A "Update AnberThemes"
     B "View changelog"
     C "UI color scheme"
     D "Startup configuration"
@@ -837,17 +839,17 @@ function SettingsMenu() {
   0)
     case $choice in
     A)
-      if [[ $arkthemes_updates_checked -eq 0 ]]; then
-        CheckArkThemesUpdates
+      if [[ $app_updates_checked -eq 0 ]]; then
+        CheckAppUpdates
       fi
-      if [[ $arkthemes_outdated -eq 0 ]]; then
-        dialog --clear --backtitle "ArkThemes - $github_user" --msgbox "ArkThemes is up to date." 5 50 2>&1 >/dev/tty1
+      if [[ $app_outdated -eq 0 ]]; then
+        dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "AnberThemes is up to date." 5 50 2>&1 >/dev/tty1
         SettingsMenu
       else
-        UpdateArkThemes
+        UpdateApp
       fi
       ;;
-    B) ArkChangeLog;;
+    B) AppChangeLog;;
     C) ColorSchemeMenu ;;
     D) StartupSettings ;;
     E) SelectCollection ;;
@@ -865,13 +867,13 @@ function MainMenu() {
   local choice
   local retval
 
-  cmd=(dialog --no-cancel --backtitle "ArkThemes v$current_ark_version - Active collection : $github_user" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --no-cancel --backtitle "AnberThemes v$current_app_version - Active collection : $github_user" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
 
   options=(
     A "Install a theme"
     B "Update a theme"
     C "Advanced menu"
-    D "ArkThemes Settings"
+    D "AnberThemes Settings"
     E "Exit to emulationstation"
   )
 

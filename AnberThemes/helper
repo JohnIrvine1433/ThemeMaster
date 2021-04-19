@@ -1,11 +1,8 @@
 #!/bin/bash
 #
 # Description : helper
-# Author      : Kris Henriksen <krishenriksen.work@gmail.com>
-#
 
-# is ArkOS ?
-if id "ark" &>/dev/null; then
+if id "ark" &>/dev/null || id "odroid" &>/dev/null; then
   if ! dpkg -s "dialog" &> /dev/null ; then
     install_dependencies="dialog"
   fi
@@ -24,7 +21,7 @@ if id "ark" &>/dev/null; then
 
   if [ ! -z "$install_dependencies" ]
   then
-    sudo sh -c 'echo "Installing dependencies ..." > /dev/tty1'
+    printf "\e[32mInstalling dependencies ...\n" > /dev/tty1
     sudo apt update && sudo apt install -y $install_dependencies --no-install-recommends
   fi
 fi

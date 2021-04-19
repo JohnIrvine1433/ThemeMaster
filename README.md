@@ -1,22 +1,28 @@
-# ArkThemes-fork
+# AnberThemes
+AnberThemes is an EmulationStation themes manager for Anbernic RG351P/M and RG351V running ArkOS or TheRA.
 
-Fork from ArkThemes by [TadMSTR](https://github.com/TadMSTR/ArkThemes)
-Theme installer developed for [ArkOS](https://github.com/christianhaitian/arkos) and tested on RG351P.
-Should run on other Anbernic devices without much trouble.
+## Nota Bene
+- Theme's update management is based on latest commit's date.
+- Themes' list is pulled from GitHub accounts based on repositories starting with "es-theme".
+- List of GitHub accounts to be used can be manually configured editing the "collections" variable in "anberthemes.cfg" file.
+- Beware that name duplicates (between different GitHub accounts) is currently not managed ; this could lead to unwanted behaviour if you choose to swap between theme collections (e.g. replace a theme with another).
+- Uninstaller allows removal of stock themes which cannot be reinstalled via AnberThemes.
+- Customised dialogrc file can be added to AnberThemes folder (no space in filename using ".dialogrc" file's extension)
 
-Originally adapted from [AnberPorts](https://github.com/krishenriksen/AnberPorts) by [kreal](https://github.com/krishenriksen) with contributions from **choo t** and **JohnIrvine**
-The fork still relies on AnberPorts for its helper and controls.
+## Background
+First ArkThemes script was developed for [ArkOS](https://github.com/christianhaitian/arkos) by [TadMSTR](https://github.com/TadMSTR/ArkThemes) based on [AnberPorts](https://github.com/krishenriksen/AnberPorts) by [kreal](https://github.com/krishenriksen) with contributions from **choo t** and **JohnIrvine**.
 
-NOTA BENE :
-- Themes are pulled from GitHub accounts based on repositories starting with "es-theme".
-- List of GitHub accounts to be used can be manually configured via editing the collections variable from the arkthemes.cfg file
-- Beware that name duplicates (between different GitHub accounts) is currently not managed ; this could lead to unwanted behaviour if you choose to swap between theme collections (e.g. replace a theme with another)
-- Uninstaller allows removal of stock themes which cannot be reinstalled via ArkThemes.
-- Customised dialogrc file can be added to ArkThemes folder (no space in filename with dialogrc file's extension)
+Most evolutions have been initially implemented on ArkThemes-fork which is now archived following renaming to AnberThemes.
 
-## Installation on ArkOS
+AnberThemes relies on oga_controls developed by [kreal](https://github.com/krishenriksen).
+
+# Installation
+## ArkOS
 Need to be on ArkOS 2021-02-13 (02132021) or newer.  
-Place *ArkThemes.sh* and *ArkThemes* folder in `/roms/tools`
+Place *AnberThemes.sh* and *AnberThemes* folder in `/roms/tools`
 You can do this over your network, or by plugging the sdcard into your PC. In that case the location would be `EASYROMS/tools`.
 
-Now in ArkOS Options menu there will be a folder called **Tools** and ArkThemes can be run from there.  
+Now in ArkOS Options menu there will be a folder called **Tools** and AnberThemes can be run from there.
+
+## TheRA
+Place *AnberThemes.sh* and *AnberThemes* folder in `/opt/tools`

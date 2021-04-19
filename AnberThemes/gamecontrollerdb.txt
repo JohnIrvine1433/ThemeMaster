@@ -1,5 +1,4 @@
-# quit
-back = 311
+back = esc
 start = esc
 a = enter
 b = space
@@ -23,3 +22,5 @@ right_analog_up = up
 right_analog_down = down
 right_analog_left = left
 right_analog_right = right
+deadzone_y = 2100
+deadzone_x = 1900

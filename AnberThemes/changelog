@@ -1,3 +1,7 @@
+v1.3.0
+- Fix controls for RG351V (update oga_controls from AnberPorts)
+- Fix non persistent local environment changes (export themes_location, temp_ram_folder and ark_location variables to local configuration files)
+- Add few dialog infoboxes to detail ongoing operations
 v1.2.4
 - Change downloading dialog from gauge to progressbox in order to work with chunked transfer encoding
 v1.2.3
