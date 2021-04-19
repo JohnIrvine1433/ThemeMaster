@@ -30,19 +30,14 @@ current_app_version="2.0.0"
 #
 if [ -e "anberthemes.cfg" ]; then
   source anberthemes.cfg
-  # anberthemes.cfg content management between versions
-  if [[ -z "$app_conf_version" || "$app_conf_version" != "$current_app_version" ]]; then
-    # Export variables to anberthemes.cfg from v1.3.0 and create an app_conf_version variable for future update management
-    themes_location="/roms/themes/" #ES themes location path with trailing slash
-    temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
-    app_location="/roms/tools/"     #AnberThemes installation path with trailing slash
+  # Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
+  if [[ -z "$themes_location" || -z "$temp_ram_folder" || -z "$app_location" ]]; then
+    SetEnvironment
     SaveSettings
   fi
 else
   # Environment settings
-  themes_location="/roms/themes/" #ES themes location path with trailing slash
-  temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
-  app_location="/roms/tools/"     #AnberThemes installation path with trailing slash
+  SetEnvironment
   # Do not check for updates at startup
   app_autocheckupdate="off"
   themes_autocheckupdate="off"
@@ -69,6 +64,25 @@ app_outdated=""
 #######################
 # ANBERTHEMES FUNCTIONS #
 #######################
+
+function SetEnvironment() {
+  if id "ark" &>/dev/null; then
+    themes_location="/roms/themes/" #ES themes location path with trailing slash
+    temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
+    app_location="/roms/tools/"     #AnberThemes installation path with trailing slash
+  elif id "odroid" &>/dev/null; then
+    themes_location="/etc/emulationstation/themes/"
+    temp_ram_folder="/dev/shm/"
+    app_location="/opt/tools/"
+  else
+    themes_location=""
+    temp_ram_folder=""
+    app_location=""
+    SaveSettings
+    dialog --clear --backtitle "AnberThemes" --msgbox "Environment not recognised, please manually edit anberthemes.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    ExitApp
+  fi
+}
 
 function InitLoader() {
   local cmd
