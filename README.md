@@ -10,9 +10,9 @@ AnberThemes is an EmulationStation themes manager for Anbernic RG351P/M and RG35
 - Customised dialogrc file can be added to AnberThemes folder (no space in filename using ".dialogrc" file's extension)
 
 ## Background
-First script named ArkThemes was developed for [ArkOS](https://github.com/christianhaitian/arkos) by [TadMSTR](https://github.com/TadMSTR/ArkThemes) based on [AnberPorts](https://github.com/krishenriksen/AnberPorts) by [kreal](https://github.com/krishenriksen) with contributions from **choo t** and **JohnIrvine**.
+Original script named [ArkThemes](https://github.com/TadMSTR/ArkThemes) was developed for [ArkOS](https://github.com/christianhaitian/arkos) by [TadMSTR](https://github.com/TadMSTR) based on [AnberPorts](https://github.com/krishenriksen/AnberPorts) by [kreal](https://github.com/krishenriksen) with contributions from **choo t** and **JohnIrvine**.
 
-Most evolutions have been initially implemented on ArkThemes-fork which is now archived following renaming to AnberThemes.
+Most evolutions have been initially implemented on [ArkThemes-fork](https://github.com/JohnIrvine1433/ArkThemes-fork) which is now archived following renaming to AnberThemes.
 
 AnberThemes relies on oga_controls developed by [kreal](https://github.com/krishenriksen).
 
