@@ -1,8 +1,9 @@
 v2.0.1
-- Update to the latest version of oga_controls from AnberPorts 1.3.6
+- Activate force quit from oga_controls (press Select + Start)
 - Fix Update Menu and SubMenu in order to stop rechecking for updates after a theme is installed
 v2.0.0
 - Change name from ArkThemes to AmberThemes following added support for TheRA
+- Update to the latest version of oga_controls from AnberPorts 1.3.6
 - Add support for Anbernic RG351V devices
 - Allow for local environment configuration (export themes_location, temp_ram_folder and app_location variables to anberthemes.cfg)
 - Add few dialog infoboxes to detail ongoing operations
