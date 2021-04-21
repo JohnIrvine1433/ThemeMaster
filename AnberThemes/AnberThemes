@@ -16,7 +16,8 @@ shopt -s extglob # required for extented pattern recognition
 #
 # Joystick controls
 #
-sudo ./oga_controls &
+#sudo ./oga_controls &
+sudo ./oga_controls AnberThemes &
 clear
 #
 # AnberThemes Configuration
@@ -486,7 +487,6 @@ function UpdateSubMenu {
   retval=$?
   case $retval in
   0)
-    themes_updates_checked=0
     InstallTheme "$theme"
     ;;
   1)
@@ -531,7 +531,6 @@ function UpdateMenu() {
   retval=$?
   case $retval in
   0)
-    themes_updates_checked=0
     InstallTheme "$choice"
     ;;
   1)
