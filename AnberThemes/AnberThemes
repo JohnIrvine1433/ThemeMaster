@@ -24,7 +24,7 @@ clear
 #
 github_app_owner="JohnIrvine1433"   #Used for AnberThemes update function
 github_app_repo="AnberThemes"       #Used for AnberThemes update function
-current_app_version="2.0.0"
+current_app_version="2.0.1"
 
 #
 # AnberThemes settings initialisation
