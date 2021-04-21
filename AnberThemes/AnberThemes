@@ -16,7 +16,6 @@ shopt -s extglob # required for extented pattern recognition
 #
 # Joystick controls
 #
-#sudo ./oga_controls &
 sudo ./oga_controls AnberThemes &
 clear
 #
