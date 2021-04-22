@@ -16,7 +16,7 @@ ThemeMaster is an EmulationStation theme manager for Anbernic RG351P/M and RG351
 ## Background
 Original script [ArkThemes](https://github.com/TadMSTR/ArkThemes) was developed for [ArkOS](https://github.com/christianhaitian/arkos) by [TadMSTR](https://github.com/TadMSTR) based on [AnberPorts](https://github.com/krishenriksen/AnberPorts) by [kreal](https://github.com/krishenriksen) with contributions from **choo t** and **JohnIrvine**.
 
-Most evolutions have been initially implemented on [ArkThemes-fork](https://github.com/JohnIrvine1433/ArkThemes-fork) which has reached EOL following the release of ThemeMaster.
+Most evolutions have been initially implemented on [ArkThemes-fork](https://github.com/JohnIrvine1433/ArkThemes-fork) which has reached EOL following the release of AnberThemes then renamed ThemeMaster (last name change, this one is future proof thanks to **5uck3rpunch**).
 
 ThemeMaster relies on [AnberPorts-Joystick](https://github.com/krishenriksen/AnberPorts/tree/master/AnberPorts-Joystick) developed by [kreal](https://github.com/krishenriksen) to emulated keyboard for Anbernic rg351p / rg351m / rg351v .
 
