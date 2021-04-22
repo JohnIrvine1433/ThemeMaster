@@ -1,5 +1,5 @@
 # ThemeMaster
-ThemeMaster is an EmulationStation themes manager for Anbernic RG351P/M and RG351V running ArkOS or TheRA.
+ThemeMaster is an EmulationStation theme manager for Anbernic RG351P/M and RG351V running ArkOS or TheRA.
 
 ## Navigation
 - Default controls are : d-pad or joysticks to move, A or X to validate, B or Y to select item in radiolist and checklist.
