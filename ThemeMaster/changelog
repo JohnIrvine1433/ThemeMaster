@@ -1,3 +1,5 @@
+v2.1.0
+- Change name from AnberThemes to ThemeMaster (last time, this one is future proof)
 v2.0.1
 - Activate force quit from oga_controls (press Select + Start)
 - Fix Update Menu and SubMenu in order to stop rechecking for updates after a theme is installed
@@ -7,9 +9,6 @@ v2.0.0
 - Add support for Anbernic RG351V devices
 - Allow for local environment configuration (export themes_location, temp_ram_folder and app_location variables to anberthemes.cfg)
 - Add few dialog infoboxes to detail ongoing operations
-#################################
-# Changelog from ArkThemes-fork #
-#################################
 v1.2.4
 - Change downloading dialog from gauge to progressbox in order to work with chunked transfer encoding
 v1.2.3

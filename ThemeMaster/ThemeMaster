@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #
-# AnberThemes
-# https://github.com/JohnIrvine1433/AnberThemes
+# ThemeMaster
+# https://github.com/JohnIrvine1433/ThemeMaster
 #
 
 #
@@ -16,20 +16,20 @@ shopt -s extglob # required for extented pattern recognition
 #
 # Joystick controls
 #
-sudo ./oga_controls AnberThemes &
-clear
-#
-# AnberThemes Configuration
-#
-github_app_owner="JohnIrvine1433"   #Used for AnberThemes update function
-github_app_repo="AnberThemes"       #Used for AnberThemes update function
-current_app_version="2.0.1"
+sudo ./oga_controls ThemeMaster &
 
 #
-# AnberThemes settings initialisation
+# ThemeMaster Configuration
 #
-if [ -e "anberthemes.cfg" ]; then
-  source anberthemes.cfg
+github_app_owner="JohnIrvine1433"   #Used for ThemeMaster update function
+github_app_repo="ThemeMaster"       #Used for ThemeMaster update function
+current_app_version="2.1.0"
+
+#
+# ThemeMaster settings initialisation
+#
+if [ -e "ThemeMaster.cfg" ]; then
+  source ThemeMaster.cfg
   # Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
   if [[ -z "$themes_location" || -z "$temp_ram_folder" || -z "$app_location" ]]; then
     SetEnvironment
@@ -60,26 +60,34 @@ themes_updates_checked=0
 app_updates_checked=0
 latest_app_version=""
 app_outdated=""
+device_os=""
 
 #######################
-# ANBERTHEMES FUNCTIONS #
+# ThemeMaster FUNCTIONS #
 #######################
 
 function SetEnvironment() {
-  if id "ark" &>/dev/null; then
+  local temp
+
+  temp=$(grep "title=" /usr/share/plymouth/themes/text.plymouth)
+
+  if [[ $temp == *"ArkOS"* ]]; then
+    device_os="ArkOS"
     themes_location="/roms/themes/" #ES themes location path with trailing slash
-    temp_ram_folder="/dev/shm/"     #ram folder with trailing slash
-    app_location="/roms/tools/"     #AnberThemes installation path with trailing slash
-  elif id "odroid" &>/dev/null; then
+    temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
+    app_location="/roms/tools/"     #App installation path with trailing slash
+  elif [[ $temp == *"TheRA"* ]]; then
+    device_os="TheRA"
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
     app_location="/opt/tools/"
   else
+    device_os="Unmanaged"
     themes_location=""
     temp_ram_folder=""
     app_location=""
     SaveSettings
-    dialog --clear --backtitle "AnberThemes" --msgbox "Environment not recognised, please manually edit anberthemes.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
     ExitApp
   fi
 }
@@ -111,7 +119,7 @@ function InitLoader() {
     fi
     MainMenu
   else
-    cmd=$(dialog --backtitle "AnberThemes" --yes-label "Try again" --no-label "Exit" --yesno "Internet connection required!" 5 50 2>&1 >/dev/tty1)
+    cmd=$(dialog --backtitle "ThemeMaster" --yes-label "Try again" --no-label "Exit" --yesno "Internet connection required!" 5 50 2>&1 >/dev/tty1)
 
     retval=$?
     case $retval in
@@ -128,9 +136,9 @@ function InitLoader() {
 function CheckAppUpdates() {
 
   dialog --clear
-  dialog --infobox "Checking for AnberThemes updates...\nPlease wait !" 5 50 >/dev/tty1
+  dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >/dev/tty1
   sleep 1
-  #Get latest AnberThemes tag version
+  #Get latest ThemeMaster tag version
   latest_app_version=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
   app_updates_checked=1
 
@@ -142,7 +150,7 @@ function CheckAppUpdates() {
   else
     app_outdated=0
     dialog --clear
-    dialog --infobox "AnberThemes is up to date..." 5 50 >/dev/tty1
+    dialog --infobox "ThemeMaster is up to date..." 5 50 >/dev/tty1
     sleep 1
   fi
 
@@ -153,7 +161,7 @@ function UpdateApp() {
   local package_folder
 
   dialog --clear
-  dialog --infobox "Downloading AnberThemes update..." 5 50 >/dev/tty1
+  dialog --infobox "Downloading ThemeMaster update..." 5 50 >/dev/tty1
 
   mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
 
@@ -161,7 +169,7 @@ function UpdateApp() {
   wget -q "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
   if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
     dialog --clear
-    dialog --infobox "Installing AnberThemes update..." 5 50 >/dev/tty1
+    dialog --infobox "Installing ThemeMaster update..." 5 50 >/dev/tty1
     #Unzipping archive
     # sudo
     unzip -qo ${temp_ram_folder}app_update_temp/update.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
@@ -169,8 +177,8 @@ function UpdateApp() {
     package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
     package_folder="${package_folder##*/}"
     #When backing up themes configuration and installation log files is required
-    #cp ${app_location}AnberThemes/*.log ${temp_ram_folder}app_update_temp/${package_folder}/AnberThemes/ 2>/dev/null
-    #cp ${app_location}AnberThemes/*.cfg ${temp_ram_folder}app_update_temp/${package_folder}AnberThemes/ 2>/dev/null
+    #cp ${app_location}ThemeMaster/*.log ${temp_ram_folder}app_update_temp/${package_folder}/ThemeMaster/ 2>/dev/null
+    #cp ${app_location}ThemeMaster/*.cfg ${temp_ram_folder}app_update_temp/${package_folder}ThemeMaster/ 2>/dev/null
     #Overwritting existing files
     cp -rf ${temp_ram_folder}app_update_temp/${package_folder}/* $app_location
     # sudo
@@ -179,7 +187,7 @@ function UpdateApp() {
     # sudo
     rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
 
-    dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "AnberThemes successfully updated !\nQuit and relaunch AnberThemes." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >/dev/tty1
 
     ExitApp
   else
@@ -187,7 +195,7 @@ function UpdateApp() {
     # sudo
     rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
 
-    cmd=$(dialog --yes-label "Try again" --no-label "Quit AnberThemes" --yesno "Update have failed because the archive did not download correctly. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
+    cmd=$(dialog --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Update have failed because the archive did not download correctly. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
     retval=$?
     case $retval in
     0)
@@ -201,15 +209,15 @@ function UpdateApp() {
 }
 
 function SaveSettings() {
-  echo "app_conf_version=\"${current_app_version}\"" >anberthemes.cfg
-  echo "themes_location=\"${themes_location}\"" >>anberthemes.cfg
-  echo "temp_ram_folder=\"${temp_ram_folder}\"" >>anberthemes.cfg
-  echo "app_location=\"${app_location}\"" >>anberthemes.cfg
-  echo "app_autocheckupdate=\"${app_autocheckupdate}\"" >>anberthemes.cfg
-  echo "themes_autocheckupdate=\"${themes_autocheckupdate}\"" >>anberthemes.cfg
-  echo "github_user=\"${github_user}\"" >>anberthemes.cfg
-  echo "collections=(${collections[@]})" >>anberthemes.cfg
-  echo "app_colorscheme=\"${app_colorscheme}\""  >>anberthemes.cfg
+  echo "app_conf_version=\"${current_app_version}\"" >ThemeMaster.cfg
+  echo "themes_location=\"${themes_location}\"" >>ThemeMaster.cfg
+  echo "temp_ram_folder=\"${temp_ram_folder}\"" >>ThemeMaster.cfg
+  echo "app_location=\"${app_location}\"" >>ThemeMaster.cfg
+  echo "app_autocheckupdate=\"${app_autocheckupdate}\"" >>ThemeMaster.cfg
+  echo "themes_autocheckupdate=\"${themes_autocheckupdate}\"" >>ThemeMaster.cfg
+  echo "github_user=\"${github_user}\"" >>ThemeMaster.cfg
+  echo "collections=(${collections[@]})" >>ThemeMaster.cfg
+  echo "app_colorscheme=\"${app_colorscheme}\""  >>ThemeMaster.cfg
 }
 
 function ExitApp() {
@@ -359,7 +367,7 @@ function InstallTheme() {
     LoadInstalledThemes                               #reload liste of installed themes (in case of install)
     outdatedthemes=("${outdatedthemes[@]/${theme}/}") #in case of update, remove theme from outdated themes list
 
-    dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "Theme $theme successfully installed!" 8 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "Theme $theme successfully installed!" 8 50 2>&1 >/dev/tty1
 
     MainMenu
 
@@ -395,7 +403,7 @@ function RemoveTheme() {
 
   LoadInstalledThemes
 
-  dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "Theme $theme successfully removed!" 10 50 2>&1 >/dev/tty1
+  dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "Theme $theme successfully removed!" 10 50 2>&1 >/dev/tty1
 
   UninstallMenu
 }
@@ -404,12 +412,12 @@ function SetColorScheme() {
   if [ "$app_colorscheme" == "Default" ]; then
     export -n DIALORGRC
   else
-    export DIALOGRC=${app_location}AnberThemes/${app_colorscheme}.dialogrc
+    export DIALOGRC=${app_location}ThemeMaster/${app_colorscheme}.dialogrc
   fi
 }
 
 ##################
-# ANBERTHEMES UI #
+# ThemeMaster UI #
 ##################
 
 function InstallSubMenu {
@@ -449,13 +457,13 @@ function InstallMenu() {
   done
   # Check whether there is still at least a theme from the collection to be installed
   if [[ -z $options ]]; then
-    dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "No more theme from $github_user to be installed" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "No more theme from $github_user to be installed" 10 50 2>&1 >/dev/tty1
     MainMenu
   fi
 
   title="[ Install Themes ]"
 
-  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "AnberThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "ThemeMaster - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
@@ -481,7 +489,7 @@ function UpdateSubMenu {
   theme=${theme/HELP /}
   commitmsg=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"message\":/!d;q' | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
 
-  cmd=$(dialog --backtitle "AnberThemes - $github_user" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1)
+  cmd=$(dialog --backtitle "ThemeMaster - $github_user" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1)
 
   retval=$?
   case $retval in
@@ -506,7 +514,7 @@ function UpdateMenu() {
   fi
 
   if [[ -z "$outdatedthemes" ]]; then
-    dialog --backtitle "AnberThemes - $github_user" --yesno "No updates available... Check again for updates ?" 10 50 2>&1 >/dev/tty1
+    dialog --backtitle "ThemeMaster - $github_user" --yesno "No updates available... Check again for updates ?" 10 50 2>&1 >/dev/tty1
     retval=$?
     case $retval in
     0)
@@ -524,7 +532,7 @@ function UpdateMenu() {
     options+=($theme "Update")
   done
 
-  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "AnberThemes - $github_user" --title "[ New releases ]" --menu "Select theme to update:" "15" "50" "15")
+  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "ThemeMaster - $github_user" --title "[ New releases ]" --menu "Select theme to update:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
@@ -557,12 +565,12 @@ function ChangeLogMenu() {
     done
 
     if [[ -z $options ]]; then
-      dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "No installed theme from $github_user" 5 50 2>&1 >/dev/tty1
+      dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "No installed theme from $github_user" 5 50 2>&1 >/dev/tty1
       AdvancedMenu
     fi
 
 
-    cmd=(dialog --cancel-label "Cancel" --backtitle "AnberThemes - $github_user" --title "[ Themes Changelog ]" --menu "Select theme to update:" "15" "50" "15")
+    cmd=(dialog --cancel-label "Cancel" --backtitle "ThemeMaster - $github_user" --title "[ Themes Changelog ]" --menu "Select theme to update:" "15" "50" "15")
     choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
     retval=$?
@@ -579,7 +587,7 @@ function ChangeLogMenu() {
 
     SAVEIFS=$IFS
     IFS=$'\n'
-    dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "$theme changelog :\n${changelog[*]}" 15 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "$theme changelog :\n${changelog[*]}" 15 50 2>&1 >/dev/tty1
     IFS=$SAVEIFS
 
     AdvancedMenu
@@ -610,13 +618,13 @@ function UninstallMenu() {
       options+=($theme "Uninstall")
     done
     if [[ -z $options ]]; then
-      dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
+      dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
       UninstallMenu
     fi
     title="\Zb\Z1[ Caution - not from $github_user collection ]"
   fi
 
-  cmd=(dialog --colors --backtitle "AnberThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  cmd=(dialog --colors --backtitle "ThemeMaster - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
 
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
@@ -649,12 +657,12 @@ function ReinstallMenu() {
     fi
   done
   if [[ -z $options ]]; then
-    dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "No theme to be reinstalled !" 5 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "No theme to be reinstalled !" 5 50 2>&1 >/dev/tty1
     AdvancedMenu
   fi
   title="[ Reinstall Themes ]"
 
-  cmd=(dialog --ok-label "OK" --cancel-label "Cancel" --backtitle "AnberThemes - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  cmd=(dialog --ok-label "OK" --cancel-label "Cancel" --backtitle "ThemeMaster - $github_user" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
@@ -674,7 +682,7 @@ function AdvancedMenu() {
   local choice
   local retval
 
-  cmd=(dialog --cancel-label "Back" --backtitle "AnberThemes - $github_user" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --cancel-label "Back" --backtitle "ThemeMaster - $github_user" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
 
   options=(
     A "Themes Changelog"
@@ -703,7 +711,7 @@ function AppChangeLog() {
   local temp
 
   temp=$(<changelog)
-  dialog --clear --backtitle "AnberThemes - v$current_app_version" --msgbox "$temp" 15 50 2>&1 >/dev/tty1
+  dialog --clear --backtitle "ThemeMaster - v$current_app_version" --msgbox "$temp" 15 50 2>&1 >/dev/tty1
 
   SettingsMenu
 }
@@ -716,11 +724,11 @@ function ColorSchemeMenu() {
   local dialog_config
   local temp
 
-  dialog_config=(${app_location}AnberThemes/*.dialogrc)         # This creates an array of the full paths to all .dialogrc files
+  dialog_config=(${app_location}ThemeMaster/*.dialogrc)         # This creates an array of the full paths to all .dialogrc files
   dialog_config=("${dialog_config[@]##*/}") #Remove path prefix
   dialog_config=("${dialog_config[@]%.*}") #Get filename without extension
 
-  cmd=(dialog --backtitle "AnberThemes - $github_user" --title " [ Color Scheme Selection ] " --radiolist "Select the AnberThemes UI color scheme :" "15" "50" "15")
+  cmd=(dialog --backtitle "ThemeMaster - $github_user" --title " [ Color Scheme Selection ] " --radiolist "Select the ThemeMaster UI color scheme :" "15" "50" "15")
 
   if [[ "$app_colorscheme" == "Default" || -z $app_colorscheme ]]; then
     options+=(Default "System's color scheme" "on")
@@ -760,10 +768,10 @@ function StartupSettings() {
   local choices
   local retval
 
-  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "AnberThemes - $github_user" --title " [ Startup Options ] " --checklist "NB : AnberThemes initialisation will take longer espacially if check for themes updates is activated :" "15" "50" "15")
+  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - $github_user" --title " [ Startup Options ] " --checklist "NB : ThemeMaster initialisation will take longer espacially if check for themes updates is activated :" "15" "50" "15")
 
   options=(
-    AnberThemes "Check for updates" $app_autocheckupdate
+    ThemeMaster "Check for updates" $app_autocheckupdate
     Themes "Check for update" $themes_autocheckupdate
   )
 
@@ -776,7 +784,7 @@ function StartupSettings() {
     themes_autocheckupdate="off"
     for choice in $choices; do
       case $choice in
-      AnberThemes) app_autocheckupdate="on" ;;
+      ThemeMaster) app_autocheckupdate="on" ;;
       Themes) themes_autocheckupdate="on" ;;
       esac
     done
@@ -796,7 +804,7 @@ function SelectCollection() {
   local retval
   local temp
 
-  cmd=(dialog --backtitle "AnberThemes - $github_user" --title " [ Themes Configuration ] " --radiolist "Set the themes collection to be used with AnberThemes :" "15" "50" "15")
+  cmd=(dialog --backtitle "ThemeMaster - $github_user" --title " [ Themes Configuration ] " --radiolist "Set the themes collection to be used with ThemeMaster :" "15" "50" "15")
 
   for temp in "${collections[@]}"; do
     if [ "$temp" == "$github_user" ]; then
@@ -834,10 +842,10 @@ function SettingsMenu() {
   local choice
   local retval
 
-  cmd=(dialog --cancel-label "Back" --backtitle "AnberThemes - $github_user" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --cancel-label "Back" --backtitle "ThemeMaster - $github_user" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
 
   options=(
-    A "Update AnberThemes"
+    A "Update ThemeMaster"
     B "View changelog"
     C "UI color scheme"
     D "Startup configuration"
@@ -855,7 +863,7 @@ function SettingsMenu() {
         CheckAppUpdates
       fi
       if [[ $app_outdated -eq 0 ]]; then
-        dialog --clear --backtitle "AnberThemes - $github_user" --msgbox "AnberThemes is up to date." 5 50 2>&1 >/dev/tty1
+        dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "ThemeMaster is up to date." 5 50 2>&1 >/dev/tty1
         SettingsMenu
       else
         UpdateApp
@@ -879,13 +887,13 @@ function MainMenu() {
   local choice
   local retval
 
-  cmd=(dialog --no-cancel --backtitle "AnberThemes v$current_app_version - Active collection : $github_user" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --no-cancel --backtitle "ThemeMaster v$current_app_version - Active collection : $github_user" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
 
   options=(
     A "Install a theme"
     B "Update a theme"
     C "Advanced menu"
-    D "AnberThemes Settings"
+    D "ThemeMaster Settings"
     E "Exit to emulationstation"
   )
 
@@ -907,4 +915,5 @@ function MainMenu() {
   esac
 }
 
+clear
 InitLoader
