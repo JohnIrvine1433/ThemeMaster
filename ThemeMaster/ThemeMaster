@@ -36,8 +36,6 @@ if [ -e "ThemeMaster.cfg" ]; then
     SaveSettings
   fi
 else
-  # Environment settings
-  SetEnvironment
   # Do not check for updates at startup
   app_autocheckupdate="off"
   themes_autocheckupdate="off"
@@ -46,6 +44,9 @@ else
   github_user="Jetup13" #Default collection
   # Default color scheme
   app_colorscheme="Default"
+  # Environment settings
+  SetEnvironment
+
   SaveSettings
 fi
 
