@@ -60,7 +60,6 @@ themes_updates_checked=0
 app_updates_checked=0
 latest_app_version=""
 app_outdated=""
-device_os=""
 
 #######################
 # ThemeMaster FUNCTIONS #
@@ -72,17 +71,14 @@ function SetEnvironment() {
   temp=$(grep "title=" /usr/share/plymouth/themes/text.plymouth)
 
   if [[ $temp == *"ArkOS"* ]]; then
-    device_os="ArkOS"
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
     app_location="/roms/tools/"     #App installation path with trailing slash
   elif [[ $temp == *"TheRA"* ]]; then
-    device_os="TheRA"
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
     app_location="/opt/tools/"
   else
-    device_os="Unmanaged"
     themes_location=""
     temp_ram_folder=""
     app_location=""
@@ -187,7 +183,7 @@ function UpdateApp() {
     # sudo
     rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
 
-    dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >/dev/tty1
 
     ExitApp
   else
