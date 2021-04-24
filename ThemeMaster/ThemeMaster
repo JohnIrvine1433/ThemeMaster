@@ -858,9 +858,8 @@ function SettingsMenu() {
     A)
       if [[ $app_updates_checked -eq 0 ]]; then
         CheckAppUpdates
-      fi
-      if [[ $app_outdated -eq 0 ]]; then
-        dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "ThemeMaster is up to date." 5 50 2>&1 >/dev/tty1
+      elif [[ $app_outdated -eq 0 ]]; then
+        dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster is up to date." 5 50 2>&1 >/dev/tty1
         SettingsMenu
       else
         UpdateApp
