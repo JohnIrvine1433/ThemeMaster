@@ -153,13 +153,12 @@ function CheckAppUpdates() {
 }
 
 function UpdateApp() {
-  local cmd
   local UPDATER_URL="https://github.com/${github_app_owner}/${github_app_repo}/blob/master/ThemeMaster/updater"
 
   #Retrieve latest updater module
-  cmd=$(wget -q "$UPDATER_URL")
+  wget -q "$UPDATER_URL"
   if [ $? -ne 0 ]; then
-    cmd=$(dialog --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Could not retrieve the updater. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
+    dialog --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Could not retrieve the updater. Check your connection and try again." 20 50 2>&1 >/dev/tty1
     retval=$?
     case $retval in
     0)
