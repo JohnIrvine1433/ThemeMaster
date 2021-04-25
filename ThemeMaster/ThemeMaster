@@ -154,7 +154,7 @@ function CheckAppUpdates() {
 
 function UpdateApp() {
   local cmd
-  local UPDATER_URL="https://github.com/${github_app_owner}/${github_app_repo}/blob/master/ThemeMaster/"
+  local UPDATER_URL="https://github.com/${github_app_owner}/${github_app_repo}/blob/master/ThemeMaster/updater"
 
   #Retrieve latest updater module
   cmd=$(wget -q "$UPDATER_URL")
