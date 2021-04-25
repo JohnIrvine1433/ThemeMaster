@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+# Description : ThemeMaster updater module
+#
+
+#
+# Updater
+#
+function ThemeMasterUpdater() {
+  local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
+  local package_folder
+
+  dialog --clear
+  dialog --infobox "Downloading ThemeMaster update..." 5 50 >/dev/tty1
+
+  mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
+
+  wget -q "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
+  if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
+    dialog --clear
+    dialog --infobox "Installing ThemeMaster update..." 5 50 >/dev/tty1
+    #Unzipping archive
+    # sudo
+    unzip -qo ${temp_ram_folder}app_update_temp/update.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
+    #Getting unzipped package folder's name
+    package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
+    package_folder="${package_folder##*/}"
+    #When backing up themes configuration and installation log files is required
+    #cp ${app_location}ThemeMaster/*.log ${temp_ram_folder}app_update_temp/${package_folder}/ThemeMaster/ 2>/dev/null
+    #cp ${app_location}ThemeMaster/*.cfg ${temp_ram_folder}app_update_temp/${package_folder}ThemeMaster/ 2>/dev/null
+    #Overwritting existing files
+    cp -rf ${temp_ram_folder}app_update_temp/${package_folder}/* $app_location
+    chmod 777 ${app_location}*.sh #make sure newly downloaded scripts have right permission
+    #Deleting temporary files...
+    rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
+
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >/dev/tty1
+
+    ExitApp
+  else
+    #Deleting temporary files...
+    rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
+
+    cmd=$(dialog --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Update have failed because the archive did not download correctly. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
+    retval=$?
+    case $retval in
+    0)
+      UpdateApp
+      ;;
+    1)
+      ExitApp
+      ;;
+    esac
+  fi
+}

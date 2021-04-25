@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Description : helper
+# Description :  ThemeMaster helper module
 
 if id "ark" &>/dev/null || id "odroid" &>/dev/null; then
   if ! dpkg -s "dialog" &> /dev/null ; then

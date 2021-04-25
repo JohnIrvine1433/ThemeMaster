@@ -1,3 +1,5 @@
+v2.2.0
+- Externalise ThemeMaster updater 
 v2.1.1
 - Fix duplicate message on app update menu
 - Fix ThemMaster.cfg initialisation when OS not recognised
