@@ -1,3 +1,7 @@
+v2.1.1
+- Fix duplicate message on app update menu
+- Fix ThemMaster.cfg initialisation when OS not recognised
+- Code cleaning
 v2.1.0
 - Change name from AnberThemes to ThemeMaster (last time, this one is future proof)
 - Fix OS identification (used to initialise environment settings)

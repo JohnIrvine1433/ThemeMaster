@@ -23,7 +23,7 @@ sudo ./oga_controls ThemeMaster &
 #
 github_app_owner="JohnIrvine1433"   #Used for ThemeMaster update function
 github_app_repo="ThemeMaster"       #Used for ThemeMaster update function
-current_app_version="2.1.0"
+current_app_version="2.1.1"
 
 #
 # ThemeMaster settings initialisation
@@ -46,7 +46,6 @@ else
   app_colorscheme="Default"
   # Environment settings
   SetEnvironment
-
   SaveSettings
 fi
 
