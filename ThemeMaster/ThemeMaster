@@ -23,7 +23,7 @@ sudo ./oga_controls ThemeMaster &
 #
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="2.1.1"
+current_app_version="2.2.0"
 
 #
 # ThemeMaster settings initialisation
@@ -154,10 +154,11 @@ function CheckAppUpdates() {
 
 function UpdateApp() {
   local cmd
-  local UPDATER_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/tree/master/ThemeMaster/updater"
+  local UPDATER_URL="https://github.com/${github_app_owner}/${github_app_repo}/blob/master/ThemeMaster/"
 
-  #Retrieve lastest updater module
-  if wget -q "$UPDATER_URL" > /dev/null; then
+  #Retrieve latest updater module
+  cmd=$(wget -q "$UPDATER_URL")
+  if [ $? -ne 0 ]; then
     cmd=$(dialog --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Could not retrieve the updater. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
     retval=$?
     case $retval in
@@ -168,7 +169,11 @@ function UpdateApp() {
       ExitApp
       ;;
     esac
-
+  fi
+  #Load updater module
+  source ./updater
+  #Launch update
+  ThemeMasterUpdater
 }
 
 function SaveSettings() {
@@ -760,7 +765,7 @@ function StartupSettings() {
   esac
 }
 
-function SelectCollection() {
+function SelectCollectionMenu() {
   local cmd
   local options
   local choice
@@ -789,7 +794,6 @@ function SelectCollection() {
       themes_updates_checked=0
       SaveSettings
       LoadOnlineThemes
-      LoadInstalledThemes
     fi
     MainMenu
     ;;
@@ -834,7 +838,7 @@ function SettingsMenu() {
     B) AppChangeLog;;
     C) ColorSchemeMenu ;;
     D) StartupSettings ;;
-    E) SelectCollection ;;
+    E) SelectCollectionMenu ;;
     esac
     ;;
   1)

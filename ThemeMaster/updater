@@ -3,9 +3,6 @@
 # Description : ThemeMaster updater module
 #
 
-#
-# Updater
-#
 function ThemeMasterUpdater() {
   local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
   local package_folder
@@ -45,7 +42,7 @@ function ThemeMasterUpdater() {
     retval=$?
     case $retval in
     0)
-      UpdateApp
+      ThemeMasterUpdater
       ;;
     1)
       ExitApp
