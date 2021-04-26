@@ -83,13 +83,12 @@ function SetEnvironment() {
     temp_ram_folder=""
     app_location=""
     SaveSettings
-    dialog --clear --backtitle "ThemeMaster" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
     ExitApp
   fi
 }
 
 function InitLoader() {
-  local cmd
   local retval
   local temparr
 
@@ -115,8 +114,7 @@ function InitLoader() {
     fi
     MainMenu
   else
-    cmd=$(dialog --backtitle "ThemeMaster" --yes-label "Try again" --no-label "Exit" --yesno "Internet connection required!" 5 50 2>&1 >/dev/tty1)
-
+    dialog --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Exit" --yesno "Internet connection required!" 5 50 2>&1 >/dev/tty1
     retval=$?
     case $retval in
     0)
@@ -153,13 +151,46 @@ function CheckAppUpdates() {
 }
 
 function UpdateApp() {
-  local cmd
-  local UPDATER_URL="https://github.com/${github_app_owner}/${github_app_repo}/blob/master/ThemeMaster/"
+  local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
+  local package_folder
+  local retval
 
-  #Retrieve latest updater module
-  cmd=$(wget -q "$UPDATER_URL")
-  if [ $? -ne 0 ]; then
-    cmd=$(dialog --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Could not retrieve the updater. Check your connection and try again." 20 50 2>&1 >/dev/tty1)
+  dialog --clear
+  dialog --infobox "Downloading ThemeMaster update..." 5 50 >/dev/tty1
+
+  mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
+
+  wget -q "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
+  if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
+    dialog --clear
+    dialog --infobox "Installing ThemeMaster update..." 5 50 >/dev/tty1
+    #Unzipping archive
+    # sudo
+    unzip -qo ${temp_ram_folder}app_update_temp/update.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
+    #Getting unzipped package folder's name
+    package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
+    package_folder="${package_folder##*/}"
+    #When backing up themes configuration and installation log files is required
+    #cp ${app_location}ThemeMaster/*.log ${temp_ram_folder}app_update_temp/${package_folder}/ThemeMaster/ 2>/dev/null
+    #cp ${app_location}ThemeMaster/*.cfg ${temp_ram_folder}app_update_temp/${package_folder}ThemeMaster/ 2>/dev/null
+    #Overwritting existing files
+    cp -rf ${temp_ram_folder}app_update_temp/${package_folder}/* $app_location
+    chmod 777 ${app_location}*.sh #make sure newly downloaded scripts have right permission
+    #Deleting temporary files...
+    rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
+    #Load updater module from new release
+    source ./updater
+    #Execute post-install updater function
+    PostInstallUpdater
+
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >/dev/tty1
+
+    ExitApp
+  else
+    #Deleting temporary files...
+    rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
+
+    dialog --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Update have failed because the archive did not download correctly. Check your connection and try again." 20 50 2>&1 >/dev/tty1
     retval=$?
     case $retval in
     0)
@@ -170,10 +201,6 @@ function UpdateApp() {
       ;;
     esac
   fi
-  #Load updater module
-  source ./updater
-  #Launch update
-  ThemeMasterUpdater
 }
 
 function SaveSettings() {
@@ -286,7 +313,6 @@ function InstallTheme() {
   local REP_URL
   local temp
   local THEME_CONTENT
-  local cmd
   local retval
   local estimated_size
 
@@ -345,7 +371,7 @@ function InstallTheme() {
     # sudo
     rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
 
-    cmd=$(dialog --yes-label "Try again" --no-label "Exit" --yesno "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 10 50 2>&1 >/dev/tty1)
+    dialog --yes-label "Try again" --no-label "Exit" --yesno "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 10 50 2>&1 >/dev/tty1
     retval=$?
     case $retval in
     0)
@@ -391,14 +417,12 @@ function SetColorScheme() {
 function InstallSubMenu {
   local theme="$1"
   local description
-  local cmd
   local retval
 
   theme=${theme/HELP /}
   description=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}" | sed '/\"description\":/!d;q' | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
 
-  cmd=$(dialog --backtitle "${backtitle}" --yes-label "Install" --no-label "Back" --yesno "${theme} description :\n ${description}" 10 50 2>&1 >/dev/tty1)
-
+  dialog --backtitle "${backtitle}" --yes-label "Install" --no-label "Back" --yesno "${theme} description :\n ${description}" 10 50 2>&1 >/dev/tty1
   retval=$?
   case $retval in
   0)
@@ -451,14 +475,12 @@ function InstallMenu() {
 function UpdateSubMenu {
   local theme="$1"
   local commitmsg
-  local cmd
   local retval
 
   theme=${theme/HELP /}
   commitmsg=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"message\":/!d;q' | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
 
-  cmd=$(dialog --backtitle "ThemeMaster - $github_user" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1)
-
+  dialog --backtitle "ThemeMaster - $github_user" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1
   retval=$?
   case $retval in
   0)

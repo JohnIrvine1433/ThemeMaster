@@ -1,5 +1,7 @@
 v2.2.0
-- Externalise ThemeMaster updater 
+- Externalise ThemeMaster post-install updater
+- Remove unnecessary call to LoadInstalledTheme in SelectCollectionMenu
+- Code cleaning (remove unnecessary command substitutions)
 v2.1.1
 - Fix duplicate message on app update menu
 - Fix ThemMaster.cfg initialisation when OS not recognised
