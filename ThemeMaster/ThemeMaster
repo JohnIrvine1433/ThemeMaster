@@ -151,6 +151,7 @@ function CheckAppUpdates() {
 }
 
 function UpdateApp() {
+<<<<<<< HEAD
   local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
   local package_folder
   local retval
@@ -191,6 +192,14 @@ function UpdateApp() {
     rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
 
     dialog --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Update have failed because the archive did not download correctly. Check your connection and try again." 20 50 2>&1 >/dev/tty1
+=======
+  local UPDATER_URL="https://github.com/${github_app_owner}/${github_app_repo}/blob/master/ThemeMaster/updater"
+
+  #Retrieve latest updater module
+  wget -q "$UPDATER_URL"
+  if [ $? -ne 0 ]; then
+    dialog --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Could not retrieve the updater. Check your connection and try again." 20 50 2>&1 >/dev/tty1
+>>>>>>> 0981a3d8b24b3079472a7dc7798b4cd92279be20
     retval=$?
     case $retval in
     0)
