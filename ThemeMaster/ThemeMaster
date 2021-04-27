@@ -4,7 +4,7 @@
 # ThemeMaster
 # https://github.com/JohnIrvine1433/ThemeMaster
 #
-
+clear
 #
 # Environment settings
 #
@@ -23,11 +23,25 @@ sudo ./oga_controls ThemeMaster &
 #
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="2.2.0"
+current_app_version="2.2.1"
 
 #
-# ThemeMaster settings initialisation
+# Reused global variables
 #
+onlinethemes=()
+installedthemes=()
+outdatedthemes=()
+changelog=()
+themes_updates_checked=0
+app_updates_checked=0
+latest_app_version=""
+app_outdated=""
+
+#######################
+# ThemeMaster FUNCTIONS #
+#######################
+
+function InitSettings() {
 if [ -e "ThemeMaster.cfg" ]; then
   source ThemeMaster.cfg
   # Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
@@ -48,22 +62,7 @@ else
   SetEnvironment
   SaveSettings
 fi
-
-#
-# Reused global variables
-#
-onlinethemes=()
-installedthemes=()
-outdatedthemes=()
-changelog=()
-themes_updates_checked=0
-app_updates_checked=0
-latest_app_version=""
-app_outdated=""
-
-#######################
-# ThemeMaster FUNCTIONS #
-#######################
+}
 
 function SetEnvironment() {
   local temp
@@ -92,6 +91,8 @@ function InitLoader() {
   local retval
   local temparr
 
+  InitSettings
+
   SetColorScheme
 
   dialog --clear
@@ -100,7 +101,6 @@ function InitLoader() {
 
   dialog --infobox "Initialization... Checking internet access" 5 50 >/dev/tty1
   wget -q --spider http://google.com
-
   if [ $? -eq 0 ]; then
     dialog --infobox "Initialization... Loading $github_user online themes" 5 50 >/dev/tty1
     LoadOnlineThemes
@@ -128,18 +128,22 @@ function InitLoader() {
 }
 
 function CheckAppUpdates() {
+  local retval
 
   dialog --clear
   dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >/dev/tty1
   sleep 1
   #Get latest ThemeMaster tag version
   latest_app_version=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+  if [[ -z "$latest_app_version" ]]; then
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "HTTP error...\n(you may have exceeded GitHub rate limit)" 8 50 2>&1 >/dev/tty1
+    MainMenu
+  fi
   app_updates_checked=1
 
   if [[ "$latest_app_version" != "$current_app_version" ]]; then
     app_outdated=1
-
-dialog --backtitle "ThemeMaster - System" --yes-label "Yes, now!" --no-label "No, later..." --yesno "A new release is available !! Launch update?" 5 50 2>&1 >/dev/tty1
+    dialog --backtitle "ThemeMaster - System" --yes-label "Yes, now!" --no-label "No, later..." --yesno "A new release is available !! Launch update?" 10 50 2>&1 >/dev/tty1
     retval=$?
     case $retval in
     0)
@@ -149,14 +153,12 @@ dialog --backtitle "ThemeMaster - System" --yes-label "Yes, now!" --no-label "No
       SettingsMenu
       ;;
     esac
-
   else
     app_outdated=0
     dialog --clear
     dialog --infobox "ThemeMaster is up to date..." 5 50 >/dev/tty1
     sleep 1
   fi
-
 }
 
 function UpdateApp() {
@@ -221,11 +223,12 @@ function SaveSettings() {
   echo "themes_autocheckupdate=\"${themes_autocheckupdate}\"" >>ThemeMaster.cfg
   echo "github_user=\"${github_user}\"" >>ThemeMaster.cfg
   echo "collections=(${collections[@]})" >>ThemeMaster.cfg
-  echo "app_colorscheme=\"${app_colorscheme}\""  >>ThemeMaster.cfg
+  echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
 }
 
 function ExitApp() {
   pgrep -f oga_controls | sudo xargs kill -9
+  clear
   exit
 }
 
@@ -242,9 +245,14 @@ function CheckThemesUpdates() {
   #(re)Load installed themes with new release
   unset outdatedthemes
   for theme in "${onlinethemes[@]}"; do
+    unset latest
     if [ -d "${themes_location}$theme" ]; then
       dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50 >/dev/tty1
       latest=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"date\":/!d;q' | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
+      if [[ -z "$latest" ]]; then
+        dialog --clear --backtitle "ThemeMaster - System" --msgbox "HTTP error...\n(you may have exceeded GitHub rate limit)" 8 50 2>&1 >/dev/tty1
+        MainMenu
+      fi
       if [ -e "${theme}.log" ]; then
         current=$(cat "${theme}.log")
         #current=$(head -n 1 ${theme}.log) #Alternative when every version installed is kept - see file creation
@@ -274,7 +282,12 @@ function GetChangeLog {
   unset changelog
 
   SAVEIFS=$IFS
-  IFS=$'\n' temparr=($(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | grep '"message": \|"date": ' | sed -e 's/.*\"message\": \"//' | sed -e 's/.*\"date\": \"//'))
+  IFS=$'\n'
+  temparr=($(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | grep '"message": \|"date": ' | sed -e 's/.*\"message\": \"//' | sed -e 's/.*\"date\": \"//'))
+  if [[ -z "$temparr" ]]; then
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "HTTP error...\n(you may have exceeded GitHub rate limit)" 8 50 2>&1 >/dev/tty1
+    MainMenu
+  fi
   IFS=$SAVEIFS
   temparr=("${temparr[@]%,}")
   temparr=("${temparr[@]//\"/}")
@@ -311,6 +324,10 @@ function LoadOnlineThemes() {
   SAVEIFS=$IFS
   IFS=$'\n'
   onlinethemes=($(wget --no-check-certificate -qO - "https://api.github.com/users/${github_user}/repos" | grep '\"name\": \"es-theme' | sed -e 's/\"name\": \"\(.*\)\",/\1/'))
+  if [[ -z "$onlinethemes" ]]; then
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "HTTP error...\n(you may have exceeded GitHub rate limit)" 8 50 2>&1 >/dev/tty1
+    MainMenu
+  fi
   IFS=$SAVEIFS
   onlinethemes=("${onlinethemes[@]/#+([[:blank:]])/}") # remove leading space/tab from each element
   onlinethemes=("${onlinethemes[@]/%+([[:blank:]])/}") # remove trailing space/tab from each element
@@ -324,12 +341,16 @@ function InstallTheme() {
   local THEME_CONTENT
   local retval
   local estimated_size
+  local temparr
 
-  # dialog --clear
-  # dialog --infobox "Installation is about to start..." 5 50 >/dev/tty1
+  dialog --clear
+  dialog --infobox "Installation is about to start..." 5 50 >/dev/tty1
 
   latest=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"date\":/!d;q' | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
-
+  if [[ -z "$latest" ]]; then
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "HTTP error...\n(you may have exceeded GitHub rate limit)" 8 50 2>&1 >/dev/tty1
+    MainMenu
+  fi
   REP_URL="https://api.github.com/repos/${github_user}/${theme}/zipball"
 
   mkdir -p ${temp_ram_folder}theme_update_temp #create a temp folder in RAM
@@ -366,9 +387,14 @@ function InstallTheme() {
     #Deleting temporary files
     # sudo
     rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
-
-    LoadInstalledThemes                               #reload liste of installed themes (in case of install)
-    outdatedthemes=("${outdatedthemes[@]/${theme}/}") #in case of update, remove theme from outdated themes list
+    #Reload liste of installed themes (in case of install)
+    LoadInstalledThemes
+    #In case of update, remove theme from outdated themes list
+    for temp in "${outdatedthemes[@]}"
+    do
+        [[ $temp != $theme ]] && temparr+=($temp)
+    done
+    outdatedthemes=("${temparr[@]}")
 
     dialog --clear --backtitle "ThemeMaster - $github_user" --msgbox "Theme $theme successfully installed!" 8 50 2>&1 >/dev/tty1
 
@@ -430,6 +456,10 @@ function InstallSubMenu {
 
   theme=${theme/HELP /}
   description=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}" | sed '/\"description\":/!d;q' | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
+  if [[ -z "$description" ]]; then
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "HTTP error...\n(you may have exceeded GitHub rate limit)" 8 50 2>&1 >/dev/tty1
+    MainMenu
+  fi
 
   dialog --backtitle "${backtitle}" --yes-label "Install" --no-label "Back" --yesno "${theme} description :\n ${description}" 10 50 2>&1 >/dev/tty1
   retval=$?
@@ -488,6 +518,10 @@ function UpdateSubMenu {
 
   theme=${theme/HELP /}
   commitmsg=$(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}/commits" | sed '/\"message\":/!d;q' | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
+  if [[ -z "$commitmsg" ]]; then
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "HTTP error...\n(you may have exceeded GitHub rate limit)" 8 50 2>&1 >/dev/tty1
+    MainMenu
+  fi
 
   dialog --backtitle "ThemeMaster - $github_user" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1
   retval=$?
@@ -859,14 +893,24 @@ function SettingsMenu() {
     A)
       if [[ $app_updates_checked -eq 0 ]]; then
         CheckAppUpdates
+        SettingsMenu
       elif [[ $app_outdated -eq 0 ]]; then
         dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster is up to date." 5 50 2>&1 >/dev/tty1
         SettingsMenu
       else
-        UpdateApp
+        dialog --backtitle "ThemeMaster - System" --yes-label "Yes, go!" --no-label "No, later..." --yesno "You're about to update ThemeMaster, no further confirmation..." 10 50 2>&1 >/dev/tty1
+        retval=$?
+        case $retval in
+        0)
+          UpdateApp
+          ;;
+        1)
+          SettingsMenu
+          ;;
+        esac
       fi
       ;;
-    B) AppChangeLog;;
+    B) AppChangeLog ;;
     C) ColorSchemeMenu ;;
     D) StartupSettings ;;
     E) SelectCollectionMenu ;;
