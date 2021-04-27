@@ -138,9 +138,18 @@ function CheckAppUpdates() {
 
   if [[ "$latest_app_version" != "$current_app_version" ]]; then
     app_outdated=1
-    dialog --clear
-    dialog --infobox "A new release is available !!" 5 50 >/dev/tty1
-    sleep 1
+
+dialog --backtitle "ThemeMaster - System" --yes-label "Yes, now!" --no-label "No, later..." --yesno "A new release is available !! Launch update?" 5 50 2>&1 >/dev/tty1
+    retval=$?
+    case $retval in
+    0)
+      UpdateApp
+      ;;
+    1)
+      SettingsMenu
+      ;;
+    esac
+
   else
     app_outdated=0
     dialog --clear
