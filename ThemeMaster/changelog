@@ -1,8 +1,8 @@
 v2.2.1
-- Very basic wget error management (to cope with GitHub limit exceeded during testing)
 - Fix app update management
 - Fix app settings initialisation
 - Fix theme update function (problem installing several updates in a row)
+- Very basic wget error management to cope with GitHub limit exceeded (to be improved later on)
 v2.2.0
 - Externalise ThemeMaster post-install updater
 - Remove unnecessary call to LoadInstalledTheme in SelectCollectionMenu
