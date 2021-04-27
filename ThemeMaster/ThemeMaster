@@ -162,7 +162,8 @@ function CheckAppUpdates() {
 }
 
 function UpdateApp() {
-  local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
+  #local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
+  local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball/Nightly"
   local package_folder
   local retval
 
@@ -182,7 +183,7 @@ function UpdateApp() {
     package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
     package_folder="${package_folder##*/}"
     #When backing up themes configuration and installation log files is required
-    #cp ${app_location}ThemeMaster/*.log ${temp_ram_folder}app_update_temp/${package_folder}/ThemeMaster/ 2>/dev/null
+    #cp ${app_location}ThemeMaster/*.version ${temp_ram_folder}app_update_temp/${package_folder}/ThemeMaster/ 2>/dev/null
     #cp ${app_location}ThemeMaster/*.cfg ${temp_ram_folder}app_update_temp/${package_folder}ThemeMaster/ 2>/dev/null
     #Overwritting existing files
     cp -rf ${temp_ram_folder}app_update_temp/${package_folder}/* $app_location
@@ -253,9 +254,9 @@ function CheckThemesUpdates() {
         dialog --clear --backtitle "ThemeMaster - System" --msgbox "HTTP error...\n(you may have exceeded GitHub rate limit)" 8 50 2>&1 >/dev/tty1
         MainMenu
       fi
-      if [ -e "${theme}.log" ]; then
-        current=$(cat "${theme}.log")
-        #current=$(head -n 1 ${theme}.log) #Alternative when every version installed is kept - see file creation
+      if [ -e "${theme}.version" ]; then
+        current=$(cat "${theme}.version")
+        #current=$(head -n 1 ${theme}.version) #Alternative when every version installed is kept - see file creation
       fi
       if [[ "$current" != "$latest" ]]; then
         outdatedthemes+=("$theme")
@@ -382,8 +383,8 @@ function InstallTheme() {
     #Overwritting existing files
     cp -rf $THEME_CONTENT ${themes_location}$theme
     #Create the theme's log file for version management
-    echo $latest >${theme}.log
-    #echo $latest >> ${theme}.log #alternative to keep every version installed, reading also need to be modified
+    echo $latest >${theme}.version
+    #echo $latest >> ${theme}.version #alternative to keep every version installed, reading also need to be modified
     #Deleting temporary files
     # sudo
     rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
@@ -428,7 +429,7 @@ function RemoveTheme() {
   # sudo
   rm -rf ${themes_location}$theme
   # sudo
-  rm -f ${theme}.log
+  rm -f ${theme}.version
 
   LoadInstalledThemes
 

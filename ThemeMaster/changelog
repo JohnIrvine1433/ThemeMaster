@@ -1,3 +1,5 @@
+v2.3.0
+- Change theme's installation log file extension from .log to .version
 v2.2.1
 - Fix app update management
 - Fix app settings initialisation
