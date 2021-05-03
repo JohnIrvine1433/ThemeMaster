@@ -1,5 +1,8 @@
-v2.3.0
+vX.X.X
+- WORK IN PROGRESS - Implement Gallery mode
+- Implement a local cache for outdated themes
 - Change theme's installation log file extension from .log to .version
+- Implement proper wget error management
 v2.2.1
 - Fix app update management
 - Fix app settings initialisation
