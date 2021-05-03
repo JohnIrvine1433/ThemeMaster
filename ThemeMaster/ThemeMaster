@@ -104,7 +104,6 @@ function InitLoader() {
     SaveSettings
   fi
 
-  SetMode
   SetColorScheme
 
   dialog --clear
@@ -112,11 +111,8 @@ function InitLoader() {
   #Checking internet access
   wget -nv -o wget.log --spider http://google.com
   wget_result $?
-  if [[ $mode == "A" ]]; then
-    LoadOnlineThemes
-  else
-    LoadGallery
-  fi
+  
+  SetMode
   LoadInstalledThemes
   if [[ "$themes_autocheckupdate" == "on" ]]; then
     if [[ $mode == "A" ]]; then
