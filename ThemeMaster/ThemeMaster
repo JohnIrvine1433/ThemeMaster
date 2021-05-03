@@ -541,11 +541,8 @@ function CheckGalleryUpdates() {
     latest=""
     current=""
     if [ -d "${themes_location}$theme" ]; then
-      #Get themes's author
-
-
       dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50 >/dev/tty1
-      wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+      wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/$gallery_array[${theme}]/${theme}/commits"
       wget_result $?
       latest=$(sed '/\"date\":/!d;q' wget.output | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
       if [ -e "${theme}.version" ]; then
