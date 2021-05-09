@@ -67,7 +67,7 @@ function wget_result() {
   local wget_error
 
   if [[ $wget_return -ne 0 ]]; then
-    err_msg=$(<wget.log)
+    err_msg=$(</tmp/ThemeMaster_wget.log)
     case $wget_return in
       1) wget_error="Generic error code." ;;
       2) wget_error="Parse error—for instance, when parsing command-line options." ;;
@@ -90,6 +90,8 @@ function wget_result() {
 }
 
 function InitLoader() {
+  #Make sure data folder is created
+  mkdir -p ./data
   #App settings initialisation
   if [ -e "ThemeMaster.cfg" ]; then
     source ThemeMaster.cfg
@@ -108,7 +110,7 @@ function InitLoader() {
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
-  wget -nv -o wget.log --spider http://google.com
+  wget -nv -o /tmp/ThemeMaster_wget.log --spider http://google.com
   wget_result $?
   if [[ $mode == "A" ]]; then
     LoadGitHubThemes
@@ -178,9 +180,9 @@ function CheckAppUpdates() {
   dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >/dev/tty1
   sleep 1
   #Get latest ThemeMaster tag version
-  wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases/latest"
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases/latest"
   wget_result $?
-  latest_app_version=$(grep '"tag_name":' wget.output | sed -E 's/.*"([^"]+)".*/\1/')
+  latest_app_version=$(grep '"tag_name":' /tmp/ThemeMaster_wget.output  | sed -E 's/.*"([^"]+)".*/\1/')
 
   app_updates_checked=1
 
@@ -215,7 +217,7 @@ function UpdateApp() {
   sleep 1
   mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
 
-  wget -nv -o wget.log "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
+  wget -nv -o /tmp/ThemeMaster_wget.log "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
   wget_result $?
   if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
     #Unzipping archive
@@ -224,9 +226,6 @@ function UpdateApp() {
     #Getting unzipped package folder's name
     package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
     package_folder="${package_folder##*/}"
-    #When backing up themes configuration and installation log files is required
-    #cp ${app_location}ThemeMaster/*.version ${temp_ram_folder}app_update_temp/${package_folder}/ThemeMaster/ 2>/dev/null
-    #cp ${app_location}ThemeMaster/*.cfg ${temp_ram_folder}app_update_temp/${package_folder}ThemeMaster/ 2>/dev/null
     #Overwritting existing files
     cp -rf ${temp_ram_folder}app_update_temp/${package_folder}/* $app_location
     chmod 777 ${app_location}*.sh #make sure newly downloaded scripts have right permission
@@ -271,8 +270,8 @@ function SaveSettings() {
 }
 
 function ExitApp() {
-  rm wget.log
-  rm wget.output
+  rm /tmp/ThemeMaster_wget.log
+  rm /tmp/ThemeMaster_wget.output
   pgrep -f oga_controls | sudo xargs kill -9
   clear
   exit
@@ -298,9 +297,9 @@ function InstallTheme() {
   dialog --clear
   dialog --infobox "Installation is about to start..." 5 50 >/dev/tty1
 
-  wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $?
-  latest=$(sed '/\"date\":/!d;q' wget.output | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
+  latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
 
   REP_URL="https://api.github.com/repos/${github_user}/${theme}/zipball"
 
@@ -333,8 +332,8 @@ function InstallTheme() {
     #Overwritting existing files
     cp -rf $THEME_CONTENT ${themes_location}$theme
     #Create the theme's log file for version management
-    echo $latest >${theme}.version
-    #echo $latest >> ${theme}.version #alternative to keep every version installed, reading also need to be modified
+    echo $latest > ./data/${theme}.version
+    #echo $latest >> ./data/${theme}.version #alternative to keep every version installed, reading also need to be modified
     #Deleting temporary files
     # sudo
     rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
@@ -379,7 +378,7 @@ function RemoveTheme() {
   # sudo
   rm -rf ${themes_location}$theme
   # sudo
-  rm -f ${theme}.version
+  rm -f ./data/${theme}.version
 
   LoadInstalledThemes
 
@@ -408,9 +407,9 @@ function GetChangeLog {
 
   SAVEIFS=$IFS
   IFS=$'\n'
-  wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $?
-  temparr=($(grep '"message": \|"date": ' wget.output | sed -e 's/.*\"message\": \"//' | sed -e 's/.*\"date\": \"//'))
+  temparr=($(grep '"message": \|"date": ' /tmp/ThemeMaster_wget.output  | sed -e 's/.*\"message\": \"//' | sed -e 's/.*\"date\": \"//'))
   IFS=$SAVEIFS
   temparr=("${temparr[@]%,}")
   temparr=("${temparr[@]//\"/}")
@@ -447,8 +446,8 @@ function CheckThemesUpdates() {
   #(re)Load installed themes with new release
   unset outdatedthemes
   # Load cached outdated themes from current collection
-  if [[ -e "outdatedthemes.cache" ]]; then
-    source outdatedthemes.cache
+  if [[ -e "./data/outdatedthemes.cache" ]]; then
+    source ./data/outdatedthemes.cache
     outdatedthemes=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f)))
   fi
   # Check for online update only if necessary (installed and not already cached)
@@ -462,12 +461,12 @@ function CheckThemesUpdates() {
         get_github_user $theme
       fi
       dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50 >/dev/tty1
-      wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+      wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
       wget_result $?
-      latest=$(sed '/\"date\":/!d;q' wget.output | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
-      if [ -e "${theme}.version" ]; then
-        current=$(cat "${theme}.version")
-        #current=$(head -n 1 ${theme}.version) #Alternative when every version installed is kept - see file creation
+      latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
+      if [ -e "./data/${theme}.version" ]; then
+        current=$(cat "./data/${theme}.version")
+        #current=$(head -n 1 ./data/${theme}.version) #Alternative when every version installed is kept - see file creation
       fi
       if [[ "$current" != "$latest" ]]; then
         outdatedthemes+=("$theme")
@@ -484,7 +483,7 @@ function CheckThemesUpdates() {
   else
     # Update cached outdated themes
     cached_outdatedthemes=(${cached_outdatedthemes[@]} ${outdatedthemes[@]})
-    echo "cached_outdatedthemes=(${cached_outdatedthemes[@]})" >outdatedthemes.cache
+    echo "cached_outdatedthemes=(${cached_outdatedthemes[@]})" > ./data/outdatedthemes.cache
 
     dialog --clear
     dialog --infobox "New theme update available !!" 5 50 >/dev/tty1
@@ -500,9 +499,9 @@ function LoadGitHubThemes() {
 
   SAVEIFS=$IFS
   IFS=$'\n'
-  wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/users/${github_user}/repos"
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/users/${github_user}/repos"
   wget_result $?
-  onlinethemes=($(grep '\"name\": \"es-theme' wget.output | sed -e 's/\"name\": \"\(.*\)\",/\1/'))
+  onlinethemes=($(grep '\"name\": \"es-theme' /tmp/ThemeMaster_wget.output  | sed -e 's/\"name\": \"\(.*\)\",/\1/'))
   IFS=$SAVEIFS
   onlinethemes=("${onlinethemes[@]/#+([[:blank:]])/}") # remove leading space/tab from each element
   onlinethemes=("${onlinethemes[@]/%+([[:blank:]])/}") # remove trailing space/tab from each element
@@ -556,9 +555,9 @@ function InstallSubMenu {
     get_github_user $theme
   fi
 
-  wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}"
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}"
   wget_result $?
-  description=$(sed '/\"description\":/!d;q' wget.output | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
+  description=$(sed '/\"description\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
 
   dialog --backtitle "${backtitle}" --yes-label "Install" --no-label "Back" --yesno "${theme} description :\n ${description}" 10 50 2>&1 >/dev/tty1
   retval=$?
@@ -621,9 +620,9 @@ function UpdateSubMenu {
     get_github_user $theme
   fi
 
-  wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $?
-  commitmsg=$(sed '/\"message\":/!d;q' wget.output | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
+  commitmsg=$(sed '/\"message\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
 
   dialog --backtitle "$mode_title" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1
   retval=$?

@@ -9,9 +9,10 @@ function PostInstallUpdater() {
   dialog --infobox "Processing post-installation ..." 5 50 >/dev/tty1
 
   #v2.2.0 - creation of the post-installation updater
-  #v2.3.0
-   #Rename existing theme's installation log file extension from .log to .version
-   for file in *.log; do
-     mv -- "$file" "${file%.log}.version"
-   done
+  #vX.X.X
+  #Rename existing theme's installation log file extension from .log to .version
+  mkdir -p ./data/
+  for file in *.log; do
+    mv -- "$file" "./data/${file%.log}.version"
+  done
 }
