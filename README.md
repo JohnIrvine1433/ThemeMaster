@@ -1,19 +1,25 @@
 # ThemeMaster
 ThemeMaster is an EmulationStation theme manager for Anbernic RG351P/M and RG351V running ArkOS or TheRA.
 
+# Instruction
 ## Navigation
-- Default controls are : d-pad or joysticks to move, A or X to validate, B or Y to select item in radiolist and checklist.
+- Default controls are : d-pad or joysticks to move, A or X to validate, B or Y to select an item in radiolist and checklist.
 - You can force quit ThemeMaster by pressing Start + Select.
+
+## ThemeMaster GitHub Repository mode
+In **GitHub repository** mode, ThemeMaster automatically create a theme collection by pulling information from a GitHub account based on repositories starting with "es-theme".
+- You can change the account to be used from **ThemeMaster Settings** menu.
+- The list of GitHub accounts to be used can be manually configured by editing the "collections" variable in "ThemeMaster.cfg" file.
+
+## ThemeMaster Theme gallery mode
+In **Theme gallery** mode, ThemeMaster relies on information from [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) by **Jetup** to create a bespoke theme collection.
 
 ## Nota Bene
 - Theme's update management is based on latest commit's date.
-- Themes' list is pulled from GitHub accounts based on repositories starting with "es-theme".
-- List of GitHub accounts to be used can be manually configured editing the "collections" variable in "ThemeMaster.cfg" file.
 - Beware that name duplicates (between different GitHub accounts) is currently not managed ; this could lead to unwanted behaviour if you choose to swap between theme collections (e.g. replace a theme with another).
 - Uninstaller allows removal of stock themes which cannot be reinstalled via ThemeMaster.
-- Customised dialogrc file can be added to ThemeMaster folder (no space in filename using ".dialogrc" file's extension).
 
-## Background
+# Background
 Original script [ArkThemes](https://github.com/TadMSTR/ArkThemes) was developed for [ArkOS](https://github.com/christianhaitian/arkos) by [TadMSTR](https://github.com/TadMSTR) based on [AnberPorts](https://github.com/krishenriksen/AnberPorts) by [kreal](https://github.com/krishenriksen) with contributions from **choo t** and **JohnIrvine**.
 
 Most evolutions have been initially implemented on [ArkThemes-fork](https://github.com/JohnIrvine1433/ArkThemes-fork) which has reached EOL following the release of AnberThemes then renamed ThemeMaster (last name change, this one is future proof thanks to **5uck3rpunch**).

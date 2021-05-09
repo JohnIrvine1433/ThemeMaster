@@ -45,14 +45,13 @@ mode_title=""
 # Common variables
 outdatedthemes=()
 installedthemes=()
+onlinethemes=()
 changelog=()
 themes_updates_checked=0
-# GitHub mode variables
-onlinethemes=()
+github_user=""
 # Gallery mode variables
 gallery_rows=""
 gallery_columns=4
-gallerythemes=()
 declare -A gallery_matrix
 declare -A gallery_array
 
@@ -113,16 +112,16 @@ function InitLoader() {
   wget -nv -o wget.log --spider http://google.com
   wget_result $?
   if [[ $mode == "A" ]]; then
-    LoadOnlineThemes
+    LoadGitHubThemes
   else
     LoadGallery
   fi
   LoadInstalledThemes
   if [[ "$themes_autocheckupdate" == "on" ]]; then
     if [[ $mode == "A" ]]; then
-      CheckCollectionUpdates
+      CheckThemesUpdates
     else
-      CheckGalleryUpdates
+      CheckThemesUpdates
     fi
   fi
   if [[ "$app_autocheckupdate" == "on" ]]; then
@@ -156,10 +155,11 @@ function SetEnvironment() {
 
 function SetMode() {
   if [[ $mode == "A" ]]; then
-    $mode_title="GitHub Repository Mode - Collection: $github_user"
-    LoadOnlineThemes
+    github_user=$active_collection
+    mode_title="GitHub Repository Mode - Collection: $github_user"
+    LoadGitHubThemes
   else
-    $mode_title="Theme Gallery by Jetup"
+    mode_title="Theme Gallery by Jetup"
     LoadGallery
   fi
 }
@@ -279,6 +279,8 @@ function ExitApp() {
   exit
 }
 
+# Theme Management functions
+
 function InstallTheme() {
   local theme=$1
   local latest
@@ -288,6 +290,11 @@ function InstallTheme() {
   local retval
   local estimated_size
   local temparr
+
+  # In gallery mode, set $github_user according to current $theme
+  if [[ $mode == "B" ]]; then
+    get_github_user $theme
+  fi
 
   dialog --clear
   dialog --infobox "Installation is about to start..." 5 50 >/dev/tty1
@@ -395,6 +402,11 @@ function GetChangeLog {
   local temparr=()
   unset changelog
 
+  # In gallery mode, set $github_user according to current $theme
+  if [[ $mode == "B" ]]; then
+    get_github_user $theme
+  fi
+
   SAVEIFS=$IFS
   IFS=$'\n'
   wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
@@ -421,9 +433,7 @@ function GetChangeLog {
   done
 }
 
-# GitHub Collection Mode functions
-
-function CheckCollectionUpdates() {
+function CheckThemesUpdates() {
   local theme
   local latest
   local current
@@ -445,8 +455,13 @@ function CheckCollectionUpdates() {
   # Check for online update only if necessary (installed and not already cached)
   unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f)))
   for theme in "${unchecked_themes[@]}"; do
-    unset latest
+    latest=""
+    current=""
     if [ -d "${themes_location}$theme" ]; then
+      # In gallery mode, set $github_user according to current $theme
+      if [[ $mode == "B" ]]; then
+        get_github_user $theme
+      fi
       dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50 >/dev/tty1
       wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
       wget_result $?
@@ -478,7 +493,9 @@ function CheckCollectionUpdates() {
   fi
 }
 
-function LoadOnlineThemes() {
+# GitHub Collection Mode functions
+
+function LoadGitHubThemes() {
   #(re)Load online themes
   unset onlinethemes
 
@@ -494,6 +511,11 @@ function LoadOnlineThemes() {
 
 # Gallery Mode functions
 
+function get_github_user() {
+  local theme=$1
+  github_user=gallery_array[${theme}]
+}
+
 function LoadGallery() {
   local i=0
   local author
@@ -501,8 +523,8 @@ function LoadGallery() {
   local _640
   local _480
 
+  unset onlinethemes
   unset gallery_matrix
-  unset gallerythemes
   unset gallery_array
  	{
   read
@@ -513,70 +535,11 @@ function LoadGallery() {
     gallery_matrix[$i,2]="$_640"
     gallery_matrix[$i,3]="$_480"
     gallery_rows=$i
-    gallerythemes+=("$theme")
+    onlinethemes+=("$theme")
     gallery_array[${theme}]="$author"
     ((i++))
   done
  	} < gallery.data
-}
-
-function CheckGalleryUpdates() {
-  local theme
-  local latest
-  local current
-  local retval
-  local cached_outdatedthemes=()
-  local unchecked_themes=()
-
-  dialog --clear
-  dialog --infobox "Checking for themes updates... Please wait !" 5 50 >/dev/tty1
-  sleep 1
-
-  #(re)Load installed themes with new release
-  unset outdatedthemes
-  # Load cached outdated themes from current collection
-  if [[ -e "outdatedthemes.cache" ]]; then
-    source outdatedthemes.cache
-    outdatedthemes=($(comm -12 <(printf '%s\n' "${gallerythemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f)))
-  fi
-  # Check for online update only if necessary (installed and not already cached)
-  unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${gallerythemes[@]}" | LC_COLLATE=C sort -f)))
-  for theme in "${unchecked_themes[@]}"; do
-    latest=""
-    current=""
-    if [ -d "${themes_location}$theme" ]; then
-      #Get themes's author
-
-
-      dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50 >/dev/tty1
-      wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
-      wget_result $?
-      latest=$(sed '/\"date\":/!d;q' wget.output | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
-      if [ -e "${theme}.version" ]; then
-        current=$(cat "${theme}.version")
-        #current=$(head -n 1 ${theme}.version) #Alternative when every version installed is kept - see file creation
-      fi
-      if [[ "$current" != "$latest" ]]; then
-        outdatedthemes+=("$theme")
-      fi
-    fi
-  done
-
-  themes_updates_checked=1
-
-  if [[ -z $outdatedthemes ]]; then
-    dialog --clear
-    dialog --infobox "All themes are up to date..." 5 50 >/dev/tty1
-    sleep 1
-  else
-    # Update cached outdated themes
-    cached_outdatedthemes=(${cached_outdatedthemes[@]} ${outdatedthemes[@]})
-    echo "cached_outdatedthemes=(${cached_outdatedthemes[@]})" >outdatedthemes.cache
-
-    dialog --clear
-    dialog --infobox "New theme update available !!" 5 50 >/dev/tty1
-    sleep 1
-  fi
 }
 
 ##################
@@ -589,6 +552,11 @@ function InstallSubMenu {
   local retval
 
   theme=${theme/HELP /}
+  # In gallery mode, set $github_user according to current $theme
+  if [[ $mode == "B" ]]; then
+    get_github_user $theme
+  fi
+  
   wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}"
   wget_result $?
   description=$(sed '/\"description\":/!d;q' wget.output | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
@@ -620,7 +588,7 @@ function InstallMenu() {
   done
   # Check whether there is still at least a theme from the collection to be installed
   if [[ -z $options ]]; then
-    dialog --clear --backtitle "$mode_title" --msgbox "No more theme from $github_user to be installed" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "$mode_title" --msgbox "No more theme to be installed" 10 50 2>&1 >/dev/tty1
     MainMenu
   fi
 
@@ -649,6 +617,11 @@ function UpdateSubMenu {
   local retval
 
   theme=${theme/HELP /}
+  # In gallery mode, set $github_user according to current $theme
+  if [[ $mode == "B" ]]; then
+    get_github_user $theme
+  fi
+
   wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $?
   commitmsg=$(sed '/\"message\":/!d;q' wget.output | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
@@ -673,7 +646,7 @@ function UpdateMenu() {
   local retval
 
   if [[ $themes_updates_checked -eq 0 ]]; then
-    CheckCollectionUpdates
+    CheckThemesUpdates
   fi
 
   if [[ -z "$outdatedthemes" ]]; then
@@ -891,7 +864,7 @@ function ColorSchemeMenu() {
   dialog_config=("${dialog_config[@]##*/}") #Remove path prefix
   dialog_config=("${dialog_config[@]%.*}") #Get filename without extension
 
-  cmd=(dialog --backtitle "$mode_title" --title " [ Color Scheme Selection ] " --radiolist "Select the ThemeMaster UI color scheme :" "15" "50" "15")
+  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Color Scheme Selection ] " --radiolist "Select the ThemeMaster UI color scheme :" "15" "50" "15")
 
   if [[ "$app_colorscheme" == "Default" || -z $app_colorscheme ]]; then
     options+=(Default "System's color scheme" "on")
@@ -931,7 +904,7 @@ function StartupSettings() {
   local choices
   local retval
 
-  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "$mode_title" --title " [ Startup Options ] " --checklist "NB : ThemeMaster initialisation will take longer espacially if check for themes updates is activated :" "15" "50" "15")
+  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Startup Options ] " --checklist "NB : ThemeMaster initialisation will take longer espacially if check for themes updates is activated :" "15" "50" "15")
 
   options=(
     ThemeMaster "Check for updates" $app_autocheckupdate
@@ -970,7 +943,7 @@ function SelectCollectionMenu() {
   cmd=(dialog --backtitle "$mode_title" --title " [ Themes Configuration ] " --radiolist "Set the themes collection to be used with ThemeMaster :" "15" "50" "15")
 
   for temp in "${collections[@]}"; do
-    if [ "$temp" == "$github_user" ]; then
+    if [ "$temp" == "$active_collection" ]; then
       options+=($temp "Themes collection" "on")
     else
       options+=($temp "Themes collection" "off")
@@ -982,13 +955,14 @@ function SelectCollectionMenu() {
   retval=$?
   case $retval in
   0)
-    if [ "$choice" != "$github_user" ]; then
+    if [ "$choice" != "$active_collection" ]; then
+      active_collection=$choice
       github_user=$choice
       dialog --clear
       dialog --infobox "Reloading parameters... Please wait !" 5 50 >/dev/tty1
       themes_updates_checked=0
       SaveSettings
-      LoadOnlineThemes
+      LoadGitHubThemes
     fi
     MainMenu
     ;;
@@ -1102,7 +1076,7 @@ function MainMenu() {
   local choice
   local retval
 
-  cmd=(dialog --no-cancel --backtitle "ThemeMaster v$current_app_version - Active collection : $github_user" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --no-cancel --backtitle "$mode_title" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
 
   options=(
     A "Install a theme"
