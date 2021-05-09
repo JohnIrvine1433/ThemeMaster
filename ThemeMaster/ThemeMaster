@@ -103,7 +103,6 @@ function InitLoader() {
     SaveSettings
   fi
 
-  SetMode
   SetColorScheme
 
   dialog --clear
@@ -556,7 +555,7 @@ function InstallSubMenu {
   if [[ $mode == "B" ]]; then
     get_github_user $theme
   fi
-  
+
   wget -nv -o wget.log -O "wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}"
   wget_result $?
   description=$(sed '/\"description\":/!d;q' wget.output | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
