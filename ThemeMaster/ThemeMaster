@@ -63,6 +63,7 @@ declare -A gallery_array
 
 function wget_result() {
   local wget_return=$1
+  local returnto=$2
   local err_msg
   local wget_error
 
@@ -82,7 +83,20 @@ function wget_result() {
     dialog --backtitle "ThemeMaster - System" --yes-label "Return to MainMenu" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >/dev/tty1
     case $? in
     0)
-      MainMenu ;;
+      if [ $returnto == "InitLoader" ]; then
+        InitLoader
+      elif [ $returnto == "SettingsMenu" ]; then
+        SettingsMenu
+      elif [ $returnto == "UpdateMenu" ]; then
+        UpdateMenu
+      elif [ $returnto == "ChangeLogMenu" ]; then
+        ChangeLogMenu
+      elif [ $returnto == "InstallMenu" ]; then
+        InstallMenu
+      else
+        MainMenu
+      fi
+    ;;
     1)
       ExitApp ;;
     esac
@@ -111,7 +125,7 @@ function InitLoader() {
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
   wget -nv -o /tmp/ThemeMaster_wget.log --spider http://google.com
-  wget_result $?
+  wget_result $? "InitLoader"
   if [[ $mode == "A" ]]; then
     LoadGitHubThemes
   else
@@ -181,7 +195,7 @@ function CheckAppUpdates() {
   sleep 1
   #Get latest ThemeMaster tag version
   wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases/latest"
-  wget_result $?
+  wget_result $? "SettingsMenu"
   latest_app_version=$(grep '"tag_name":' /tmp/ThemeMaster_wget.output  | sed -E 's/.*"([^"]+)".*/\1/')
 
   app_updates_checked=1
@@ -218,7 +232,7 @@ function UpdateApp() {
   mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
 
   wget -nv -o /tmp/ThemeMaster_wget.log "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
-  wget_result $?
+  wget_result $? "SettingsMenu"
   if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
     #Unzipping archive
     # sudo
@@ -298,7 +312,7 @@ function InstallTheme() {
   dialog --infobox "Installation is about to start..." 5 50 >/dev/tty1
 
   wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
-  wget_result $?
+  wget_result $? "UpdateMenu"
   latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
 
   REP_URL="https://api.github.com/repos/${github_user}/${theme}/zipball"
@@ -408,7 +422,7 @@ function GetChangeLog {
   SAVEIFS=$IFS
   IFS=$'\n'
   wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
-  wget_result $?
+  wget_result $? "ChangeLogMenu"
   temparr=($(grep '"message": \|"date": ' /tmp/ThemeMaster_wget.output  | sed -e 's/.*\"message\": \"//' | sed -e 's/.*\"date\": \"//'))
   IFS=$SAVEIFS
   temparr=("${temparr[@]%,}")
@@ -556,7 +570,7 @@ function InstallSubMenu {
   fi
 
   wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}"
-  wget_result $?
+  wget_result $? "InstallMenu"
   description=$(sed '/\"description\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
 
   dialog --backtitle "${backtitle}" --yes-label "Install" --no-label "Back" --yesno "${theme} description :\n ${description}" 10 50 2>&1 >/dev/tty1
@@ -584,7 +598,7 @@ function InstallMenu() {
       options+=($theme "Install")
     fi
   done
-  # Check whether there is still at least a theme from the collection to be installed
+  # Check whether there is still at least a theme to be installed
   if [[ -z $options ]]; then
     dialog --clear --backtitle "$mode_title" --msgbox "No more theme to be installed" 10 50 2>&1 >/dev/tty1
     MainMenu
