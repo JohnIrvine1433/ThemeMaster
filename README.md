@@ -7,7 +7,7 @@ ThemeMaster is an EmulationStation theme manager for Anbernic RG351P/M and RG351
 - You can force quit ThemeMaster by pressing Start + Select.
 
 ## ThemeMaster GitHub Repository mode
-In **GitHub repository** mode, ThemeMaster automatically create a theme collection by pulling information from a GitHub account based on repositories starting with "es-theme".
+In **GitHub repository** mode, ThemeMaster automatically creates theme’s collection by pulling information from a GitHub account based on repositories starting with "es-theme".
 - You can change the account to be used from **ThemeMaster Settings** menu.
 - The list of GitHub accounts to be used can be manually configured by editing the "collections" variable in "ThemeMaster.cfg" file.
 
