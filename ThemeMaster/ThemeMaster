@@ -531,12 +531,13 @@ function LoadGallery() {
   local theme
   local _640
   local _480
-  local temp
 
   unset onlinethemes
-  unset gallery_array
-  declare -A gallery_array
- 	{
+  unset gallery_640
+  unset gallery_480
+  unset gallery_640_untested
+  unset gallery_480_untested
+  {
   read
   while read -r author theme _640 _480
   do
