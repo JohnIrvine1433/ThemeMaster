@@ -50,9 +50,10 @@ changelog=()
 themes_updates_checked=0
 github_user=""
 # Gallery mode variables
-gallery_rows=""
-gallery_columns=4
-declare -A gallery_matrix
+gallery_640=()
+gallery_640_untested=()
+gallery_480=()
+gallery_480_untested=()
 declare -A gallery_array
 
 #########################
@@ -83,15 +84,15 @@ function wget_result() {
     dialog --backtitle "ThemeMaster - System" --yes-label "Return to MainMenu" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >/dev/tty1
     case $? in
     0)
-      if [ $returnto == "InitLoader" ]; then
+      if [[ $returnto == "InitLoader" ]]; then
         InitLoader
-      elif [ $returnto == "SettingsMenu" ]; then
+      elif [[ $returnto == "SettingsMenu" ]]; then
         SettingsMenu
-      elif [ $returnto == "UpdateMenu" ]; then
+      elif [[[ $returnto == "UpdateMenu" ]]; then
         UpdateMenu
-      elif [ $returnto == "ChangeLogMenu" ]; then
+      elif [[ $returnto == "ChangeLogMenu" ]]; then
         ChangeLogMenu
-      elif [ $returnto == "InstallMenu" ]; then
+      elif [[ $returnto == "InstallMenu" ]]; then
         InstallMenu
       else
         MainMenu
@@ -126,21 +127,13 @@ function InitLoader() {
   #Checking internet access
   wget -nv -o /tmp/ThemeMaster_wget.log --spider http://google.com
   wget_result $? "InitLoader"
-  if [[ $mode == "A" ]]; then
-    LoadGitHubThemes
-  else
-    LoadGallery
-  fi
+  SetMode
   LoadInstalledThemes
   if [[ "$themes_autocheckupdate" == "on" ]]; then
-    if [[ $mode == "A" ]]; then
-      CheckThemesUpdates
-    else
-      CheckThemesUpdates
-    fi
+    CheckThemesUpdates
   fi
   if [[ "$app_autocheckupdate" == "on" ]]; then
-    CheckAppUpdates
+    CheckAppUpdates "MainMenu"
   fi
   MainMenu
 }
@@ -189,6 +182,7 @@ function SetColorScheme() {
 
 function CheckAppUpdates() {
   local retval
+  local returnto=$1
 
   dialog --clear
   dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >/dev/tty1
@@ -209,7 +203,11 @@ function CheckAppUpdates() {
       UpdateApp
       ;;
     1)
-      SettingsMenu
+      if [ $returnto == "MainMenu" ]; then
+        MainMenu
+      else
+        SettingsMenu
+      fi
       ;;
     esac
   else
@@ -525,31 +523,35 @@ function LoadGitHubThemes() {
 
 function get_github_user() {
   local theme=$1
-  github_user=gallery_array[${theme}]
+  github_user=${gallery_array[$theme]}
 }
 
 function LoadGallery() {
-  local i=0
   local author
   local theme
   local _640
   local _480
+  local temp
 
   unset onlinethemes
-  unset gallery_matrix
   unset gallery_array
+  declare -A gallery_array
  	{
   read
   while read -r author theme _640 _480
   do
-    gallery_matrix[$i,0]="$author"
-    gallery_matrix[$i,1]="$theme"
-    gallery_matrix[$i,2]="$_640"
-    gallery_matrix[$i,3]="$_480"
-    gallery_rows=$i
+    if [[ "$_640" == "Yes" ]]; then
+      gallery_640+=("$theme")
+    else
+      gallery_640_untested+=("$theme")
+    fi
+    if [[ "$_480" == "Yes" ]]; then
+      gallery_480+=("$theme")
+    else
+      gallery_480_untested+=("$theme")
+    fi
     onlinethemes+=("$theme")
-    gallery_array[${theme}]="$author"
-    ((i++))
+    gallery_array[$theme]="$author"
   done
  	} < gallery.data
 }
@@ -557,6 +559,79 @@ function LoadGallery() {
 ##################
 # THEMEMASTER UI #
 ##################
+function BrowseMenu() {
+  local cmd
+  local options
+  local choice
+  local retval
+  local filter=$1
+  local theme
+  local browse_title
+  local temp
+
+  if [[ -z $filter ]]; then
+    browse_title="Select theme's resolution compatibility :"
+    options=(
+      A "Verified on 480x320"
+      B "Verified on 640x480"
+      C "Untested on 480x320"
+      D "Untested on 640x480"
+    )
+  elif [[ "$filter" == "480verified" ]]; then
+    browse_title="Themes successfully tested on 480x320 displays :"
+    for theme in "${gallery_480[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        options+=($theme "by ${gallery_array[$theme]}")
+      fi
+    done
+  elif [[ "$filter" == "480untested" ]]; then
+    browse_title="Themes not tested on 480x320 displays :"
+    for theme in "${gallery_480_untested[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        options+=($theme "by ${gallery_array[$theme]}")
+      fi
+    done
+  elif [[ "$filter" == "640verified" ]]; then
+    browse_title="Themes successfully tested on 640x480 displays :"
+    for theme in "${gallery_640[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        options+=($theme "by ${gallery_array[$theme]}")
+      fi
+    done
+  elif [[ "$filter" == "640untested" ]]; then
+    browse_title="Themes untested on 640x480 displays :"
+    for theme in "${gallery_640_untested[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        options+=($theme "by ${gallery_array[$theme]}")
+      fi
+    done
+  else
+    MainMenu
+  fi
+
+  cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --menu "$browse_title" "15" "50" "15")
+
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+
+  retval=$?
+  case $retval in
+  0)
+    if [[ -z $filter ]]; then
+      case $choice in
+        A) BrowseMenu "480verified" ;;
+        B) BrowseMenu "640verified" ;;
+        C) BrowseMenu "480unstested" ;;
+        D) BrowseMenu "640untested" ;;
+      esac
+    else
+      InstallTheme "$choice"
+    fi
+    ;;
+  1)
+    MainMenu
+    ;;
+  esac
+}
 
 function InstallSubMenu {
   local theme="$1"
@@ -952,7 +1027,7 @@ function SelectCollectionMenu() {
   local retval
   local temp
 
-  cmd=(dialog --backtitle "$mode_title" --title " [ Themes Configuration ] " --radiolist "Set the themes collection to be used with ThemeMaster :" "15" "50" "15")
+  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Theme Configuration ] " --radiolist "Set the themes collection to be used with ThemeMaster :" "15" "50" "15")
 
   for temp in "${collections[@]}"; do
     if [ "$temp" == "$active_collection" ]; then
@@ -969,12 +1044,11 @@ function SelectCollectionMenu() {
   0)
     if [ "$choice" != "$active_collection" ]; then
       active_collection=$choice
-      github_user=$choice
       dialog --clear
       dialog --infobox "Reloading parameters... Please wait !" 5 50 >/dev/tty1
       themes_updates_checked=0
+      SetMode
       SaveSettings
-      LoadGitHubThemes
     fi
     MainMenu
     ;;
@@ -989,18 +1063,15 @@ function SetModeMenu() {
   local options
   local choice
   local retval
-  local temp
 
   cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Mode Selection ] " --radiolist "Select the application mode to be used :" "15" "50" "15")
 
-  if [ "$mode" == "GitHub" ]; then
+  if [ "$mode" == "A" ]; then
     options+=(A "GitHub repository" "on")
     options+=(B "Theme gallery by Jetup" "off")
-    temp="A"
   else
     options+=(A "GitHub repository" "off")
     options+=(B "Theme gallery by Jetup" "on")
-    temp="B"
   fi
 
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
@@ -1008,7 +1079,7 @@ function SetModeMenu() {
   retval=$?
   case $retval in
   0)
-    if [ "$choice" != "$temp" ]; then
+    if [ "$choice" != "$mode" ]; then
       mode=$choice
       dialog --clear
       dialog --infobox "Reloading parameters... Please wait !" 5 50 >/dev/tty1
@@ -1090,13 +1161,24 @@ function MainMenu() {
 
   cmd=(dialog --no-cancel --backtitle "$mode_title" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
 
-  options=(
-    A "Install a theme"
-    B "Update a theme"
-    C "Advanced menu"
-    D "ThemeMaster Settings"
-    E "Exit to emulationstation"
-  )
+  if [ "$mode" == "A" ]; then
+    options=(
+      A "Install a theme"
+      B "Update a theme"
+      C "Advanced menu"
+      D "ThemeMaster Settings"
+      E "Exit to emulationstation"
+    )
+  else
+    options=(
+      A "Browse gallery"
+      B "Update a theme"
+      C "Advanced menu"
+      D "ThemeMaster Settings"
+      E "Exit to emulationstation"
+    )
+  fi
+
 
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
@@ -1104,7 +1186,13 @@ function MainMenu() {
   case $retval in
   0)
     case $choice in
-    A) InstallMenu ;;
+    A)
+      if [ "$mode" == "A" ]; then
+        InstallMenu
+      else
+        BrowseMenu
+      fi
+    ;;
     B) UpdateMenu ;;
     C) AdvancedMenu ;;
     D) SettingsMenu ;;
