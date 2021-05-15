@@ -543,12 +543,12 @@ function LoadGallery() {
   do
     if [[ "$_640" == "Yes" ]]; then
       gallery_640+=("$theme")
-    else
+    elif [[ "$_640" == "Untested" ]]; then
       gallery_640_untested+=("$theme")
     fi
     if [[ "$_480" == "Yes" ]]; then
       gallery_480+=("$theme")
-    else
+    elif [[ "$_480" == "Untested" ]]; then
       gallery_480_untested+=("$theme")
     fi
     onlinethemes+=("$theme")
@@ -578,39 +578,47 @@ function BrowseMenu() {
       C "Untested on 480x320"
       D "Untested on 640x480"
     )
-  elif [[ "$filter" == "480verified" ]]; then
-    browse_title="Themes successfully tested on 480x320 displays :"
-    for theme in "${gallery_480[@]}"; do
-      if [ ! -d "${themes_location}$theme" ]; then
-        options+=($theme "by ${gallery_array[$theme]}")
-      fi
-    done
-  elif [[ "$filter" == "480untested" ]]; then
-    browse_title="Themes not tested on 480x320 displays :"
-    for theme in "${gallery_480_untested[@]}"; do
-      if [ ! -d "${themes_location}$theme" ]; then
-        options+=($theme "by ${gallery_array[$theme]}")
-      fi
-    done
-  elif [[ "$filter" == "640verified" ]]; then
-    browse_title="Themes successfully tested on 640x480 displays :"
-    for theme in "${gallery_640[@]}"; do
-      if [ ! -d "${themes_location}$theme" ]; then
-        options+=($theme "by ${gallery_array[$theme]}")
-      fi
-    done
-  elif [[ "$filter" == "640untested" ]]; then
-    browse_title="Themes untested on 640x480 displays :"
-    for theme in "${gallery_640_untested[@]}"; do
-      if [ ! -d "${themes_location}$theme" ]; then
-        options+=($theme "by ${gallery_array[$theme]}")
-      fi
-    done
+    cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --menu "$browse_title" "15" "50" "15")
   else
-    MainMenu
+    if [[ "$filter" == "480verified" ]]; then
+      browse_title="Themes tested on 480x320 displays :"
+      for theme in "${gallery_480[@]}"; do
+        if [ ! -d "${themes_location}$theme" ]; then
+          options+=($theme "by ${gallery_array[$theme]}")
+        fi
+      done
+    elif [[ "$filter" == "480untested" ]]; then
+      browse_title="Themes not tested on 480x320 displays :"
+      for theme in "${gallery_480_untested[@]}"; do
+        if [ ! -d "${themes_location}$theme" ]; then
+          options+=($theme "by ${gallery_array[$theme]}")
+        fi
+      done
+    elif [[ "$filter" == "640verified" ]]; then
+      browse_title="Themes tested on 640x480 displays :"
+      for theme in "${gallery_640[@]}"; do
+        if [ ! -d "${themes_location}$theme" ]; then
+          options+=($theme "by ${gallery_array[$theme]}")
+        fi
+      done
+    elif [[ "$filter" == "640untested" ]]; then
+      browse_title="Themes untested on 640x480 displays :"
+      for theme in "${gallery_640_untested[@]}"; do
+        if [ ! -d "${themes_location}$theme" ]; then
+          options+=($theme "by ${gallery_array[$theme]}")
+        fi
+      done
+    else
+      #Safeguard
+      MainMenu
+    fi
+    cmd=(dialog --help-button --help-label "Details" --cancel-label "Back" --ok-label "Install" --backtitle "$mode_title" --menu "$browse_title" "15" "50" "15")
   fi
 
-  cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --menu "$browse_title" "15" "50" "15")
+  if [[ -z $options ]]; then
+    dialog --clear --backtitle "$mode_title" --msgbox "None (left) available to be installed" 10 50 2>&1 >/dev/tty1
+    BrowseMenu
+  fi
 
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
@@ -621,7 +629,7 @@ function BrowseMenu() {
       case $choice in
         A) BrowseMenu "480verified" ;;
         B) BrowseMenu "640verified" ;;
-        C) BrowseMenu "480unstested" ;;
+        C) BrowseMenu "480untested" ;;
         D) BrowseMenu "640untested" ;;
       esac
     else
@@ -629,8 +637,14 @@ function BrowseMenu() {
     fi
     ;;
   1)
-    MainMenu
+    if [[ -z $filter ]]; then
+      MainMenu
+    else
+      BrowseMenu
+    fi
     ;;
+  2)
+    InstallSubMenu "$choice" ;;
   esac
 }
 
@@ -640,6 +654,10 @@ function InstallSubMenu {
   local retval
 
   theme=${theme/HELP /}
+
+  if [ -e "./data/${theme}.png" ]; then
+    image-viewer ${app_location}ThemeMaster/data/${theme}.png
+  fi
   # In gallery mode, set $github_user according to current $theme
   if [[ $mode == "B" ]]; then
     get_github_user $theme
@@ -653,10 +671,13 @@ function InstallSubMenu {
   retval=$?
   case $retval in
   0)
-    InstallTheme "$theme"
-    ;;
+    InstallTheme "$theme" ;;
   1)
-    InstallMenu
+    if [ "$mode" == "A" ]; then
+      InstallMenu
+    else
+      BrowseMenu
+    fi
     ;;
   esac
 }
@@ -676,7 +697,7 @@ function InstallMenu() {
   done
   # Check whether there is still at least a theme to be installed
   if [[ -z $options ]]; then
-    dialog --clear --backtitle "$mode_title" --msgbox "No more theme to be installed" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "$mode_title" --msgbox "No more themes to be installed" 10 50 2>&1 >/dev/tty1
     MainMenu
   fi
 
