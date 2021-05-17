@@ -4,11 +4,12 @@
 # ThemeMaster
 # https://github.com/JohnIrvine1433/ThemeMaster
 #
-clear
+
 #
 # Environment settings
 #
 export TERM=linux
+clear
 sudo chmod 666 /dev/tty1
 source ./helper
 shopt -s extglob # required for extented pattern recognition
@@ -1181,7 +1182,7 @@ function MainMenu() {
   local choice
   local retval
 
-  cmd=(dialog --no-cancel --backtitle "$mode_title" --title " [ Main Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --no-cancel --backtitle "$mode_title" --title " [ Main Menu ] " --menu "D-pad to move, A for <enter>, B for <space>:" "15" "50" "15")
 
   if [ "$mode" == "A" ]; then
     options=(
