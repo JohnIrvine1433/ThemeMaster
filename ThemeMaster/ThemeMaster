@@ -9,7 +9,6 @@
 # Environment settings
 #
 export TERM=linux
-clear
 sudo chmod 666 /dev/tty1
 source ./helper
 shopt -s extglob # required for extented pattern recognition
@@ -17,7 +16,12 @@ shopt -s extglob # required for extented pattern recognition
 #
 # Joystick controls
 #
-sudo ./oga_controls ThemeMaster &
+isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
+if [ ! -z "$isitoga" ]; then
+  sudo ./oga_controls ThemeMaster &
+else
+  sudo ./anbernic_controls ThemeMaster &
+fi
 
 ##########################
 # APP SETTINGS VARIABLES #
@@ -25,7 +29,7 @@ sudo ./oga_controls ThemeMaster &
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="X.X.X"
+current_app_version="3.0.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 mode="A" # Default app mode to GitHub collection
 app_colorscheme="Default" # Default app UI color scheme
@@ -106,6 +110,9 @@ function wget_result() {
 }
 
 function InitLoader() {
+  local latest
+  local current
+
   #Make sure data folder is created
   mkdir -p ./data
   #App settings initialisation
@@ -120,9 +127,7 @@ function InitLoader() {
     SetEnvironment
     SaveSettings
   fi
-
   SetColorScheme
-
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
@@ -135,6 +140,22 @@ function InitLoader() {
   fi
   if [[ "$app_autocheckupdate" == "on" ]]; then
     CheckAppUpdates "MainMenu"
+  fi
+  #Update Gallery data
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits"
+  wget_result $?
+  latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
+  if [ ! -e ./data/gallery.db ]; then
+    UpdateGalleryDB
+    echo $latest > ./data/gallery.version
+  else
+    if [ -e "./data/gallery.version" ]; then
+      current=$(cat "./data/gallery.version")
+    fi
+    if [[ "$current" != "$latest" ]]; then
+      UpdateGalleryDB
+      echo $latest > ./data/gallery.version
+    fi
   fi
   MainMenu
 }
@@ -168,7 +189,7 @@ function SetMode() {
     mode_title="GitHub Repository Mode - Collection: $github_user"
     LoadGitHubThemes
   else
-    mode_title="Theme Gallery by Jetup"
+    mode_title="Theme Gallery Mode"
     LoadGallery
   fi
 }
@@ -283,9 +304,13 @@ function SaveSettings() {
 }
 
 function ExitApp() {
-  rm /tmp/ThemeMaster_wget.log
-  rm /tmp/ThemeMaster_wget.output
-  pgrep -f oga_controls | sudo xargs kill -9
+  rm /tmp/ThemeMaster*
+
+  if [ ! -z "$isitoga" ]; then
+    pgrep -f oga_controls | sudo xargs kill -9
+  else
+    pgrep -f anbernic_controls | sudo xargs kill -9
+  fi
   clear
   exit
 }
@@ -530,8 +555,9 @@ function get_github_user() {
 function LoadGallery() {
   local author
   local theme
-  local _640
   local _480
+  local _640
+  local _854
 
   unset onlinethemes
   unset gallery_640
@@ -540,7 +566,7 @@ function LoadGallery() {
   unset gallery_480_untested
   {
   read
-  while read -r author theme _640 _480
+  while read -r author theme _480 _640 _854
   do
     if [[ "$_640" == "Yes" ]]; then
       gallery_640+=("$theme")
@@ -555,12 +581,46 @@ function LoadGallery() {
     onlinethemes+=("$theme")
     gallery_array[$theme]="$author"
   done
- 	} < gallery.data
+} < ./data/gallery.db
+}
+
+function UpdateGalleryDB() {
+  local temp1
+  local temp
+  local preview_url
+  local _480
+  local _640
+  local _854
+  local account
+  local theme_repo
+
+  dialog --infobox "Updating Gallery data... Please wait !\n" 5 50 >/dev/tty1
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
+  wget_result $? "InitLoader"
+  grep "|" /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
+  tail -n+3 /tmp/ThemeMaster_temp.output > /tmp/ThemeMaster_wget.output
+  sed 's/[][!() ]//g' /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
+  > ./data/gallery.db
+  SAVEIFS=$IFS
+  IFS='|'
+  while read -r temp1 temp preview_url _480 _640 _854
+  do
+    account=$(echo $temp | awk -F"/" '{print $4}')
+    theme_repo=$(echo $temp | awk -F"/" '{print $5}')
+    echo "${account} ${theme_repo} ${_480} ${_640}" >> ./data/gallery.db
+    if [ ! -e "./data/${theme_repo}.png" ]; then
+      wget -nv -o /tmp/ThemeMaster_wget.log -O "./data/${theme_repo}.png" $preview_url
+      wget_result $? "InitLoader"
+    fi
+  done < /tmp/ThemeMaster_temp.output
+  IFS=$SAVEIFS
 }
 
 ##################
 # THEMEMASTER UI #
 ##################
+
+# Specfic to Gallery Mode
 function BrowseMenu() {
   local cmd
   local options
@@ -645,19 +705,21 @@ function BrowseMenu() {
     fi
     ;;
   2)
-    InstallSubMenu "$choice" ;;
+    InstallSubMenu "$choice" "$filter" ;;
   esac
 }
 
 function InstallSubMenu {
   local theme="$1"
+  local filter="$2"
   local description
   local retval
 
   theme=${theme/HELP /}
 
   if [ -e "./data/${theme}.png" ]; then
-    image-viewer ${app_location}ThemeMaster/data/${theme}.png
+    clear
+    image-viewer ${app_location}ThemeMaster/data/${theme}.png > /dev/null 2>&1
   fi
   # In gallery mode, set $github_user according to current $theme
   if [[ $mode == "B" ]]; then
@@ -668,7 +730,7 @@ function InstallSubMenu {
   wget_result $? "InstallMenu"
   description=$(sed '/\"description\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
 
-  dialog --backtitle "${backtitle}" --yes-label "Install" --no-label "Back" --yesno "${theme} description :\n ${description}" 10 50 2>&1 >/dev/tty1
+  dialog --backtitle "$mode_title" --title " [ ${theme} ] " --yes-label "Install" --no-label "Back" --yesno "About:\n ${description}" 10 50 2>&1 >/dev/tty1
   retval=$?
   case $retval in
   0)
@@ -677,7 +739,11 @@ function InstallSubMenu {
     if [ "$mode" == "A" ]; then
       InstallMenu
     else
-      BrowseMenu
+      if [[ ! -z $filter ]]; then
+        BrowseMenu "$filter"
+      else
+        BrowseMenu
+      fi
     fi
     ;;
   esac
@@ -778,7 +844,7 @@ function UpdateMenu() {
     options+=($theme "Update")
   done
 
-  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "$mode_title" --title "[ New releases ]" --menu "Select theme to update:" "15" "50" "15")
+  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "$mode_title" --title " [ New releases ] " --menu "Select theme to update:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
@@ -816,7 +882,7 @@ function ChangeLogMenu() {
     fi
 
 
-    cmd=(dialog --cancel-label "Cancel" --backtitle "$mode_title" --title "[ Themes Changelog ]" --menu "Select theme to update:" "15" "50" "15")
+    cmd=(dialog --cancel-label "Cancel" --backtitle "$mode_title" --title " [ Themes Changelog ] " --menu "Select theme :" "15" "50" "15")
     choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
     retval=$?
@@ -906,7 +972,7 @@ function ReinstallMenu() {
     dialog --clear --backtitle "$mode_title" --msgbox "No theme to be reinstalled !" 5 50 2>&1 >/dev/tty1
     AdvancedMenu
   fi
-  title="[ Reinstall Themes ]"
+  title=" [ Reinstall Themes ] "
 
   cmd=(dialog --ok-label "OK" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
@@ -928,7 +994,7 @@ function AdvancedMenu() {
   local choice
   local retval
 
-  cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --title " [ Advanced Menu ] " --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --title " [ Advanced Menu ] " --menu "Advanced actions :" "15" "50" "15")
 
   options=(
     A "View a theme changelog"
@@ -1043,6 +1109,7 @@ function StartupSettings() {
   esac
 }
 
+# Specfic to GitHub Mode
 function SelectCollectionMenu() {
   local cmd
   local options
@@ -1050,7 +1117,7 @@ function SelectCollectionMenu() {
   local retval
   local temp
 
-  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Theme Configuration ] " --radiolist "Set the themes collection to be used with ThemeMaster :" "15" "50" "15")
+  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Theme Configuration ] " --radiolist "Set the collection to be used :" "15" "50" "15")
 
   for temp in "${collections[@]}"; do
     if [ "$temp" == "$active_collection" ]; then
@@ -1124,7 +1191,7 @@ function SettingsMenu() {
   local choice
   local retval
 
-  cmd=(dialog --cancel-label "Back" --backtitle "ThemeMaster - System" --menu "You can use UP/DOWN on the D-pad and A to select:" "15" "50" "15")
+  cmd=(dialog --cancel-label "Back" --backtitle "ThemeMaster - System" --title " [ Settings ] " --menu "" "15" "50" "15")
 
   options=(
     A "Update ThemeMaster"

@@ -9,7 +9,9 @@ function PostInstallUpdater() {
   dialog --infobox "Processing post-installation ..." 5 50 >/dev/tty1
 
   #v2.2.0 - creation of the post-installation updater
-  #vX.X.X
+  #v3.0.0
+  #gamecontrollerdb non longer used with bespoke controls files
+  rm -f gamecontrollerdb.txt
   #Rename existing theme's installation log file extension from .log to .version
   mkdir -p ./data/
   for file in *.log; do
