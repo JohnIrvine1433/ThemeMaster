@@ -2,7 +2,7 @@
 ThemeMaster is an EmulationStation theme manager for RG351P/M, RG351V and RGB10 devices running ArkOS or TheRA.
 
 # Controls
-## Navigation
+### Navigation
 - Controls are : d-pad to move, A to validate, B to select an item in radiolist and checklist.
 - You can force quit ThemeMaster by pressing Start + Select.
 
@@ -25,7 +25,7 @@ In **GitHub repository** mode, ThemeMaster creates live theme’s collection by 
 In **Theme Gallery** mode, ThemeMaster relies on information from [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) by [Jetup](https://github.com/Jetup13) to create a bespoke theme collection (allowing access from different GitHub accounts at once).
 Collection is cached locally and updated on start whenever new commit exists on [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) repository.
 
-# Credit
+# Credits
 ThemeMaster reused some external code to emulated keyboards and display pictures :
 - anbernic_controls and oga_controls are based on [AnberPorts-Joystick](https://github.com/krishenriksen/AnberPorts-Joystick) by [Kris Henriksen](https://github.com/krishenriksen)
 - image-viewer is based on [Image Viewer](https://github.com/RICCIARDI-Adrien/Image_Viewer) by [Adrien Ricciardi](https://github.com/RICCIARDI-Adrien)
