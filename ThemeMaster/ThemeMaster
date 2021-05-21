@@ -103,7 +103,7 @@ function wget_result() {
         MainMenu
       fi
     ;;
-    1)
+    *)
       ExitApp ;;
     esac
   fi
@@ -283,7 +283,7 @@ function UpdateApp() {
     0)
       UpdateApp
       ;;
-    1)
+    *)
       ExitApp
       ;;
     esac
@@ -400,7 +400,7 @@ function InstallTheme() {
     0)
       UpdateMenu
       ;;
-    1)
+    *)
       ExitApp
       ;;
     esac
@@ -707,6 +707,9 @@ function BrowseMenu() {
     ;;
   2)
     InstallSubMenu "$choice" "$filter" ;;
+  *)
+    ExitApp
+    ;;
   esac
 }
 
@@ -790,6 +793,9 @@ function InstallMenu() {
   2)
     InstallSubMenu "$choice"
     ;;
+  *)
+    ExitApp
+    ;;
   esac
 }
 
@@ -842,6 +848,9 @@ function UpdateMenu() {
     1)
       MainMenu
       ;;
+    *)
+      ExitApp
+      ;;
     esac
   fi
 
@@ -863,6 +872,9 @@ function UpdateMenu() {
     ;;
   2)
     UpdateSubMenu "$choice"
+    ;;
+  *)
+    ExitApp
     ;;
   esac
 }
@@ -898,6 +910,9 @@ function ChangeLogMenu() {
       ;;
     1)
       AdvancedMenu
+      ;;
+    *)
+      ExitApp
       ;;
     esac
   else
@@ -958,6 +973,9 @@ function UninstallMenu() {
   1)
     AdvancedMenu
     ;;
+  *)
+    ExitApp
+    ;;
   esac
 }
 
@@ -991,6 +1009,9 @@ function ReinstallMenu() {
   1)
     AdvancedMenu
     ;;
+  *)
+    ExitApp
+    ;;
   esac
 }
 
@@ -1021,6 +1042,9 @@ function AdvancedMenu() {
     ;;
   1)
     MainMenu
+    ;;
+  *)
+    ExitApp
     ;;
   esac
 }
@@ -1076,6 +1100,9 @@ function ColorSchemeMenu() {
   1)
     SettingsMenu
     ;;
+  *)
+    ExitApp
+    ;;
   esac
 }
 
@@ -1111,6 +1138,9 @@ function StartupSettings() {
     ;;
   1)
     SettingsMenu
+    ;;
+  *)
+    ExitApp
     ;;
   esac
 }
@@ -1151,6 +1181,9 @@ function SelectCollectionMenu() {
   1)
     SettingsMenu
     ;;
+  *)
+    ExitApp
+    ;;
   esac
 }
 
@@ -1187,6 +1220,9 @@ function SetModeMenu() {
     ;;
   1)
     SettingsMenu
+    ;;
+  *)
+    ExitApp
     ;;
   esac
 }
@@ -1246,6 +1282,9 @@ function SettingsMenu() {
   1)
     MainMenu
     ;;
+  *)
+    ExitApp
+    ;;
   esac
 }
 
@@ -1295,7 +1334,7 @@ function MainMenu() {
     E) ExitApp ;;
     esac
     ;;
-  1)
+  *)
     ExitApp ;;
   esac
 }
