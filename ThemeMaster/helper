@@ -1,6 +1,9 @@
 #!/bin/bash
 #
-# Description :  ThemeMaster helper module
+# ThemeMaster
+# https://github.com/JohnIrvine1433/ThemeMaster
+# Description : dependencies management module
+#
 
 if id "ark" &>/dev/null || id "odroid" &>/dev/null; then
   if ! dpkg -s "dialog" &> /dev/null ; then

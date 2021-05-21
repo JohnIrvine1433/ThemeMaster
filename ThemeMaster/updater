@@ -1,6 +1,8 @@
 #!/bin/bash
 #
-# Description : ThemeMaster updater module
+# ThemeMaster
+# https://github.com/JohnIrvine1433/ThemeMaster
+# Description : post installation module
 #
 
 function PostInstallUpdater() {

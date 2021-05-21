@@ -1,7 +1,8 @@
 #!/bin/bash
-
 #
+# ThemeMaster
 # https://github.com/JohnIrvine1433/ThemeMaster
+# Description : launch script
 #
 cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/ThemeMaster"
 rm -rf /tmp/ThemeMaster.log

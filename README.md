@@ -39,8 +39,7 @@ Most evolutions have been initially implemented on [ArkThemes-fork](https://gith
 ## ArkOS
 Need to be on ArkOS 2021-02-13 (02132021) or newer.  
 Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools`
-You can do this over your network, or by plugging the sdcard into your PC. In that case the location would be `EASYROMS/tools`.
-Now in ArkOS Options menu there will be a folder called **Tools** and ThemeMaster can be run from there.
+Run ThemeMaster from ArkOS Options > Tools menu.
 
 ## TheRA
 Place *ThemeMaster.sh* and *ThemeMaster* folder in `/opt/tools`

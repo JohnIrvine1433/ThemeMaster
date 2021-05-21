@@ -1,8 +1,8 @@
 #!/bin/bash
-
 #
 # ThemeMaster
 # https://github.com/JohnIrvine1433/ThemeMaster
+# Description : main script
 #
 
 #
@@ -14,7 +14,7 @@ source ./helper
 shopt -s extglob # required for extented pattern recognition
 
 #
-# Joystick controls
+# Controls management
 #
 isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
 if [ ! -z "$isitoga" ]; then
@@ -64,9 +64,9 @@ declare -A gallery_array
 #########################
 # THEMEMASTER FUNCTIONS #
 #########################
-
+#
 # Global functions
-
+#
 function wget_result() {
   local wget_return=$1
   local returnto=$2
@@ -304,7 +304,7 @@ function SaveSettings() {
 }
 
 function ExitApp() {
-  rm /tmp/ThemeMaster*
+  rm /tmp/ThemeMaster_*
 
   if [ ! -z "$isitoga" ]; then
     pgrep -f oga_controls | sudo xargs kill -9
@@ -314,9 +314,9 @@ function ExitApp() {
   clear
   exit
 }
-
+#
 # Theme Management functions
-
+#
 function InstallTheme() {
   local theme=$1
   local latest
@@ -528,9 +528,9 @@ function CheckThemesUpdates() {
     sleep 1
   fi
 }
-
-# GitHub Collection Mode functions
-
+#
+# GitHub Repository mode functions
+#
 function LoadGitHubThemes() {
   #(re)Load online themes
   unset onlinethemes
@@ -544,9 +544,9 @@ function LoadGitHubThemes() {
   onlinethemes=("${onlinethemes[@]/#+([[:blank:]])/}") # remove leading space/tab from each element
   onlinethemes=("${onlinethemes[@]/%+([[:blank:]])/}") # remove trailing space/tab from each element
 }
-
-# Gallery Mode functions
-
+#
+# Gallery mode functions
+#
 function get_github_user() {
   local theme=$1
   github_user=${gallery_array[$theme]}
@@ -620,13 +620,14 @@ function UpdateGalleryDB() {
 # THEMEMASTER UI #
 ##################
 
-# Specfic to Gallery Mode
+# Specfic to Theme Gallery mode
 function BrowseMenu() {
+  local filter=$1
+  local selected_theme=$2
   local cmd
   local options
   local choice
   local retval
-  local filter=$1
   local theme
   local browse_title
   local temp
@@ -673,7 +674,7 @@ function BrowseMenu() {
       #Safeguard
       MainMenu
     fi
-    cmd=(dialog --help-button --help-label "Details" --cancel-label "Back" --ok-label "Install" --backtitle "$mode_title" --menu "$browse_title" "15" "50" "15")
+    cmd=(dialog --help-button --help-label "Details" --cancel-label "Back" --ok-label "Install" --backtitle "$mode_title" --default-item "$selected_theme" --menu "$browse_title" "15" "50" "15")
   fi
 
   if [[ -z $options ]]; then
@@ -720,36 +721,41 @@ function InstallSubMenu {
   if [ -e "./data/${theme}.png" ]; then
     clear
     image-viewer ${app_location}ThemeMaster/data/${theme}.png > /dev/null 2>&1
-  fi
-  # In gallery mode, set $github_user according to current $theme
-  if [[ $mode == "B" ]]; then
-    get_github_user $theme
-  fi
-
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}"
-  wget_result $? "InstallMenu"
-  description=$(sed '/\"description\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
-
-  dialog --backtitle "$mode_title" --title " [ ${theme} ] " --yes-label "Install" --no-label "Back" --yesno "About:\n ${description}" 10 50 2>&1 >/dev/tty1
-  retval=$?
-  case $retval in
-  0)
-    InstallTheme "$theme" ;;
-  1)
     if [ "$mode" == "A" ]; then
-      InstallMenu
+      InstallMenu "$theme"
     else
       if [[ ! -z $filter ]]; then
-        BrowseMenu "$filter"
+        BrowseMenu "$filter" "$theme"
       else
         BrowseMenu
       fi
     fi
-    ;;
-  esac
+  else
+    # In gallery mode, set $github_user according to current $theme
+    if [[ $mode == "B" ]]; then
+      get_github_user $theme
+    fi
+    wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}"
+    wget_result $? "InstallMenu"
+    description=$(sed '/\"description\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
+    if [[ $description == *"null,"* ]]; then
+      description="** No information available **"
+    fi
+    dialog --clear --backtitle "$mode_title" --title " [ ${theme} ] " --msgbox "About:\n ${description}" 10 50 2>&1 >/dev/tty1
+    if [ "$mode" == "A" ]; then
+      InstallMenu "$theme"
+    else
+      if [[ ! -z $filter ]]; then
+        BrowseMenu "$filter" "$theme"
+      else
+        BrowseMenu
+      fi
+    fi
+  fi
 }
 
 function InstallMenu() {
+  local selected_theme=$1
   local theme
   local options
   local cmd
@@ -770,7 +776,7 @@ function InstallMenu() {
 
   title="[ Install Themes ]"
 
-  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --default-item "$selected_theme" --menu "Select theme from the list:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
@@ -1109,7 +1115,7 @@ function StartupSettings() {
   esac
 }
 
-# Specfic to GitHub Mode
+# Specfic to GitHub Repository mode
 function SelectCollectionMenu() {
   local cmd
   local options

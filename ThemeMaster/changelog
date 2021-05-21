@@ -5,6 +5,7 @@ v3.0.0
 - Implement proper wget error management
 - Change theme's installation log file extension from .log to .version
 - Moved all app generated data sits within "data" subfolder
+- Various UI and navigation improvements
 v2.2.1
 - Fix app update management
 - Fix app settings initialisation
