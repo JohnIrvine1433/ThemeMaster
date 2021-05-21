@@ -823,6 +823,9 @@ function UpdateSubMenu {
   1)
     UpdateMenu
     ;;
+  *)
+    ExitApp
+    ;;
   esac
 }
 
