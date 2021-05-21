@@ -4,8 +4,8 @@ ThemeMaster is an EmulationStation theme manager for small screen devices (OGA, 
 # Controls
 ### Navigation
 - Controls are : d-pad to move, A to validate, B to select an item in radiolist and checklist.
-- Select key exit ThemeMaster
-- You can force quit ThemeMaster by pressing Start + Select.
+- Select key exits ThemeMaster
+- You can force quit ThemeMaster by pressing Select + Start.
 
 ## Image viewer
 - Controls are : X to quit displaying a picture, Y to rotate a picture.
@@ -39,7 +39,8 @@ Most evolutions have been initially implemented on [ArkThemes-fork](https://gith
 # Installation
 ## ArkOS
 Need to be on ArkOS 2021-02-13 (02132021) or newer.  
-Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools`
+Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools`.
+NB : on RG351V, if SD2 is being used for roms, installation must be in `/roms2/tools/`.
 Run ThemeMaster from ArkOS Options > Tools menu.
 
 ## TheRA

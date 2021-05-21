@@ -168,7 +168,11 @@ function SetEnvironment() {
   if [[ $temp == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
-    app_location="/roms/tools/"     #App installation path with trailing slash
+    if [[ -e "/opt/system/Advanced/Switch to SD2 for Roms.sh" ]]; then
+      app_location="/roms/tools/"     #App installation path when SD1 is being used for roms
+    else
+      app_location="/roms2/tools/"     #App installation path when SD2 is being used for roms
+    fi
   elif [[ $temp == *"TheRA"* ]]; then
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
