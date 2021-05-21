@@ -1,3 +1,5 @@
+v3.0.1
+- Fix Select key not being properly managed (now exit the app)
 v3.0.0
 - Add "Theme Gallery" mode with screenshot preview
 - Add controls support for RGB10 devices (and a bespoke controls file for Anbernic devices)

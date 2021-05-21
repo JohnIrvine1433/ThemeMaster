@@ -4,6 +4,7 @@ ThemeMaster is an EmulationStation theme manager for small screen devices (OGA, 
 # Controls
 ### Navigation
 - Controls are : d-pad to move, A to validate, B to select an item in radiolist and checklist.
+- Select key exit ThemeMaster
 - You can force quit ThemeMaster by pressing Start + Select.
 
 ## Image viewer
