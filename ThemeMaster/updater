@@ -19,4 +19,17 @@ function PostInstallUpdater() {
   for file in *.log; do
     mv -- "$file" "./data/${file%.log}.version"
   done
+  #v3.0.1
+  #app_location is now dynamic, remove it from config file
+  echo "app_conf_version=\"${current_app_version}\"" >ThemeMaster.cfg
+  echo "mode=\"${mode}\"" >>ThemeMaster.cfg
+  echo "themes_location=\"${themes_location}\"" >>ThemeMaster.cfg
+  echo "temp_ram_folder=\"${temp_ram_folder}\"" >>ThemeMaster.cfg
+  echo "app_autocheckupdate=\"${app_autocheckupdate}\"" >>ThemeMaster.cfg
+  echo "themes_autocheckupdate=\"${themes_autocheckupdate}\"" >>ThemeMaster.cfg
+  echo "active_collection=\"${active_collection}\"" >>ThemeMaster.cfg
+  echo "collections=(${collections[@]})" >>ThemeMaster.cfg
+  echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
+
+
 }

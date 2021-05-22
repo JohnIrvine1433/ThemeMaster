@@ -12,15 +12,17 @@ export TERM=linux
 sudo chmod 666 /dev/tty1
 source ./helper
 shopt -s extglob # required for extented pattern recognition
+app_location="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+app_location="${app_location%ThemeMaster}"
 
 #
 # Controls management
 #
 isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
 if [ ! -z "$isitoga" ]; then
-  sudo ./oga_controls ThemeMaster &
+  sudo ./oga_controls ThemeMaster > /dev/null 2>&1 &
 else
-  sudo ./anbernic_controls ThemeMaster &
+  sudo ./anbernic_controls ThemeMaster > /dev/null 2>&1 &
 fi
 
 ##########################
@@ -119,7 +121,7 @@ function InitLoader() {
   if [ -e "ThemeMaster.cfg" ]; then
     source ThemeMaster.cfg
     # Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
-    if [[ -z "$themes_location" || -z "$temp_ram_folder" || -z "$app_location" ]]; then
+    if [[ -z "$themes_location" || -z "$temp_ram_folder" ]]; then
       SetEnvironment
       SaveSettings
     fi
@@ -168,19 +170,12 @@ function SetEnvironment() {
   if [[ $temp == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
-    if [[ -e "/opt/system/Advanced/Switch to SD2 for Roms.sh" ]]; then
-      app_location="/roms/tools/"     #App installation path when SD1 is being used for roms
-    else
-      app_location="/roms2/tools/"     #App installation path when SD2 is being used for roms
-    fi
   elif [[ $temp == *"TheRA"* ]]; then
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
-    app_location="/opt/tools/"
   else
     themes_location=""
     temp_ram_folder=""
-    app_location=""
     SaveSettings
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
     ExitApp
@@ -299,7 +294,6 @@ function SaveSettings() {
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
   echo "themes_location=\"${themes_location}\"" >>ThemeMaster.cfg
   echo "temp_ram_folder=\"${temp_ram_folder}\"" >>ThemeMaster.cfg
-  echo "app_location=\"${app_location}\"" >>ThemeMaster.cfg
   echo "app_autocheckupdate=\"${app_autocheckupdate}\"" >>ThemeMaster.cfg
   echo "themes_autocheckupdate=\"${themes_autocheckupdate}\"" >>ThemeMaster.cfg
   echo "active_collection=\"${active_collection}\"" >>ThemeMaster.cfg
@@ -316,7 +310,6 @@ function ExitApp() {
     pgrep -f anbernic_controls | sudo xargs kill -9
   fi
   clear
-  exit
 }
 #
 # Theme Management functions
