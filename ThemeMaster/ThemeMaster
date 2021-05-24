@@ -31,7 +31,7 @@ fi
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="3.0.0"
+current_app_version="3.0.1"
 # Default app settings (overwritten by ThemeMaster.cfg)
 mode="A" # Default app mode to GitHub collection
 app_colorscheme="Default" # Default app UI color scheme
@@ -51,6 +51,7 @@ app_outdated=""
 mode_title=""
 # Common variables
 outdatedthemes=()
+cached_outdatedthemes=()
 installedthemes=()
 onlinethemes=()
 changelog=()
@@ -471,8 +472,9 @@ function CheckThemesUpdates() {
   local latest
   local current
   local retval
-  local cached_outdatedthemes=()
+  local temp_array=()
   local unchecked_themes=()
+  local temp
 
   dialog --clear
   dialog --infobox "Checking for themes updates... Please wait !" 5 50 >/dev/tty1
@@ -480,13 +482,18 @@ function CheckThemesUpdates() {
 
   #(re)Load installed themes with new release
   unset outdatedthemes
+  unset cached_outdatedthemes
   # Load cached outdated themes from current collection
   if [[ -e "./data/outdatedthemes.cache" ]]; then
     source ./data/outdatedthemes.cache
     outdatedthemes=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f)))
   fi
+echo "onlinethemes : ${onlinethemes[@]}\n" > ./DEBUG.TXT
+echo "cached outdatedthemes : ${cached_outdatedthemes[@]}\n" >> ./DEBUG.TXT
+echo "outdatedthemes from cache : ${outdatedthemes[@]}\n" >> ./DEBUG.TXT
   # Check for online update only if necessary (installed and not already cached)
   unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f)))
+echo "unchecked_themes : ${unchecked_themes[@]}\n" >> ./DEBUG.TXT
   for theme in "${unchecked_themes[@]}"; do
     latest=""
     current=""
@@ -508,6 +515,7 @@ function CheckThemesUpdates() {
       fi
     fi
   done
+echo "outdatedthemes after online check : ${outdatedthemes[@]}\n" >> ./DEBUG.TXT
 
   themes_updates_checked=1
 
@@ -517,8 +525,13 @@ function CheckThemesUpdates() {
     sleep 1
   else
     # Update cached outdated themes
-    cached_outdatedthemes=(${cached_outdatedthemes[@]} ${outdatedthemes[@]})
-    echo "cached_outdatedthemes=(${cached_outdatedthemes[@]})" > ./data/outdatedthemes.cache
+    SAVEIFS=$IFS
+    IFS=$'\n'
+    temp_array=(`for temp in "${cached_outdatedthemes[@]}" "${outdatedthemes[@]}" ; do echo "$temp" ; done | sort -du`)
+    IFS=$SAVEIFS
+
+    cached_outdatedthemes=(${temp_array[@]})
+    echo "cached_outdatedthemes=(${temp_array[@]})" > ./data/outdatedthemes.cache
 
     dialog --clear
     dialog --infobox "New theme update available !!" 5 50 >/dev/tty1
@@ -597,7 +610,7 @@ function UpdateGalleryDB() {
   grep "|" /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
   tail -n+3 /tmp/ThemeMaster_temp.output > /tmp/ThemeMaster_wget.output
   sed 's/[][!() ]//g' /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
-  > ./data/gallery.db
+  echo "*Account* *Repository* *480x320* *640x480* *854x480*" > ./data/gallery.db
   SAVEIFS=$IFS
   IFS='|'
   while read -r temp1 temp preview_url _480 _640 _854
@@ -954,7 +967,7 @@ function UninstallMenu() {
       dialog --clear --backtitle "$mode_title" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
       UninstallMenu
     fi
-    title="\Zb\Z1[ Caution - not from $github_user collection ]"
+    title="\Zb\Z1[ Caution - not part of $mode_title ]"
   fi
 
   cmd=(dialog --colors --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
