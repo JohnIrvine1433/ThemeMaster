@@ -1,3 +1,8 @@
+v3.1.0
+- Add a debug mode
+- Change ThemeMaster.cfg version management
+- Fix cached outdated themes not being updated
+- Various message updates and menu changes
 v3.0.1
 - Fix Select key not being properly managed (now exit the app)
 - Dynamic installation path (fix path on RG351V when using SD2)

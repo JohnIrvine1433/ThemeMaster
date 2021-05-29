@@ -31,14 +31,18 @@ fi
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="3.0.1"
+current_app_version="3.1.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
-mode="A" # Default app mode to GitHub collection
-app_colorscheme="Default" # Default app UI color scheme
+app_conf_version="" #Empty by default, managed through updater
+debug=0 #Debug mode off by default
+mode="A" #Default app mode to GitHub collection
+themes_location="" #Empty by default, managed through SetEnvironment
+temp_ram_folder="" #Empty by default, managed through SetEnvironment
 app_autocheckupdate="off" # Do not check for updates at startup
 themes_autocheckupdate="off" # Do not check for updates at startup
-collections=("Jetup13" "CodyV59" "EmuELEC" "RetroPie") # GitHub Collection Mode - Default collection list
 active_collection="Jetup13" # GitHub Collection Mode - Default active collection
+collections=("Jetup13" "CodyV59" "EmuELEC" "RetroPie") # GitHub Collection Mode - Default collection list
+app_colorscheme="Default" # Default app UI color scheme
 
 #####################
 #  GLOBAL VARIABLES #
@@ -121,6 +125,10 @@ function InitLoader() {
   #App settings initialisation
   if [ -e "ThemeMaster.cfg" ]; then
     source ThemeMaster.cfg
+    #DEBUG
+    if [[ $debug -eq 1 ]]; then
+      echo `date` >> ./DEBUG.TXT
+    fi
     # Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
     if [[ -z "$themes_location" || -z "$temp_ram_folder" ]]; then
       SetEnvironment
@@ -138,28 +146,15 @@ function InitLoader() {
   wget_result $? "InitLoader"
   SetMode
   LoadInstalledThemes
+  # Check and update gallery data at startup
+  CheckGalleryUpdates
   if [[ "$themes_autocheckupdate" == "on" ]]; then
     CheckThemesUpdates
   fi
   if [[ "$app_autocheckupdate" == "on" ]]; then
     CheckAppUpdates "MainMenu"
   fi
-  #Update Gallery data
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits"
-  wget_result $?
-  latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
-  if [ ! -e ./data/gallery.db ]; then
-    UpdateGalleryDB
-    echo $latest > ./data/gallery.version
-  else
-    if [ -e "./data/gallery.version" ]; then
-      current=$(cat "./data/gallery.version")
-    fi
-    if [[ "$current" != "$latest" ]]; then
-      UpdateGalleryDB
-      echo $latest > ./data/gallery.version
-    fi
-  fi
+
   MainMenu
 }
 
@@ -175,8 +170,6 @@ function SetEnvironment() {
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
   else
-    themes_location=""
-    temp_ram_folder=""
     SaveSettings
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
     ExitApp
@@ -237,6 +230,11 @@ function CheckAppUpdates() {
     dialog --clear
     dialog --infobox "ThemeMaster is up to date..." 5 50 >/dev/tty1
     sleep 1
+    if [ $returnto == "MainMenu" ]; then
+      MainMenu
+    else
+      SettingsMenu
+    fi
   fi
 }
 
@@ -291,7 +289,8 @@ function UpdateApp() {
 }
 
 function SaveSettings() {
-  echo "app_conf_version=\"${current_app_version}\"" >ThemeMaster.cfg
+  echo "app_conf_version=\"${app_conf_version}\"" >ThemeMaster.cfg
+  echo "debug=\"${debug}\"" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
   echo "themes_location=\"${themes_location}\"" >>ThemeMaster.cfg
   echo "temp_ram_folder=\"${temp_ram_folder}\"" >>ThemeMaster.cfg
@@ -311,7 +310,9 @@ function ExitApp() {
     pgrep -f anbernic_controls | sudo xargs kill -9
   fi
   clear
+  sudo systemctl restart emulationstation
 }
+
 #
 # Theme Management functions
 #
@@ -323,8 +324,14 @@ function InstallTheme() {
   local THEME_CONTENT
   local retval
   local estimated_size
-  local temparr
+  local temp_array
 
+  #DEBUG
+  if [[ $debug -eq 1 ]]; then
+    echo "InstallTheme $theme" >> ./DEBUG.TXT
+    echo "outdatedthemes before theme installation : ${outdatedthemes[@]}" >> ./DEBUG.TXT
+    echo "cached outdatedthemes before theme installation : ${cached_outdatedthemes[@]}" >> ./DEBUG.TXT
+  fi
   # In gallery mode, set $github_user according to current $theme
   if [[ $mode == "B" ]]; then
     get_github_user $theme
@@ -378,10 +385,22 @@ function InstallTheme() {
     #In case of update, remove theme from outdated themes list
     for temp in "${outdatedthemes[@]}"
     do
-        [[ $temp != $theme ]] && temparr+=($temp)
+        [[ $temp != $theme ]] && temp_array+=($temp)
     done
-    outdatedthemes=("${temparr[@]}")
-
+    outdatedthemes=("${temp_array[@]}")
+    #In case of update, remove theme from cached outdated themes list
+    unset temp_array
+    for temp in "${cached_outdatedthemes[@]}"
+    do
+        [[ $temp != $theme ]] && temp_array+=($temp)
+    done
+    cached_outdatedthemes=("${temp_array[@]}")
+    echo "cached_outdatedthemes=(${temp_array[@]})" > ./data/outdatedthemes.cache
+    #DEBUG
+    if [[ $debug -eq 1 ]]; then
+      echo "outdatedthemes after theme installation : ${outdatedthemes[@]}" >> ./DEBUG.TXT
+      echo "cached outdatedthemes after theme installation : ${cached_outdatedthemes[@]}" >> ./DEBUG.TXT
+    fi
     dialog --clear --backtitle "$mode_title" --msgbox "Theme $theme successfully installed!" 8 50 2>&1 >/dev/tty1
 
     MainMenu
@@ -418,7 +437,7 @@ function RemoveTheme() {
 
   LoadInstalledThemes
 
-  dialog --clear --backtitle "$mode_title" --msgbox "Theme $theme successfully removed!" 10 50 2>&1 >/dev/tty1
+  dialog --clear --backtitle "$mode_title" --msgbox "Theme $theme successfully removed!" 5 50 2>&1 >/dev/tty1
 
   UninstallMenu
 }
@@ -433,7 +452,7 @@ function LoadInstalledThemes {
 
 function GetChangeLog {
   local theme=$1
-  local temparr=()
+  local temp_array=()
   unset changelog
 
   # In gallery mode, set $github_user according to current $theme
@@ -445,13 +464,13 @@ function GetChangeLog {
   IFS=$'\n'
   wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $? "ChangeLogMenu"
-  temparr=($(grep '"message": \|"date": ' /tmp/ThemeMaster_wget.output  | sed -e 's/.*\"message\": \"//' | sed -e 's/.*\"date\": \"//'))
+  temp_array=($(grep '"message": \|"date": ' /tmp/ThemeMaster_wget.output  | sed -e 's/.*\"message\": \"//' | sed -e 's/.*\"date\": \"//'))
   IFS=$SAVEIFS
-  temparr=("${temparr[@]%,}")
-  temparr=("${temparr[@]//\"/}")
+  temp_array=("${temp_array[@]%,}")
+  temp_array=("${temp_array[@]//\"/}")
 
   i=0
-  for value in "${temparr[@]}"; do
+  for value in "${temp_array[@]}"; do
     if [[ $i -eq 0 ]]; then
       i=1
       echo $i
@@ -488,12 +507,18 @@ function CheckThemesUpdates() {
     source ./data/outdatedthemes.cache
     outdatedthemes=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f)))
   fi
-echo "onlinethemes : ${onlinethemes[@]}\n" > ./DEBUG.TXT
-echo "cached outdatedthemes : ${cached_outdatedthemes[@]}\n" >> ./DEBUG.TXT
-echo "outdatedthemes from cache : ${outdatedthemes[@]}\n" >> ./DEBUG.TXT
+
   # Check for online update only if necessary (installed and not already cached)
   unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f)))
-echo "unchecked_themes : ${unchecked_themes[@]}\n" >> ./DEBUG.TXT
+  #DEBUG
+  if [[ $debug -eq 1 ]]; then
+    echo "CheckThemesUpdates" >> ./DEBUG.TXT
+    echo "onlinethemes : ${onlinethemes[@]}" >> ./DEBUG.TXT
+    echo "cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./DEBUG.TXT
+    echo "outdatedthemes from cache : ${outdatedthemes[@]}" >> ./DEBUG.TXT
+    echo "unchecked_themes : ${unchecked_themes[@]}\n" >> ./DEBUG.TXT
+  fi
+
   for theme in "${unchecked_themes[@]}"; do
     latest=""
     current=""
@@ -515,7 +540,6 @@ echo "unchecked_themes : ${unchecked_themes[@]}\n" >> ./DEBUG.TXT
       fi
     fi
   done
-echo "outdatedthemes after online check : ${outdatedthemes[@]}\n" >> ./DEBUG.TXT
 
   themes_updates_checked=1
 
@@ -524,18 +548,21 @@ echo "outdatedthemes after online check : ${outdatedthemes[@]}\n" >> ./DEBUG.TXT
     dialog --infobox "All themes are up to date..." 5 50 >/dev/tty1
     sleep 1
   else
+    dialog --clear
+    dialog --infobox "New updates avalaible !" 5 50 >/dev/tty1
+    sleep 1
     # Update cached outdated themes
     SAVEIFS=$IFS
     IFS=$'\n'
     temp_array=(`for temp in "${cached_outdatedthemes[@]}" "${outdatedthemes[@]}" ; do echo "$temp" ; done | sort -du`)
     IFS=$SAVEIFS
-
     cached_outdatedthemes=(${temp_array[@]})
     echo "cached_outdatedthemes=(${temp_array[@]})" > ./data/outdatedthemes.cache
-
-    dialog --clear
-    dialog --infobox "New theme update available !!" 5 50 >/dev/tty1
-    sleep 1
+  fi
+  #DEBUG
+  if [[ $debug -eq 1 ]]; then
+    echo "outdatedthemes after online check : ${outdatedthemes[@]}" >> ./DEBUG.TXT
+    echo "updated cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./DEBUG.TXT
   fi
 }
 #
@@ -624,6 +651,28 @@ function UpdateGalleryDB() {
     fi
   done < /tmp/ThemeMaster_temp.output
   IFS=$SAVEIFS
+}
+
+function CheckGalleryUpdates() {
+  local latest
+  local current
+
+  #Update Gallery data
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits"
+  wget_result $?
+  latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
+  if [ ! -e ./data/gallery.db ]; then
+    UpdateGalleryDB
+    echo $latest > ./data/gallery.version
+  else
+    if [ -e "./data/gallery.version" ]; then
+      current=$(cat "./data/gallery.version")
+    fi
+    if [[ "$current" != "$latest" ]]; then
+      UpdateGalleryDB
+      echo $latest > ./data/gallery.version
+    fi
+  fi
 }
 
 ##################
@@ -848,10 +897,15 @@ function UpdateMenu() {
 
   if [[ $themes_updates_checked -eq 0 ]]; then
     CheckThemesUpdates
+    if [[ -z "$outdatedthemes" ]]; then
+      MainMenu
+    else
+      UpdateMenu
+    fi
   fi
 
   if [[ -z "$outdatedthemes" ]]; then
-    dialog --backtitle "$mode_title" --yesno "No updates available... Check again for updates ?" 10 50 2>&1 >/dev/tty1
+    dialog --backtitle "$mode_title" --yesno "No updates available... Do you really want to check again ?" 8 50 2>&1 >/dev/tty1
     retval=$?
     case $retval in
     0)
@@ -909,7 +963,7 @@ function ChangeLogMenu() {
 
     if [[ -z $options ]]; then
       dialog --clear --backtitle "$mode_title" --msgbox "No installed theme from $github_user" 5 50 2>&1 >/dev/tty1
-      AdvancedMenu
+      MainMenu
     fi
 
 
@@ -922,7 +976,7 @@ function ChangeLogMenu() {
       ChangeLogMenu "$choice"
       ;;
     1)
-      AdvancedMenu
+      MainMenu
       ;;
     *)
       ExitApp
@@ -936,7 +990,7 @@ function ChangeLogMenu() {
     dialog --clear --backtitle "$mode_title" --msgbox "$theme changelog :\n${changelog[*]}" 15 50 2>&1 >/dev/tty1
     IFS=$SAVEIFS
 
-    AdvancedMenu
+    MainMenu
   fi
 }
 
@@ -967,7 +1021,7 @@ function UninstallMenu() {
       dialog --clear --backtitle "$mode_title" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
       UninstallMenu
     fi
-    title="\Zb\Z1[ Caution - not part of $mode_title ]"
+    title="\Zb\Z1[ Caution - not part of active collection ]"
   fi
 
   cmd=(dialog --colors --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
@@ -984,7 +1038,7 @@ function UninstallMenu() {
     fi
     ;;
   1)
-    AdvancedMenu
+    MainMenu
     ;;
   *)
     ExitApp
@@ -1007,7 +1061,7 @@ function ReinstallMenu() {
   done
   if [[ -z $options ]]; then
     dialog --clear --backtitle "$mode_title" --msgbox "No theme to be reinstalled !" 5 50 2>&1 >/dev/tty1
-    AdvancedMenu
+    MainMenu
   fi
   title=" [ Reinstall Themes ] "
 
@@ -1018,40 +1072,6 @@ function ReinstallMenu() {
   case $retval in
   0)
     InstallTheme "$choice"
-    ;;
-  1)
-    AdvancedMenu
-    ;;
-  *)
-    ExitApp
-    ;;
-  esac
-}
-
-function AdvancedMenu() {
-  local cmd
-  local options
-  local choice
-  local retval
-
-  cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --title " [ Advanced Menu ] " --menu "Advanced actions :" "15" "50" "15")
-
-  options=(
-    A "View a theme changelog"
-    B "Uninstall a theme"
-    C "Reinstall a theme"
-  )
-
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
-  retval=$?
-  case $retval in
-  0)
-    case $choice in
-    A) ChangeLogMenu ;;
-    B) UninstallMenu ;;
-    C) ReinstallMenu ;;
-    esac
     ;;
   1)
     MainMenu
@@ -1126,11 +1146,11 @@ function StartupSettings() {
   local choices
   local retval
 
-  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Startup Options ] " --checklist "NB : ThemeMaster initialisation will take longer espacially if check for themes updates is activated :" "15" "50" "15")
+  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Startup Options ] " --checklist "Select options for the initialisation process :" "15" "50" "15")
 
   options=(
     ThemeMaster "Check for updates" $app_autocheckupdate
-    Themes "Check for update" $themes_autocheckupdate
+    Themes "Check for updates" $themes_autocheckupdate
   )
 
   choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
@@ -1245,11 +1265,19 @@ function SettingsMenu() {
   local options
   local choice
   local retval
+  local item_A
 
   cmd=(dialog --cancel-label "Back" --backtitle "ThemeMaster - System" --title " [ Settings ] " --menu "" "15" "50" "15")
 
+  if [[ $app_updates_checked -eq 0 ]]; then
+    item_A="Check for update"
+  elif [[ $app_outdated -eq 1 ]]; then
+    item_A="Update ThemeMaster"
+  else
+    item_A="No update - recheck"
+  fi
   options=(
-    A "Update ThemeMaster"
+    A "$item_A"
     B "View changelog"
     C "UI color scheme"
     D "Startup configuration"
@@ -1268,16 +1296,24 @@ function SettingsMenu() {
     A)
       if [[ $app_updates_checked -eq 0 ]]; then
         CheckAppUpdates
-        SettingsMenu
-      elif [[ $app_outdated -eq 0 ]]; then
-        dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster is up to date." 5 50 2>&1 >/dev/tty1
-        SettingsMenu
-      else
+      elif [[ $app_outdated -eq 1 ]]; then
         dialog --backtitle "ThemeMaster - System" --yes-label "Yes, go!" --no-label "No, later..." --yesno "You're about to update ThemeMaster, no further confirmation..." 10 50 2>&1 >/dev/tty1
         retval=$?
         case $retval in
         0)
           UpdateApp
+          ;;
+        1)
+          SettingsMenu
+          ;;
+        esac
+      else
+        dialog --backtitle "ThemeMaster - System" --yes-label "Yes" --no-label "No" --yesno "No update available, check again ?" 5 50 2>&1 >/dev/tty1
+        retval=$?
+        case $retval in
+        0)
+          app_updates_checked=0
+          CheckAppUpdates
           ;;
         1)
           SettingsMenu
@@ -1306,27 +1342,32 @@ function MainMenu() {
   local options
   local choice
   local retval
+  local item_A
+  local item_B
 
   cmd=(dialog --no-cancel --backtitle "$mode_title" --title " [ Main Menu ] " --menu "D-pad to move, A for <enter>, B for <space>:" "15" "50" "15")
 
-  if [ "$mode" == "A" ]; then
-    options=(
-      A "Install a theme"
-      B "Update a theme"
-      C "Advanced menu"
-      D "ThemeMaster Settings"
-      E "Exit to emulationstation"
-    )
+  if [[ "$mode" == "A" ]]; then
+    item_A="Install a theme"
   else
-    options=(
-      A "Browse gallery"
-      B "Update a theme"
-      C "Advanced menu"
-      D "ThemeMaster Settings"
-      E "Exit to emulationstation"
-    )
+    item_A="Browse gallery"
   fi
-
+  if [[ $themes_updates_checked -eq 0 ]]; then
+    item_B="Check for updates"
+  elif [[ -z "$outdatedthemes" ]]; then
+    item_B="No update - recheck"
+  else
+    item_B="Update a theme"
+  fi
+  options=(
+      A "$item_A"
+      B "$item_B"
+      C "View a theme changelog"
+      D "Uninstall a theme"
+      E "Reinstall a theme"
+      F "ThemeMaster Settings"
+      G "Exit to emulationstation"
+    )
 
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
@@ -1342,9 +1383,11 @@ function MainMenu() {
       fi
     ;;
     B) UpdateMenu ;;
-    C) AdvancedMenu ;;
-    D) SettingsMenu ;;
-    E) ExitApp ;;
+    C) ChangeLogMenu ;;
+    D) UninstallMenu ;;
+    E) ReinstallMenu ;;
+    F) SettingsMenu ;;
+    G) ExitApp ;;
     esac
     ;;
   *)
