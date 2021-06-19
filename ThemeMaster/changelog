@@ -1,3 +1,6 @@
+v3.1.1
+- Display version changes after app update
+- Fix SSL error while retrieving Gallery updates from GitHub
 v3.1.0
 - Add a debug mode
 - Change ThemeMaster.cfg version management
@@ -14,7 +17,7 @@ v3.0.0
 - Add a local cache for outdated themes
 - Implement proper wget error management
 - Change theme's installation log file extension from .log to .version
-- Moved all app generated data sits within "data" subfolder
+- Moved all app generated files within a new "data" subfolder
 - Various UI and navigation improvements
 v2.2.1
 - Fix app update management

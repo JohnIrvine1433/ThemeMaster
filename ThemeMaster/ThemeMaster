@@ -31,18 +31,18 @@ fi
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="3.1.0"
+current_app_version="3.1.1"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 debug=0 #Debug mode off by default
 mode="A" #Default app mode to GitHub collection
 themes_location="" #Empty by default, managed through SetEnvironment
 temp_ram_folder="" #Empty by default, managed through SetEnvironment
-app_autocheckupdate="off" # Do not check for updates at startup
+app_autocheckupdate="on" # Check for updates at startup
 themes_autocheckupdate="off" # Do not check for updates at startup
 active_collection="Jetup13" # GitHub Collection Mode - Default active collection
 collections=("Jetup13" "CodyV59" "EmuELEC" "RetroPie") # GitHub Collection Mode - Default collection list
-app_colorscheme="Default" # Default app UI color scheme
+app_colorscheme="All_Black" # Default app UI color scheme, "Default" for system's one
 
 #####################
 #  GLOBAL VARIABLES #
@@ -632,7 +632,7 @@ function UpdateGalleryDB() {
   local theme_repo
 
   dialog --infobox "Updating Gallery data... Please wait !\n" 5 50 >/dev/tty1
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
   wget_result $? "InitLoader"
   grep "|" /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
   tail -n+3 /tmp/ThemeMaster_temp.output > /tmp/ThemeMaster_wget.output

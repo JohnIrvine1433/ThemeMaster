@@ -6,6 +6,7 @@
 #
 
 function PostInstallUpdater() {
+  local changes
 
   dialog --clear
   dialog --infobox "Processing post-installation ..." 5 50 >/dev/tty1
@@ -23,7 +24,7 @@ function PostInstallUpdater() {
   #app_location is now dynamic, remove it from config file
 #from v3.1.0
   #add debug mode, add variable to config file
-  echo "app_conf_version=\"3.0.1\"" >ThemeMaster.cfg
+  echo "app_conf_version=\"3.1.0\"" >ThemeMaster.cfg
   echo "debug=0" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
   echo "themes_location=\"${themes_location}\"" >>ThemeMaster.cfg
@@ -39,5 +40,10 @@ function PostInstallUpdater() {
 ####################
   #3.1.0
   #Fix cached_outdatedthemes, file reset
-  rm -f ./data/outdatedthemes.cache
+  #rm -f ./data/outdatedthemes.cache
+
+#Display changelog
+  changes=$(head -n 3 changelog)
+  dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1 >/dev/tty1
+
 }
