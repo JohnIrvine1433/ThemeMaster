@@ -19,8 +19,11 @@ app_location="${app_location%ThemeMaster}"
 # Controls management
 #
 isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
-if [ ! -z "$isitoga" ]; then
+isitogs=$(dmesg | grep odroidgo3-joypad/input/input2)
+if [[ ! -z "$isitoga" ]]; then
   sudo ./oga_controls ThemeMaster > /dev/null 2>&1 &
+elif [[ ! -z "$isitogs" ]]; then
+  sudo ./ogs_controls ThemeMaster > /dev/null 2>&1 &
 else
   sudo ./anbernic_controls ThemeMaster > /dev/null 2>&1 &
 fi
@@ -166,6 +169,9 @@ function SetEnvironment() {
   if [[ $temp == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
+  elif [[ $temp == *"RetroOZ"* ]]; then
+    themes_location="/roms/themes/"
+    temp_ram_folder="/dev/shm/"
   elif [[ $temp == *"TheRA"* ]]; then
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
