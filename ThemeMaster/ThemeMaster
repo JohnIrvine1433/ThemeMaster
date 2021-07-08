@@ -21,11 +21,11 @@ app_location="${app_location%ThemeMaster}"
 isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
 isitogs=$(dmesg | grep odroidgo3-joypad/input/input2)
 if [[ ! -z "$isitoga" ]]; then
-  sudo ./oga_controls ThemeMaster > /dev/null 2>&1 &
+  sudo ./controls ThemeMaster oga > /dev/null 2>&1 &
 elif [[ ! -z "$isitogs" ]]; then
-  sudo ./ogs_controls ThemeMaster > /dev/null 2>&1 &
+  sudo ./controls ThemeMaster ogs > /dev/null 2>&1 &
 else
-  sudo ./anbernic_controls ThemeMaster > /dev/null 2>&1 &
+  sudo ./controls ThemeMaster anberbic > /dev/null 2>&1 &
 fi
 
 ##########################

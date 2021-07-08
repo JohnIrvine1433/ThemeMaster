@@ -34,6 +34,10 @@ function PostInstallUpdater() {
   echo "active_collection=\"${active_collection}\"" >>ThemeMaster.cfg
   echo "collections=(${collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
+ #from v3.2.0
+  #Remove deprecated controls files
+  rm -f ./oga_controls
+  rm -f ./anbernic_controls
 
 ####################
 # ONE SHOT UPDATES #
@@ -43,7 +47,7 @@ function PostInstallUpdater() {
   #rm -f ./data/outdatedthemes.cache
 
 #Display changelog
-  changes=$(head -n 3 changelog)
+  changes=$(head -n 4 changelog)
   dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1 >/dev/tty1
 
 }

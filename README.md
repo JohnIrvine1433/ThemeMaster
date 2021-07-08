@@ -1,5 +1,5 @@
 # ThemeMaster
-ThemeMaster is an EmulationStation theme manager for small screen devices (OGA, RGB10, RK2020, RG351p/m, and RG351v) running ArkOS or TheRA.
+ThemeMaster is an EmulationStation theme manager for small screen devices (e.g. OGA, RGB10, RK2020, RG351p/m, RG351v and OGS, RGB10 Max) running ArkOS, RetroOZ or TheRA.
 
 # Controls
 ### Navigation
