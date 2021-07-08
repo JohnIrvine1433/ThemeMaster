@@ -27,7 +27,7 @@ app_location="${app_location%ThemeMaster}"
 # else
 #   sudo ./controls ThemeMaster anberbic > /dev/null 2>&1 &
 # fi
-
+echo "DEBUG MODE"
 sudo ./controls ThemeMaster debug > /dev/null 2>&1 &
 
 ##########################
