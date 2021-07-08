@@ -18,15 +18,17 @@ app_location="${app_location%ThemeMaster}"
 #
 # Controls management
 #
-isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
-isitogs=$(dmesg | grep odroidgo3-joypad/input/input2)
-if [[ ! -z "$isitoga" ]]; then
-  sudo ./controls ThemeMaster oga > /dev/null 2>&1 &
-elif [[ ! -z "$isitogs" ]]; then
-  sudo ./controls ThemeMaster ogs > /dev/null 2>&1 &
-else
-  sudo ./controls ThemeMaster anberbic > /dev/null 2>&1 &
-fi
+# isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
+# isitogs=$(dmesg | grep odroidgo3-joypad/input/input2)
+# if [[ ! -z "$isitoga" ]]; then
+#   sudo ./controls ThemeMaster oga > /dev/null 2>&1 &
+# elif [[ ! -z "$isitogs" ]]; then
+#   sudo ./controls ThemeMaster ogs > /dev/null 2>&1 &
+# else
+#   sudo ./controls ThemeMaster anberbic > /dev/null 2>&1 &
+# fi
+
+sudo ./controls ThemeMaster debug > /dev/null 2>&1 &
 
 ##########################
 # APP SETTINGS VARIABLES #
