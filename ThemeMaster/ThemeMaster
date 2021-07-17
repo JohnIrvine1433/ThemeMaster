@@ -111,6 +111,7 @@ function InitLoader() {
   local current
   local isitoga
   local isitogs
+  local isitchi
   local param_device=""
   local param_debug=""
 
@@ -145,14 +146,32 @@ function InitLoader() {
   #
   isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
   isitogs=$(dmesg | grep odroidgo3-joypad/input/input2)
+  isitchi=$(dmesg | grep gameforce-gamepad/input/input2)
   if [[ ! -z "$isitoga" ]]; then
     param_device="oga"
   elif [[ ! -z "$isitogs" ]]; then
     param_device="ogs"
+  elif [[ ! -z "$isitchi" ]]; then
+    param_device="chi"
   else
     param_device="anbernic"
   fi
   sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
+
+#  if [[ ! -z "$isitoga" ]]; then
+#    param_device="oga"
+#    sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
+#  elif [[ ! -z "$isitogs" ]]; then
+#    param_device="ogs"
+#    sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
+#  elif [[ ! -z "$isitchi" ]]; then
+#    param_device="chi"
+#    sudo ./chi_controls ThemeMaster $param_device > /dev/null 2>&1 &
+#  else
+#    param_device="anbernic"
+#    sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
+#  fi
+
 
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
