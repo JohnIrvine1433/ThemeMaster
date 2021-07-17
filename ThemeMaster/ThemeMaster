@@ -21,7 +21,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="3.2.0"
+current_app_version="3.3.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 debug=0 #Debug mode off by default
@@ -157,21 +157,6 @@ function InitLoader() {
     param_device="anbernic"
   fi
   sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
-
-#  if [[ ! -z "$isitoga" ]]; then
-#    param_device="oga"
-#    sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
-#  elif [[ ! -z "$isitogs" ]]; then
-#    param_device="ogs"
-#    sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
-#  elif [[ ! -z "$isitchi" ]]; then
-#    param_device="chi"
-#    sudo ./chi_controls ThemeMaster $param_device > /dev/null 2>&1 &
-#  else
-#    param_device="anbernic"
-#    sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
-#  fi
-
 
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
