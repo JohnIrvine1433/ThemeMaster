@@ -34,7 +34,7 @@ function PostInstallUpdater() {
   echo "active_collection=\"${active_collection}\"" >>ThemeMaster.cfg
   echo "collections=(${collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
- #from v3.2.0
+#from v3.2.0
   #Remove deprecated controls files
   rm -f ./oga_controls
   rm -f ./anbernic_controls
