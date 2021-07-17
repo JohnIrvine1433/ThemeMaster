@@ -2,6 +2,7 @@ v3.2.0
 - Add support for RetroOZ
 - Add support for OGS and RBGB10 Max
 - Merge controls in one binary
+- Improvements to debug mode
 v3.1.1
 - Display version changes after app update
 - Fix SSL error while retrieving Gallery updates from GitHub

@@ -47,7 +47,7 @@ function PostInstallUpdater() {
   #rm -f ./data/outdatedthemes.cache
 
 #Display changelog
-  changes=$(head -n 4 changelog)
+  changes=$(head -n 5 changelog)
   dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1 >/dev/tty1
 
 }

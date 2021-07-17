@@ -15,21 +15,6 @@ shopt -s extglob # required for extented pattern recognition
 app_location="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 app_location="${app_location%ThemeMaster}"
 
-#
-# Controls management
-#
-# isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
-# isitogs=$(dmesg | grep odroidgo3-joypad/input/input2)
-# if [[ ! -z "$isitoga" ]]; then
-#   sudo ./controls ThemeMaster oga > /dev/null 2>&1 &
-# elif [[ ! -z "$isitogs" ]]; then
-#   sudo ./controls ThemeMaster ogs > /dev/null 2>&1 &
-# else
-#   sudo ./controls ThemeMaster anberbic > /dev/null 2>&1 &
-# fi
-echo "DEBUG MODE"
-sudo ./controls ThemeMaster debug > /dev/null 2>&1 &
-
 ##########################
 # APP SETTINGS VARIABLES #
 ##########################
@@ -98,7 +83,7 @@ function wget_result() {
       8) wget_error="Server issued an error response." ;;
       *) wget_error="Unmanaged error." ;;
     esac
-    dialog --backtitle "ThemeMaster - System" --yes-label "Return to MainMenu" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >/dev/tty1
+    dialog --backtitle "ThemeMaster - System" --yes-label "Continue" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >/dev/tty1
     case $? in
     0)
       if [[ $returnto == "InitLoader" ]]; then
@@ -124,16 +109,19 @@ function wget_result() {
 function InitLoader() {
   local latest
   local current
+  local isitoga
+  local isitogs
+  local param_device=""
+  local param_debug=""
 
   #Make sure data folder is created
   mkdir -p ./data
+
+  #
   #App settings initialisation
+  #
   if [ -e "ThemeMaster.cfg" ]; then
     source ThemeMaster.cfg
-    #DEBUG
-    if [[ $debug -eq 1 ]]; then
-      echo `date` >> ./DEBUG.TXT
-    fi
     # Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
     if [[ -z "$themes_location" || -z "$temp_ram_folder" ]]; then
       SetEnvironment
@@ -143,7 +131,29 @@ function InitLoader() {
     SetEnvironment
     SaveSettings
   fi
+  #DEBUG
+  if [[ $debug -eq 1 ]]; then
+    echo "************** NEW THEMES DEBUG OUTPUTS **************" >> ./debug_themes.txt
+    echo `date` >> ./debug_themes.txt
+    echo "***** THEMEMASTER.CFG *****" >> ./debug_themes.txt
+    cat ./ThemeMaster.cfg >> ./debug_themes.txt
+  fi
   SetColorScheme
+
+  #
+  # Load Controls management
+  #
+  isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
+  isitogs=$(dmesg | grep odroidgo3-joypad/input/input2)
+  if [[ ! -z "$isitoga" ]]; then
+    param_device="oga"
+  elif [[ ! -z "$isitogs" ]]; then
+    param_device="ogs"
+  else
+    param_device="anbernic"
+  fi
+  sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
+
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
@@ -298,7 +308,7 @@ function UpdateApp() {
 
 function SaveSettings() {
   echo "app_conf_version=\"${app_conf_version}\"" >ThemeMaster.cfg
-  echo "debug=\"${debug}\"" >>ThemeMaster.cfg
+  echo "debug=${debug}" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
   echo "themes_location=\"${themes_location}\"" >>ThemeMaster.cfg
   echo "temp_ram_folder=\"${temp_ram_folder}\"" >>ThemeMaster.cfg
@@ -311,12 +321,7 @@ function SaveSettings() {
 
 function ExitApp() {
   rm /tmp/ThemeMaster_*
-
-  if [ ! -z "$isitoga" ]; then
-    pgrep -f oga_controls | sudo xargs kill -9
-  else
-    pgrep -f anbernic_controls | sudo xargs kill -9
-  fi
+  pgrep -f controls | sudo xargs kill -9
   clear
   sudo systemctl restart emulationstation
 }
@@ -336,9 +341,9 @@ function InstallTheme() {
 
   #DEBUG
   if [[ $debug -eq 1 ]]; then
-    echo "InstallTheme $theme" >> ./DEBUG.TXT
-    echo "outdatedthemes before theme installation : ${outdatedthemes[@]}" >> ./DEBUG.TXT
-    echo "cached outdatedthemes before theme installation : ${cached_outdatedthemes[@]}" >> ./DEBUG.TXT
+    echo "InstallTheme $theme" >> ./debug_themes.txt
+    echo "outdatedthemes before theme installation : ${outdatedthemes[@]}" >> ./debug_themes.txt
+    echo "cached outdatedthemes before theme installation : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
   fi
   # In gallery mode, set $github_user according to current $theme
   if [[ $mode == "B" ]]; then
@@ -406,8 +411,8 @@ function InstallTheme() {
     echo "cached_outdatedthemes=(${temp_array[@]})" > ./data/outdatedthemes.cache
     #DEBUG
     if [[ $debug -eq 1 ]]; then
-      echo "outdatedthemes after theme installation : ${outdatedthemes[@]}" >> ./DEBUG.TXT
-      echo "cached outdatedthemes after theme installation : ${cached_outdatedthemes[@]}" >> ./DEBUG.TXT
+      echo "outdatedthemes after theme installation : ${outdatedthemes[@]}" >> ./debug_themes.txt
+      echo "cached outdatedthemes after theme installation : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
     fi
     dialog --clear --backtitle "$mode_title" --msgbox "Theme $theme successfully installed!" 8 50 2>&1 >/dev/tty1
 
@@ -520,11 +525,11 @@ function CheckThemesUpdates() {
   unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f)))
   #DEBUG
   if [[ $debug -eq 1 ]]; then
-    echo "CheckThemesUpdates" >> ./DEBUG.TXT
-    echo "onlinethemes : ${onlinethemes[@]}" >> ./DEBUG.TXT
-    echo "cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./DEBUG.TXT
-    echo "outdatedthemes from cache : ${outdatedthemes[@]}" >> ./DEBUG.TXT
-    echo "unchecked_themes : ${unchecked_themes[@]}\n" >> ./DEBUG.TXT
+    echo "CheckThemesUpdates" >> ./debug_themes.txt
+    echo "onlinethemes : ${onlinethemes[@]}" >> ./debug_themes.txt
+    echo "cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
+    echo "outdatedthemes from cache : ${outdatedthemes[@]}" >> ./debug_themes.txt
+    echo "unchecked_themes : ${unchecked_themes[@]}\n" >> ./debug_themes.txt
   fi
 
   for theme in "${unchecked_themes[@]}"; do
@@ -569,8 +574,8 @@ function CheckThemesUpdates() {
   fi
   #DEBUG
   if [[ $debug -eq 1 ]]; then
-    echo "outdatedthemes after online check : ${outdatedthemes[@]}" >> ./DEBUG.TXT
-    echo "updated cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./DEBUG.TXT
+    echo "outdatedthemes after online check : ${outdatedthemes[@]}" >> ./debug_themes.txt
+    echo "updated cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
   fi
 }
 #
