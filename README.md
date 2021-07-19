@@ -28,8 +28,8 @@ Collection is cached locally and updated on start whenever new commit exists on 
 
 # Credits
 ThemeMaster reused some external code to emulated keyboards and display pictures :
-- anbernic_controls and oga_controls are based on [AnberPorts-Joystick](https://github.com/krishenriksen/AnberPorts-Joystick) by [Kris Henriksen](https://github.com/krishenriksen)
-- image-viewer is based on [Image Viewer](https://github.com/RICCIARDI-Adrien/Image_Viewer) by [Adrien Ricciardi](https://github.com/RICCIARDI-Adrien)
+- 'controls' binary is based on [AnberPorts-Joystick](https://github.com/krishenriksen/AnberPorts-Joystick) by [Kris Henriksen](https://github.com/krishenriksen)
+- 'image-viewer' binary is based on [Image Viewer](https://github.com/RICCIARDI-Adrien/Image_Viewer) by [Adrien Ricciardi](https://github.com/RICCIARDI-Adrien)
 
 # Background
 Original script [ArkThemes](https://github.com/TadMSTR/ArkThemes) was developed for [ArkOS](https://github.com/christianhaitian/arkos) by [TadMSTR](https://github.com/TadMSTR) based on [AnberPorts](https://github.com/krishenriksen/AnberPorts) with contributions from **choo t** and **JohnIrvine**.
