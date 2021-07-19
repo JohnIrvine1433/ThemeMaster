@@ -222,8 +222,8 @@ function CheckAppUpdates() {
   local retval
   local returnto=$1
 
-  if [[ $current_branch!="master" ]]; then
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Update only available on the master branch" 10 50 2>&1 >/dev/tty1
+  if [[ "$current_branch" != "master" ]]; then
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Update only available on master branch" 5 50 2>&1 >/dev/tty1
     MainMenu
   fi
 
@@ -867,7 +867,7 @@ function InstallMenu() {
 
   title="[ Install Themes ]"
 
-  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --default-item "$selected_theme" --menu "Select theme from the list:" "15" "50" "15")
+  cmd=(dialog --extra-button --extra-label "Install ALL" --help-button --help-label "Details" --ok-label "Install" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --default-item "$selected_theme" --menu "Select theme from the list:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
@@ -881,6 +881,14 @@ function InstallMenu() {
     ;;
   2)
     InstallSubMenu "$choice"
+    ;;
+  3)
+    for theme in "${onlinethemes[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        InstallTheme "$theme"
+      fi
+    done
+    MainMenu
     ;;
   *)
     ExitApp

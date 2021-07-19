@@ -1,5 +1,5 @@
 v3.4.0
-- Add an option to update all themes at once
+- Add options to install and update all themes at once
 - Fix removed themes not being deleted from outdated cache
 v3.3.1
 - Display screenshot in fullscreen
