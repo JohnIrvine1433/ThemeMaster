@@ -21,7 +21,8 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="3.3.1"
+current_app_version="3.4.0"
+current_branch="nightly"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 debug=0 #Debug mode off by default
@@ -221,6 +222,11 @@ function CheckAppUpdates() {
   local retval
   local returnto=$1
 
+  if [[ $current_branch!="master" ]]; then
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Update only available on the master branch" 10 50 2>&1 >/dev/tty1
+    MainMenu
+  fi
+
   dialog --clear
   dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >/dev/tty1
   sleep 1
@@ -399,28 +405,14 @@ function InstallTheme() {
     rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
     #Reload liste of installed themes (in case of install)
     LoadInstalledThemes
-    #In case of update, remove theme from outdated themes list
-    for temp in "${outdatedthemes[@]}"
-    do
-        [[ $temp != $theme ]] && temp_array+=($temp)
-    done
-    outdatedthemes=("${temp_array[@]}")
-    #In case of update, remove theme from cached outdated themes list
-    unset temp_array
-    for temp in "${cached_outdatedthemes[@]}"
-    do
-        [[ $temp != $theme ]] && temp_array+=($temp)
-    done
-    cached_outdatedthemes=("${temp_array[@]}")
-    echo "cached_outdatedthemes=(${temp_array[@]})" > ./data/outdatedthemes.cache
+    #In case of update, update outdated themes lists
+    UpdateOutdatedThemes
     #DEBUG
     if [[ $debug -eq 1 ]]; then
       echo "outdatedthemes after theme installation : ${outdatedthemes[@]}" >> ./debug_themes.txt
       echo "cached outdatedthemes after theme installation : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
     fi
     dialog --clear --backtitle "$mode_title" --msgbox "Theme $theme successfully installed!" 8 50 2>&1 >/dev/tty1
-
-    MainMenu
 
   else
     #Install failed
@@ -454,7 +446,9 @@ function RemoveTheme() {
 
   LoadInstalledThemes
 
-  dialog --clear --backtitle "$mode_title" --msgbox "Theme $theme successfully removed!" 5 50 2>&1 >/dev/tty1
+  UpdateOutdatedThemes
+
+  dialog --clear --backtitle "$mode_title" --msgbox "Theme $theme successfully removed!" 10 50 2>&1 >/dev/tty1
 
   UninstallMenu
 }
@@ -465,6 +459,23 @@ function LoadInstalledThemes {
 
   installedthemes=(${themes_location}*)         # This creates an array of the full paths to all subdirs
   installedthemes=("${installedthemes[@]##*/}") # This removes the path prefix, leaving just the dir names
+}
+
+function UpdateOutdatedThemes() {
+  #Remove theme from outdated themes list
+  for temp in "${outdatedthemes[@]}"
+  do
+      [[ $temp != $theme ]] && temp_array+=($temp)
+  done
+  outdatedthemes=("${temp_array[@]}")
+  #Remove theme from cached outdated themes list
+  unset temp_array
+  for temp in "${cached_outdatedthemes[@]}"
+  do
+      [[ $temp != $theme ]] && temp_array+=($temp)
+  done
+  cached_outdatedthemes=("${temp_array[@]}")
+  echo "cached_outdatedthemes=(${temp_array[@]})" > ./data/outdatedthemes.cache
 }
 
 function GetChangeLog {
@@ -772,6 +783,7 @@ function BrowseMenu() {
       esac
     else
       InstallTheme "$choice"
+      MainMenu
     fi
     ;;
   1)
@@ -862,6 +874,7 @@ function InstallMenu() {
   case $retval in
   0)
     InstallTheme "$choice"
+    MainMenu
     ;;
   1)
     MainMenu
@@ -895,6 +908,7 @@ function UpdateSubMenu {
   case $retval in
   0)
     InstallTheme "$theme"
+    MainMenu
     ;;
   1)
     UpdateMenu
@@ -943,19 +957,26 @@ function UpdateMenu() {
     options+=($theme "Update")
   done
 
-  cmd=(dialog --help-button --help-label "Details" --ok-label "Go for it!" --cancel-label "Cancel" --backtitle "$mode_title" --title " [ New releases ] " --menu "Select theme to update:" "15" "50" "15")
+  cmd=(dialog --extra-button --extra-label "Update ALL" --help-button --help-label "Details" --ok-label "Update" --cancel-label "Cancel" --backtitle "$mode_title" --title " [ New releases ] " --menu "Select theme to update:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
 
   retval=$?
   case $retval in
   0)
     InstallTheme "$choice"
+    MainMenu
     ;;
   1)
     MainMenu
     ;;
   2)
     UpdateSubMenu "$choice"
+    ;;
+  3)
+    for theme in "${outdatedthemes[@]}"; do
+      InstallTheme "$theme"
+    done
+    MainMenu
     ;;
   *)
     ExitApp
@@ -1089,6 +1110,7 @@ function ReinstallMenu() {
   case $retval in
   0)
     InstallTheme "$choice"
+    MainMenu
     ;;
   1)
     MainMenu

@@ -42,9 +42,9 @@ function PostInstallUpdater() {
 ####################
 # ONE SHOT UPDATES #
 ####################
-  #3.1.0
+  #3.1.0 and 3.4.0
   #Fix cached_outdatedthemes, file reset
-  #rm -f ./data/outdatedthemes.cache
+  rm -f ./data/outdatedthemes.cache
 
 #Display changelog
   changes=$(head -n 3 changelog)
