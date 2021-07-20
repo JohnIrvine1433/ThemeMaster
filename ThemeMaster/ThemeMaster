@@ -118,7 +118,6 @@ function InitLoader() {
 
   #Make sure data folder is created
   mkdir -p ./data
-
   #
   #App settings initialisation
   #
@@ -141,7 +140,6 @@ function InitLoader() {
     cat ./ThemeMaster.cfg >> ./debug_themes.txt
   fi
   SetColorScheme
-
   #
   # Load Controls management
   #
@@ -158,7 +156,6 @@ function InitLoader() {
     param_device="anbernic"
   fi
   sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
-
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
@@ -174,7 +171,6 @@ function InitLoader() {
   if [[ "$app_autocheckupdate" == "on" ]]; then
     CheckAppUpdates "MainMenu"
   fi
-
   MainMenu
 }
 
@@ -182,7 +178,6 @@ function SetEnvironment() {
   local temp
 
   temp=$(grep "title=" /usr/share/plymouth/themes/text.plymouth)
-
   if [[ $temp == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
@@ -226,7 +221,6 @@ function CheckAppUpdates() {
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Update only available on master branch" 5 50 2>&1 >/dev/tty1
     MainMenu
   fi
-
   dialog --clear
   dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >/dev/tty1
   sleep 1
@@ -234,9 +228,7 @@ function CheckAppUpdates() {
   wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases/latest"
   wget_result $? "SettingsMenu"
   latest_app_version=$(grep '"tag_name":' /tmp/ThemeMaster_wget.output  | sed -E 's/.*"([^"]+)".*/\1/')
-
   app_updates_checked=1
-
   if [[ "$latest_app_version" != "$current_app_version" ]]; then
     app_outdated=1
     dialog --backtitle "ThemeMaster - System" --yes-label "Yes, now!" --no-label "No, later..." --yesno "A new release is available !! Launch update?" 10 50 2>&1 >/dev/tty1
@@ -276,7 +268,6 @@ function UpdateApp() {
   dialog --infobox "Downloading and installing ThemeMaster update..." 5 50 >/dev/tty1
   sleep 1
   mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
-
   wget -nv -o /tmp/ThemeMaster_wget.log "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
   wget_result $? "SettingsMenu"
   if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
@@ -295,9 +286,7 @@ function UpdateApp() {
     source ./updater
     #Execute post-install updater function
     PostInstallUpdater
-
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >/dev/tty1
-
     ExitApp
   else
     #Deleting temporary files...
@@ -359,18 +348,14 @@ function InstallTheme() {
   if [[ $mode == "B" ]]; then
     get_github_user $theme
   fi
-
   dialog --clear
-  dialog --infobox "Installation is about to start..." 5 50 >/dev/tty1
-
+  dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} installation is about to start..." 8 50 >/dev/tty1
+  sleep 1
   wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $? "UpdateMenu"
   latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
-
   REP_URL="https://api.github.com/repos/${github_user}/${theme}/zipball"
-
   mkdir -p ${temp_ram_folder}theme_update_temp #create a temp folder in RAM
-
   #Downloading archive
   # Only works if content-length header is provided
   # wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+%" | grep -o "[0-9]\+" | dialog --gauge "Downloading ${theme} package..." 10 50 0
@@ -379,12 +364,8 @@ function InstallTheme() {
   # wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+K \." | stdbuf -oL grep -o "[0-9]\+" | stdbuf -oL awk "{print int(\$1*100/$estimated_size)}" | dialog --gauge "Downloading package..." 10 50 0 >/dev/tty1
   # Display download progress directly form wget
   wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox "Downloading package..." 10 50 >/dev/tty1
-
   if unzip -qt "${temp_ram_folder}theme_update_temp/update.zip" | grep 'No errors detected'; then
-    dialog --clear
-    dialog --infobox "Theme's installation in progess..." 5 50 >/dev/tty1
-    sleep 1
-
+    dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} installation in progress..." 8 50 >/dev/tty1
     #Unzipping archive
     # sudo
     unzip -qo "${temp_ram_folder}theme_update_temp/update.zip" -d "${temp_ram_folder}theme_update_temp/" #unzip directly in RAM
@@ -412,19 +393,20 @@ function InstallTheme() {
       echo "outdatedthemes after theme installation : ${outdatedthemes[@]}" >> ./debug_themes.txt
       echo "cached outdatedthemes after theme installation : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
     fi
-    dialog --clear --backtitle "$mode_title" --msgbox "Theme $theme successfully installed!" 8 50 2>&1 >/dev/tty1
-
+    dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} successfully installed!" 8 50 >/dev/tty1
+    sleep 1
+    dialog --clear
   else
     #Install failed
     #Deleting temporary files
     # sudo
     rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
 
-    dialog --yes-label "Try again" --no-label "Exit" --yesno "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Exit" --yesno "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 15 50 2>&1 >/dev/tty1
     retval=$?
     case $retval in
     0)
-      UpdateMenu
+      MainMenu
       ;;
     *)
       ExitApp
@@ -437,19 +419,15 @@ function RemoveTheme() {
   local theme="$1"
 
   dialog --clear
-  dialog --infobox "Removing $theme ..." 5 50 >/dev/tty1
-
+  dialog --backtitle "$mode_title" --infobox "Removing ${theme#es-theme-}..." 8 50 >/dev/tty1
   # sudo
   rm -rf ${themes_location}$theme
   # sudo
   rm -f ./data/${theme}.version
-
   LoadInstalledThemes
-
   UpdateOutdatedThemes
-
-  dialog --clear --backtitle "$mode_title" --msgbox "Theme $theme successfully removed!" 10 50 2>&1 >/dev/tty1
-
+  dialog --backtitle "$mode_title" --infobox "Theme ${theme#es-theme-} successfully removed!" 8 50 >/dev/tty1
+  sleep 1
   UninstallMenu
 }
 
@@ -487,7 +465,6 @@ function GetChangeLog {
   if [[ $mode == "B" ]]; then
     get_github_user $theme
   fi
-
   SAVEIFS=$IFS
   IFS=$'\n'
   wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
@@ -496,20 +473,16 @@ function GetChangeLog {
   IFS=$SAVEIFS
   temp_array=("${temp_array[@]%,}")
   temp_array=("${temp_array[@]//\"/}")
-
   i=0
   for value in "${temp_array[@]}"; do
     if [[ $i -eq 0 ]]; then
       i=1
-      echo $i
     elif [[ $i -eq 1 ]]; then
       changelog+=("$value")
       i=2
-      echo $i
     elif [[ $i -eq 2 ]]; then
       changelog+=("$value")
       i=0
-      echo $i
     fi
   done
 }
@@ -526,7 +499,6 @@ function CheckThemesUpdates() {
   dialog --clear
   dialog --infobox "Checking for themes updates... Please wait !" 5 50 >/dev/tty1
   sleep 1
-
   #(re)Load installed themes with new release
   unset outdatedthemes
   unset cached_outdatedthemes
@@ -546,7 +518,6 @@ function CheckThemesUpdates() {
     echo "outdatedthemes from cache : ${outdatedthemes[@]}" >> ./debug_themes.txt
     echo "unchecked_themes : ${unchecked_themes[@]}\n" >> ./debug_themes.txt
   fi
-
   for theme in "${unchecked_themes[@]}"; do
     latest=""
     current=""
@@ -568,9 +539,7 @@ function CheckThemesUpdates() {
       fi
     fi
   done
-
   themes_updates_checked=1
-
   if [[ -z $outdatedthemes ]]; then
     dialog --clear
     dialog --infobox "All themes are up to date..." 5 50 >/dev/tty1
@@ -708,7 +677,7 @@ function CheckGalleryUpdates() {
 ##################
 
 # Specfic to Theme Gallery mode
-function BrowseMenu() {
+function BACKUPBrowseMenu() {
   local filter=$1
   local selected_theme=$2
   local cmd
@@ -763,14 +732,11 @@ function BrowseMenu() {
     fi
     cmd=(dialog --help-button --help-label "Details" --cancel-label "Back" --ok-label "Install" --backtitle "$mode_title" --default-item "$selected_theme" --menu "$browse_title" "15" "50" "15")
   fi
-
   if [[ -z $options ]]; then
     dialog --clear --backtitle "$mode_title" --msgbox "None (left) available to be installed" 10 50 2>&1 >/dev/tty1
     BrowseMenu
   fi
-
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)
@@ -795,6 +761,164 @@ function BrowseMenu() {
     ;;
   2)
     InstallSubMenu "$choice" "$filter" ;;
+  *)
+    ExitApp
+    ;;
+  esac
+}
+
+function BrowseMenu() {
+  local filter=$1
+  local selected_theme=$2
+  local cmd
+  local options
+  local choice
+  local choices
+  local retval
+  local theme
+  local browse_title
+  local tmp
+  local i=1
+  local nb=0
+
+  if [[ -z $filter ]]; then
+    browse_title="Select theme's resolution compatibility :"
+    options=(
+      A "Verified on 480x320"
+      B "Verified on 640x480"
+      C "Untested on 480x320"
+      D "Untested on 640x480"
+    )
+    cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --menu "$browse_title" "15" "50" "15")
+    choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+    retval=$?
+    case $retval in
+    0)
+      case $choice in
+        A) BrowseMenu "480verified" ;;
+        B) BrowseMenu "640verified" ;;
+        C) BrowseMenu "480untested" ;;
+        D) BrowseMenu "640untested" ;;
+      esac
+      ;;
+    1)
+      MainMenu
+      ;;
+    *)
+      ExitApp
+      ;;
+    esac
+  fi
+
+  if [[ "$filter" == "480verified" ]]; then
+    browse_title="Themes tested on 480x320 displays :"
+    for theme in "${gallery_480[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        options+=(${theme#es-theme-} "by ${gallery_array[$theme]}" "off")
+        nb=$((nb+1))
+      fi
+    done
+  elif [[ "$filter" == "480untested" ]]; then
+    browse_title="Themes not tested on 480x320 displays :"
+    for theme in "${gallery_480_untested[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        options+=(${theme#es-theme-} "by ${gallery_array[$theme]}" "off")
+        nb=$((nb+1))
+      fi
+    done
+  elif [[ "$filter" == "640verified" ]]; then
+    browse_title="Themes tested on 640x480 displays :"
+    for theme in "${gallery_640[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        options+=(${theme#es-theme-} "by ${gallery_array[$theme]}" "off")
+        nb=$((nb+1))
+      fi
+    done
+  elif [[ "$filter" == "640untested" ]]; then
+    browse_title="Themes untested on 640x480 displays :"
+    for theme in "${gallery_640_untested[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        options+=(${theme#es-theme-} "by ${gallery_array[$theme]}" "off")
+        nb=$((nb+1))
+      fi
+    done
+  else
+    #Safeguard
+    MainMenu
+  fi
+  if [[ -z $options ]]; then
+    dialog --clear --backtitle "$mode_title" --msgbox "None (left) available to be installed" 10 50 2>&1 >/dev/tty1
+    BrowseMenu
+  fi
+  cmd=(dialog --extra-button --extra-label "ALL" --help-button --help-label "Details" --cancel-label "Back" --ok-label "Selected" --backtitle "$mode_title" --default-item "$selected_theme" --checklist "$browse_title" "15" "50" "15")
+  tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choices=($tmp)
+  retval=$?
+  case $retval in
+  0)
+    if [[ ${#choices[@]} == 0 ]]; then
+      dialog --clear --backtitle "$mode_title" --msgbox "No theme selected (press B to select)" 5 50 2>&1 >/dev/tty1
+      InstallMenu
+    elif [[ ${#choices[@]} == 1 ]]; then
+      theme="es-theme-""$choices"
+      InstallTheme "$theme"
+      MainMenu
+    else
+      mode_title_saved="$mode_title"
+      for choice in "${choices[@]}"; do
+        mode_title="Batch processing : theme $i / ${#choices[@]}"
+        theme="es-theme-""$choice"
+        InstallTheme "$theme"
+        i=$((i+1))
+      done
+      mode_title="$mode_title_saved"
+      MainMenu
+    fi
+    ;;
+  1)
+    BrowseMenu
+    ;;
+  2)
+    theme="es-theme-""$choice"
+    InstallSubMenu "$theme" "$filter" ;;
+  3)
+    mode_title_saved="$mode_title"
+    if [[ "$filter" == "480verified" ]]; then
+      for theme in "${gallery_480[@]}"; do
+        if [ ! -d "${themes_location}$theme" ]; then
+          mode_title="Batch processing : theme $i / $nb"
+          InstallTheme "$theme"
+          i=$((i+1))
+        fi
+      done
+    elif [[ "$filter" == "480untested" ]]; then
+      for theme in "${gallery_480_untested[@]}"; do
+        if [ ! -d "${themes_location}$theme" ]; then
+          mode_title="Batch processing : theme $i / $nb"
+          InstallTheme "$theme"
+          i=$((i+1))
+        fi
+      done
+    elif [[ "$filter" == "640verified" ]]; then
+      for theme in "${gallery_640[@]}"; do
+        if [ ! -d "${themes_location}$theme" ]; then
+          mode_title="Batch processing : theme $i / $nb"
+          InstallTheme "$theme"
+          i=$((i+1))
+        fi
+      done
+    elif [[ "$filter" == "640untested" ]]; then
+      for theme in "${gallery_640_untested[@]}"; do
+        if [ ! -d "${themes_location}$theme" ]; then
+          mode_title="Batch processing : theme $i / $nb"
+          InstallTheme "$theme"
+          i=$((i+1))
+        fi
+      done
+    fi
+    mode_title="$mode_title_saved"
+    MainMenu
+    ;;
   *)
     ExitApp
     ;;
@@ -832,7 +956,7 @@ function InstallSubMenu {
     if [[ $description == *"null,"* ]]; then
       description="** No information available **"
     fi
-    dialog --clear --backtitle "$mode_title" --title " [ ${theme} ] " --msgbox "About:\n ${description}" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "$mode_title" --title " [ ${theme#es-theme-} ] " --msgbox "About:\n ${description}" 10 50 2>&1 >/dev/tty1
     if [ "$mode" == "A" ]; then
       InstallMenu "$theme"
     else
@@ -850,13 +974,19 @@ function InstallMenu() {
   local theme
   local options
   local cmd
-  local choice
+  local choices
   local retval
+  local nb=0
+  local i=1
+  local mode_title_saved
+  local tmp
 
   # Get themes not currently installed
   for theme in "${onlinethemes[@]}"; do
     if [ ! -d "${themes_location}$theme" ]; then
-      options+=($theme "Install")
+      #options+=($theme "Install" "off")
+      options+=(${theme#es-theme-} "Install" "off")
+      nb=$((nb+1))
     fi
   done
   # Check whether there is still at least a theme to be installed
@@ -864,12 +994,83 @@ function InstallMenu() {
     dialog --clear --backtitle "$mode_title" --msgbox "No more themes to be installed" 10 50 2>&1 >/dev/tty1
     MainMenu
   fi
-
   title="[ Install Themes ]"
+  cmd=(dialog --extra-button --extra-label "ALL" --help-button --help-label "Details" --ok-label "Selected" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --default-item "$selected_theme" --checklist "Select theme(s) from the list: :" "15" "50" "15")
+  tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choices=($tmp)
+  retval=$?
+  case $retval in
+  0)
+    if [[ ${#choices[@]} == 0 ]]; then
+      dialog --clear --backtitle "$mode_title" --msgbox "No theme selected (press B to select)" 10 50 2>&1 >/dev/tty1
+      InstallMenu
+    elif [[ ${#choices[@]} == 1 ]]; then
+      theme="es-theme-""$choices"
+      InstallTheme "$theme"
+      MainMenu
+    else
+      mode_title_saved="$mode_title"
+      for choice in "${choices[@]}"; do
+        mode_title="Batch processing : theme $i / ${#choices[@]}"
+        theme="es-theme-""$choice"
+        InstallTheme "$theme"
+        i=$((i+1))
+      done
+      mode_title="$mode_title_saved"
+      MainMenu
+    fi
+    ;;
+  1)
+    MainMenu
+    ;;
+  2)
+    theme="es-theme-""$choices"
+    InstallSubMenu "$choices"
+    ;;
+  3)
+    mode_title_saved="$mode_title"
+    for theme in "${onlinethemes[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        mode_title="Batch processing : theme $i / $nb"
+        InstallTheme "$theme"
+        i=$((i+1))
+      fi
+    done
+    mode_title="$mode_title_saved"
+    MainMenu
+    ;;
+  *)
+    ExitApp
+    ;;
+  esac
+}
 
+function BACKUPInstallMenu() {
+  local selected_theme=$1
+  local theme
+  local options
+  local cmd
+  local choice
+  local retval
+  local nb=0
+  local i=1
+  local mode_title_saved
+
+  # Get themes not currently installed
+  for theme in "${onlinethemes[@]}"; do
+    if [ ! -d "${themes_location}$theme" ]; then
+      options+=($theme "Install")
+      nb=$((nb+1))
+    fi
+  done
+  # Check whether there is still at least a theme to be installed
+  if [[ -z $options ]]; then
+    dialog --clear --backtitle "$mode_title" --msgbox "No more themes to be installed" 10 50 2>&1 >/dev/tty1
+    MainMenu
+  fi
+  title="[ Install Themes ]"
   cmd=(dialog --extra-button --extra-label "Install ALL" --help-button --help-label "Details" --ok-label "Install" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --default-item "$selected_theme" --menu "Select theme from the list:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)
@@ -883,11 +1084,15 @@ function InstallMenu() {
     InstallSubMenu "$choice"
     ;;
   3)
+    mode_title_saved="$mode_title"
     for theme in "${onlinethemes[@]}"; do
       if [ ! -d "${themes_location}$theme" ]; then
+        mode_title="Batch processing : theme $i / $nb"
         InstallTheme "$theme"
+        i=$((i+1))
       fi
     done
+    mode_title="$mode_title_saved"
     MainMenu
     ;;
   *)
@@ -906,12 +1111,10 @@ function UpdateSubMenu {
   if [[ $mode == "B" ]]; then
     get_github_user $theme
   fi
-
   wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $?
   commitmsg=$(sed '/\"message\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
-
-  dialog --backtitle "$mode_title" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1
+  dialog --backtitle "$mode_title" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme#es-theme-}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1
   retval=$?
   case $retval in
   0)
@@ -919,7 +1122,7 @@ function UpdateSubMenu {
     MainMenu
     ;;
   1)
-    UpdateMenu
+    UpdateMenu "$theme"
     ;;
   *)
     ExitApp
@@ -928,11 +1131,15 @@ function UpdateSubMenu {
 }
 
 function UpdateMenu() {
+  local selected_theme="$1"
   local theme
   local options
   local cmd
   local choice
   local retval
+  local nb=0
+  local i=1
+  local mode_title_saved
 
   if [[ $themes_updates_checked -eq 0 ]]; then
     CheckThemesUpdates
@@ -942,7 +1149,6 @@ function UpdateMenu() {
       UpdateMenu
     fi
   fi
-
   if [[ -z "$outdatedthemes" ]]; then
     dialog --backtitle "$mode_title" --yesno "No updates available... Do you really want to check again ?" 8 50 2>&1 >/dev/tty1
     retval=$?
@@ -959,31 +1165,35 @@ function UpdateMenu() {
       ;;
     esac
   fi
-
   # Select themes to update
   for theme in "${outdatedthemes[@]}"; do
-    options+=($theme "Update")
+    options+=(${theme#es-theme-} "Update")
+    nb=$((nb+1))
   done
-
-  cmd=(dialog --extra-button --extra-label "Update ALL" --help-button --help-label "Details" --ok-label "Update" --cancel-label "Cancel" --backtitle "$mode_title" --title " [ New releases ] " --menu "Select theme to update:" "15" "50" "15")
+  cmd=(dialog --extra-button --extra-label "Update ALL" --help-button --help-label "Details" --ok-label "Update" --cancel-label "Cancel" --backtitle "$mode_title" --title " [ New releases ] " --default-item "$selected_theme" --menu "Select theme to update:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)
-    InstallTheme "$choice"
+    theme="es-theme-""$choice"
+    InstallTheme "$theme"
     MainMenu
     ;;
   1)
     MainMenu
     ;;
   2)
-    UpdateSubMenu "$choice"
+    theme="es-theme-""$choice"
+    UpdateSubMenu "$theme"
     ;;
   3)
+    mode_title_saved="$mode_title"
     for theme in "${outdatedthemes[@]}"; do
+      mode_title="Batch processing : theme $i / $nb"
       InstallTheme "$theme"
+      i=$((i+1))
     done
+    bmode_title="$mode_title_saved"
     MainMenu
     ;;
   *)
@@ -1006,16 +1216,12 @@ function ChangeLogMenu() {
     for theme in "${themes[@]}"; do
       options+=($theme "See Changelog")
     done
-
     if [[ -z $options ]]; then
       dialog --clear --backtitle "$mode_title" --msgbox "No installed theme from $github_user" 5 50 2>&1 >/dev/tty1
       MainMenu
     fi
-
-
     cmd=(dialog --cancel-label "Cancel" --backtitle "$mode_title" --title " [ Themes Changelog ] " --menu "Select theme :" "15" "50" "15")
     choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
     retval=$?
     case $retval in
     0)
@@ -1030,12 +1236,10 @@ function ChangeLogMenu() {
     esac
   else
     GetChangeLog $1
-
     SAVEIFS=$IFS
     IFS=$'\n'
     dialog --clear --backtitle "$mode_title" --msgbox "$theme changelog :\n${changelog[*]}" 15 50 2>&1 >/dev/tty1
     IFS=$SAVEIFS
-
     MainMenu
   fi
 }
@@ -1053,7 +1257,7 @@ function UninstallMenu() {
     # Uninstall managed themes
     themes2remove=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
     for theme in "${themes2remove[@]}"; do
-      options+=($theme "Uninstall")
+      options+=(${theme#es-theme-} "Uninstall")
     done
     options+=(Other "System themes")
     title="[ Remove Themes ]"
@@ -1061,7 +1265,7 @@ function UninstallMenu() {
     # Uninstall non managed themes
     themes2remove=($(comm -13 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
     for theme in "${themes2remove[@]}"; do
-      options+=($theme "Uninstall")
+      options+=(${theme#es-theme-} "Uninstall")
     done
     if [[ -z $options ]]; then
       dialog --clear --backtitle "$mode_title" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
@@ -1069,18 +1273,16 @@ function UninstallMenu() {
     fi
     title="\Zb\Z1[ Caution - not part of active collection ]"
   fi
-
   cmd=(dialog --colors --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
-
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)
     if [ "$choice" == "Other" ]; then
       UninstallMenu "$choice"
     else
-      RemoveTheme "$choice"
+      theme="es-theme-""$choice"
+      RemoveTheme "$theme"
     fi
     ;;
   1)
@@ -1110,10 +1312,8 @@ function ReinstallMenu() {
     MainMenu
   fi
   title=" [ Reinstall Themes ] "
-
   cmd=(dialog --ok-label "OK" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)
@@ -1134,7 +1334,6 @@ function AppChangeLog() {
 
   temp=$(<changelog)
   dialog --clear --backtitle "ThemeMaster - v$current_app_version" --msgbox "$temp" 15 50 2>&1 >/dev/tty1
-
   SettingsMenu
 }
 
@@ -1149,9 +1348,7 @@ function ColorSchemeMenu() {
   dialog_config=(${app_location}ThemeMaster/*.dialogrc)         # This creates an array of the full paths to all .dialogrc files
   dialog_config=("${dialog_config[@]##*/}") #Remove path prefix
   dialog_config=("${dialog_config[@]%.*}") #Get filename without extension
-
   cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Color Scheme Selection ] " --radiolist "Select the ThemeMaster UI color scheme :" "15" "50" "15")
-
   if [[ "$app_colorscheme" == "Default" || -z $app_colorscheme ]]; then
     options+=(Default "System's color scheme" "on")
   else
@@ -1164,9 +1361,7 @@ function ColorSchemeMenu() {
       options+=($temp "Customized color scheme" "off")
     fi
   done
-
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)
@@ -1194,20 +1389,17 @@ function StartupSettings() {
   local retval
 
   cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Startup Options ] " --checklist "Select options for the initialisation process :" "15" "50" "15")
-
   options=(
     ThemeMaster "Check for updates" $app_autocheckupdate
     Themes "Check for updates" $themes_autocheckupdate
   )
-
   choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)
     app_autocheckupdate="off"
     themes_autocheckupdate="off"
-    for choice in $choices; do
+    for choice in "${choices[@]}"; do
       case $choice in
       ThemeMaster) app_autocheckupdate="on" ;;
       Themes) themes_autocheckupdate="on" ;;
@@ -1234,7 +1426,6 @@ function SelectCollectionMenu() {
   local temp
 
   cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Theme Configuration ] " --radiolist "Set the collection to be used :" "15" "50" "15")
-
   for temp in "${collections[@]}"; do
     if [ "$temp" == "$active_collection" ]; then
       options+=($temp "Themes collection" "on")
@@ -1242,9 +1433,7 @@ function SelectCollectionMenu() {
       options+=($temp "Themes collection" "off")
     fi
   done
-
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)
@@ -1274,7 +1463,6 @@ function SetModeMenu() {
   local retval
 
   cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Mode Selection ] " --radiolist "Select the application mode to be used :" "15" "50" "15")
-
   if [ "$mode" == "A" ]; then
     options+=(A "GitHub repository" "on")
     options+=(B "Theme gallery by Jetup" "off")
@@ -1282,9 +1470,7 @@ function SetModeMenu() {
     options+=(A "GitHub repository" "off")
     options+=(B "Theme gallery by Jetup" "on")
   fi
-
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)
@@ -1315,7 +1501,6 @@ function SettingsMenu() {
   local item_A
 
   cmd=(dialog --cancel-label "Back" --backtitle "ThemeMaster - System" --title " [ Settings ] " --menu "" "15" "50" "15")
-
   if [[ $app_updates_checked -eq 0 ]]; then
     item_A="Check for update"
   elif [[ $app_outdated -eq 1 ]]; then
@@ -1333,9 +1518,7 @@ function SettingsMenu() {
   if [ "$mode" == "A" ]; then
     options+=(F "Change active collection")
   fi
-
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)
@@ -1393,7 +1576,6 @@ function MainMenu() {
   local item_B
 
   cmd=(dialog --no-cancel --backtitle "$mode_title" --title " [ Main Menu ] " --menu "D-pad to move, A for <enter>, B for <space>:" "15" "50" "15")
-
   if [[ "$mode" == "A" ]]; then
     item_A="Install a theme"
   else
@@ -1415,9 +1597,7 @@ function MainMenu() {
       F "ThemeMaster Settings"
       G "Exit to emulationstation"
     )
-
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-
   retval=$?
   case $retval in
   0)

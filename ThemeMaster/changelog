@@ -1,5 +1,8 @@
 v3.4.0
-- Add options to install and update all themes at once
+- Allow installation of several themes at once (set install menu as a checklist)
+- Add an option to install all themes at once
+- Add an option to update all themes at once
+- Remove 'es-theme' from theme's name when displayed
 - Fix removed themes not being deleted from outdated cache
 v3.3.1
 - Display screenshot in fullscreen
