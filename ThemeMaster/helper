@@ -2,9 +2,69 @@
 #
 # ThemeMaster
 # https://github.com/JohnIrvine1433/ThemeMaster
-# Description : dependencies management module
+# Description : helper
 #
 
+#
+# Global functions
+#
+function wget_result() {
+  local wget_return=$1
+  local returnto=$2
+  local err_msg
+  local wget_error
+  local yes_label="Continue"
+
+  if [[ $returnto == "Restart" ]]; then
+    yes_label="Restart"
+  fi
+  if [[ $wget_return -ne 0 ]]; then
+    err_msg=$(</tmp/ThemeMaster_wget.log)
+    case $wget_return in
+      1) wget_error="Generic error code." ;;
+      2) wget_error="Parse error—for instance, when parsing command-line options." ;;
+      3) wget_error="File I/O error." ;;
+      4) wget_error="Network failure." ;;
+      5) wget_error="SSL verification failure." ;;
+      6) wget_error="Username/password authentication failure." ;;
+      7) wget_error="Protocol errors." ;;
+      8) wget_error="Server issued an error response." ;;
+      *) wget_error="Unmanaged error." ;;
+    esac
+    dialog --backtitle "ThemeMaster - System" --yes-label "$label" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >/dev/tty1
+    case $? in
+    0)
+      if [[ $returnto == "InitLoader" ]]; then
+        InitLoader
+      elif [[ $returnto == "SettingsMenu" ]]; then
+        SettingsMenu
+      elif [[[ $returnto == "UpdateMenu" ]]; then
+        UpdateMenu
+      elif [[ $returnto == "ChangeLogMenu" ]]; then
+        ChangeLogMenu
+      elif [[ $returnto == "InstallMenu" ]]; then
+        InstallMenu
+      elif [[ $returnto == "Restart" ]]; then
+        ./$(basename $0) && exit
+      else
+        MainMenu
+      fi
+    ;;
+    *)
+      ExitApp ;;
+    esac
+  fi
+}
+
+#
+# Dependencies management
+#
+dialog --clear
+dialog --infobox "Checking environment.. Please wait !" 5 50 >/dev/tty1
+#Checking internet access
+wget -nv -o /tmp/ThemeMaster_wget.log --spider http://google.com
+wget_result $? "Restart"
+#Checking required modules
 if id "ark" &>/dev/null || id "odroid" &>/dev/null; then
   if ! dpkg -s "dialog" &> /dev/null ; then
     install_dependencies="dialog"

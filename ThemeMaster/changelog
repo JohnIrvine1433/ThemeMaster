@@ -1,11 +1,11 @@
 v3.4.0
-- Allow installation of several themes at once (set install menu as a checklist)
+- Allow for installation of several themes at once (set Install menus as a checklist)
 - Add an option to install all themes at once
 - Add an option to update all themes at once
 - Remove 'es-theme' from theme's name when displayed
-- Fix removed themes not being deleted from outdated cache
-**TODO**
 - Check for internet connection before installing dependencies (helper)
+- TODO - Check dependencies for TheRA and RetroOZ (helper)
+- Fix removed themes not being deleted from outdated cache
 v3.3.1
 - Display screenshot in fullscreen
 - Fix loading of image-viewer
