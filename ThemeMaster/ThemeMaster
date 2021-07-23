@@ -10,7 +10,6 @@
 #
 export TERM=linux
 sudo chmod 666 /dev/tty1
-source ./helper
 shopt -s extglob # required for extented pattern recognition
 app_location="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 app_location="${app_location%ThemeMaster}"
@@ -63,8 +62,88 @@ declare -A gallery_array
 # THEMEMASTER FUNCTIONS #
 #########################
 #
+# Global functions
+#
+function wget_result() {
+  local wget_return=$1
+  local returnto=$2
+  local err_msg
+  local wget_error
+  local yes_label="Continue"
+
+  if [[ $returnto == "Restart" ]]; then
+    yes_label="Restart"
+  fi
+  if [[ $wget_return -ne 0 ]]; then
+    err_msg=$(</tmp/ThemeMaster_wget.log)
+    case $wget_return in
+    1) wget_error="Generic error code." ;;
+    2) wget_error="Parse error—for instance, when parsing command-line options." ;;
+    3) wget_error="File I/O error." ;;
+    4) wget_error="Network failure." ;;
+    5) wget_error="SSL verification failure." ;;
+    6) wget_error="Username/password authentication failure." ;;
+    7) wget_error="Protocol errors." ;;
+    8) wget_error="Server issued an error response." ;;
+    *) wget_error="Unmanaged error." ;;
+    esac
+    dialog --backtitle "ThemeMaster - System" --yes-label "$label" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >/dev/tty1
+    case $? in
+    0)
+      if [[ $returnto == "InitLoader" ]]; then
+        InitLoader
+      elif [[ $returnto == "SettingsMenu" ]]; then
+        SettingsMenu
+      elif [[[ $returnto == "UpdateMenu" ]]; then
+        UpdateMenu
+      elif [[ $returnto == "ChangeLogMenu" ]]; then
+        ChangeLogMenu
+      elif [[ $returnto == "InstallMenu" ]]; then
+        InstallMenu
+      elif [[ $returnto == "Restart" ]]; then
+        ./$(basename $0) && exit
+      else
+        MainMenu
+      fi
+      ;;
+    *)
+      ExitApp
+      ;;
+    esac
+  fi
+}
+
+#
 # Common functions
 #
+function InstallDependencies() {
+  local install_dependencies
+
+  #Checking internet access
+  wget -nv -o /tmp/ThemeMaster_wget.log --spider http://google.com
+  wget_result $? "Restart"
+  #Checking required modules (RetroOZ uses odroid)
+  if id "ark" &>/dev/null || id "odroid" &>/dev/null; then
+    if ! dpkg -s "dialog" &>/dev/null; then
+      install_dependencies="dialog"
+    fi
+    if ! dpkg -s "unzip" &>/dev/null; then
+      install_dependencies="$install_dependencies unzip"
+    fi
+    if ! dpkg -s "wget" &>/dev/null; then
+      install_dependencies="$install_dependencies wget"
+    fi
+    if ! dpkg -s "libevdev2" &>/dev/null; then
+      install_dependencies="$install_dependencies libevdev2"
+    fi
+    if [ ! -z "$install_dependencies" ]; then
+      dialog --clear
+      dialog --infobox "Installing dependencies ... Please wait !" 5 50 >/dev/tty1
+      sudo apt update && sudo apt install -y $install_dependencies --no-install-recommends
+    fi
+  fi
+}
+
 function InitLoader() {
   local latest
   local current
@@ -74,8 +153,6 @@ function InitLoader() {
   local param_device=""
   local param_debug=""
 
-  dialog --clear
-  dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Make sure data folder is created
   mkdir -p ./data
   #
@@ -92,6 +169,10 @@ function InitLoader() {
     SetEnvironment
     SaveSettings
   fi
+  SetColorScheme
+  dialog --clear
+  dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
+  InstallDependencies
   #DEBUG
   if [[ $debug -eq 1 ]]; then
     echo "************** NEW THEMES DEBUG OUTPUTS **************" >> ./debug_themes.txt
@@ -99,7 +180,6 @@ function InitLoader() {
     echo "***** THEMEMASTER.CFG *****" >> ./debug_themes.txt
     cat ./ThemeMaster.cfg >> ./debug_themes.txt
   fi
-  SetColorScheme
   #
   # Load Controls management
   #
@@ -131,8 +211,19 @@ function InitLoader() {
 
 function SetEnvironment() {
   local temp
+  local plymouth
 
-  temp=$(grep "title=" /usr/share/plymouth/themes/text.plymouth)
+  if [[ -e "/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth" ]]; then
+    plymouth="/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth"
+  elif [[ -e "/usr/share/plymouth/themes/text.plymouth" ]]; then
+    plymouth="/usr/share/plymouth/themes/text.plymouth"
+  else
+    SaveSettings
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised (plymouth file), please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    ExitApp
+  fi
+
+  temp=$(grep "title=" $plymouth)
   if [[ $temp == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
@@ -144,7 +235,7 @@ function SetEnvironment() {
     temp_ram_folder="/dev/shm/"
   else
     SaveSettings
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised (plymouth title), please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
     ExitApp
   fi
 }
@@ -353,7 +444,6 @@ function InstallTheme() {
   else
     #Install failed
     #Deleting temporary files
-    # sudo
     rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
 
     dialog --clear --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Exit" --yesno "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 15 50 2>&1 >/dev/tty1

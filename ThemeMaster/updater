@@ -2,27 +2,44 @@
 #
 # ThemeMaster
 # https://github.com/JohnIrvine1433/ThemeMaster
-# Description : post installation module
+# Description : post installation module, loaded after having downloaded the new version
 #
 
 function PostInstallUpdater() {
   local changes
+  local temp
+  local nbchanges
 
   dialog --clear
   dialog --infobox "Processing post-installation ..." 5 50 >/dev/tty1
 
-#from v2.2.0 - creation of the post-installation updater
-#from v3.0.0
-  #gamecontrollerdb non longer used with bespoke controls files
+####################################
+# FORWARD COMPATIBLE MODIFICATIONS #
+####################################
+#
+#Removing deprecated files
+#
+  #from v3.0.0
   rm -f gamecontrollerdb.txt
-  #Rename existing theme's installation log file extension from .log to .version
+  #from v3.2.0
+  rm -f ./oga_controls
+  rm -f ./anbernic_controls
+  #from v3.4.0
+  rm -f ./helper
+#
+# Renaming files
+#
+  #from v3.0.0
   mkdir -p ./data/
   for file in *.log; do
     mv -- "$file" "./data/${file%.log}.version"
   done
-#from v3.0.1
+#
+# ThemeMaster configuration file changes
+#
+  #from v3.0.1
   #app_location is now dynamic, remove it from config file
-#from v3.1.0
+  #from v3.1.0
   #add debug mode, add variable to config file
   echo "app_conf_version=\"3.1.0\"" >ThemeMaster.cfg
   echo "debug=0" >>ThemeMaster.cfg
@@ -34,20 +51,18 @@ function PostInstallUpdater() {
   echo "active_collection=\"${active_collection}\"" >>ThemeMaster.cfg
   echo "collections=(${collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
-#from v3.2.0
-  #Remove deprecated controls files
-  rm -f ./oga_controls
-  rm -f ./anbernic_controls
 
-####################
-# ONE SHOT UPDATES #
-####################
-  #3.1.0 and 3.4.0
+##########################
+# ONE SHOT MODIFICATIONS #
+##########################
+#3.1.0 and 3.4.0
   #Fix cached_outdatedthemes, file reset
   rm -f ./data/outdatedthemes.cache
 
 #Display changelog
-  changes=$(head -n 8 changelog)
+  temp=$(grep -n "^v" ./changelog | head -2 | tail -1)
+  nbchanges=${temp:0:1}
+  nbchanges=$((nbchanges-1))
+  changes=$(head -n $nbchanges changelog)
   dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1 >/dev/tty1
-
 }

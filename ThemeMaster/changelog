@@ -4,8 +4,8 @@ v3.4.0
 - Add an option to update all themes at once
 - Remove 'es-theme' from theme's name when displayed
 - Check for internet connection before installing dependencies (helper)
-- TODO - Check dependencies for TheRA and RetroOZ (helper)
 - Fix removed themes not being deleted from outdated cache
+- Various code improvements
 v3.3.1
 - Display screenshot in fullscreen
 - Fix loading of image-viewer
