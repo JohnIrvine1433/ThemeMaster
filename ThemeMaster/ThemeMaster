@@ -21,9 +21,9 @@ app_location="${app_location%ThemeMaster}"
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
 current_app_version="3.4.0"
-current_branch="nightly"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
+app_prerelease="off" #Do not use prerelease versions
 debug=0 #Debug mode off by default
 mode="A" #Default app mode to GitHub collection
 themes_location="" #Empty by default, managed through SetEnvironment
@@ -152,6 +152,8 @@ function InitLoader() {
   local isitchi
   local param_device=""
   local param_debug=""
+  local set_environment=0
+  local save_settings=0
 
   #Make sure data folder is created
   mkdir -p ./data
@@ -160,13 +162,24 @@ function InitLoader() {
   #
   if [ -e "ThemeMaster.cfg" ]; then
     source ThemeMaster.cfg
-    # Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
+    #Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
     if [[ -z "$themes_location" || -z "$temp_ram_folder" ]]; then
-      SetEnvironment
-      SaveSettings
+      set_environment=1
+      save_settings=1
+    fi
+    #Make the variable has been initialsed (could be removed later on)
+    if [[ -z "$app_prerelease" ]]; then
+      app_prerelease="off"
+      save_settings=1
     fi
   else
+    set_environment=1
+    save_settings=1
+  fi
+  if [[ $set_environment -eq 1 ]]; then
     SetEnvironment
+  fi
+  if [[ $save_settings -eq 1 ]]; then
     SaveSettings
   fi
   SetColorScheme
@@ -262,20 +275,24 @@ function SetColorScheme() {
 function CheckAppUpdates() {
   local retval
   local returnto=$1
+  local temp
+  local prerelease
 
-  if [[ "$current_branch" != "master" ]]; then
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Update only available on master branch" 5 50 2>&1 >/dev/tty1
-    MainMenu
-  fi
   dialog --clear
   dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >/dev/tty1
   sleep 1
   #Get latest ThemeMaster tag version
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases/latest"
+  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases"
   wget_result $? "SettingsMenu"
-  latest_app_version=$(grep '"tag_name":' /tmp/ThemeMaster_wget.output  | sed -E 's/.*"([^"]+)".*/\1/')
+  latest_app_version=$(grep -m 1 '"tag_name":' /tmp/ThemeMaster_wget.output  | sed -E 's/.*"([^"]+)".*/\1/')
+  prerelease=$(grep -m 1 '"prerelease":' /tmp/ThemeMaster_wget.output  | grep -c "true")
+  if [[ $app_prerelease == "off" ]]; then
+    temp=0
+  else
+    temp=1
+  fi
   app_updates_checked=1
-  if [[ "$latest_app_version" != "$current_app_version" ]]; then
+  if [ "${latest_app_version//.}" -gt "${current_app_version//.}" ] && [ "$prerelease" == "$temp" ]; then
     app_outdated=1
     dialog --backtitle "ThemeMaster - System" --yes-label "Yes, now!" --no-label "No, later..." --yesno "A new release is available !! Launch update?" 10 50 2>&1 >/dev/tty1
     retval=$?
@@ -305,9 +322,9 @@ function CheckAppUpdates() {
 }
 
 function UpdateApp() {
-  local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
+  #local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
+  local UPDATE_URL="https://github.com/${github_app_owner}/${github_app_repo}/archive/refs/tags/${latest_app_version}.zip"
   local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${latest_app_version}/ThemeMaster.nfo.zip"
-  #local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball/Nightly"
   local package_folder
   local retval
 
@@ -325,9 +342,10 @@ function UpdateApp() {
     #Unzipping archives
     unzip -qo ${temp_ram_folder}app_update_temp/update.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
     unzip -qo ${temp_ram_folder}app_update_temp/asset.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
-    #Getting unzipped package folder's name
-    package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
-    package_folder="${package_folder##*/}"
+    #Getting unzipped package folder's name - when using api for zipball
+    #package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
+    #package_folder="${package_folder##*/}"
+    package_folder="ThemeMaster-${latest_app_version}"
     #Overwritting existing files
     cp -rf ${temp_ram_folder}app_update_temp/${package_folder}/* $app_location
     cp -rf ${temp_ram_folder}app_update_temp/ThemeMaster.nfo $app_location
@@ -359,6 +377,7 @@ function UpdateApp() {
 
 function SaveSettings() {
   echo "app_conf_version=\"${app_conf_version}\"" >ThemeMaster.cfg
+  echo "app_prerelease=\"${app_prerelease}\"" >>ThemeMaster.cfg
   echo "debug=${debug}" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
   echo "themes_location=\"${themes_location}\"" >>ThemeMaster.cfg
@@ -1430,17 +1449,18 @@ function ColorSchemeMenu() {
   esac
 }
 
-function StartupSettings() {
+function AppSettings() {
   local cmd
   local options
   local choice
   local choices
   local retval
 
-  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Startup Options ] " --checklist "Select options for the initialisation process :" "15" "50" "15")
+  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Configuration Options ] " --checklist "Define application behaviour :" "15" "50" "15")
   options=(
-    ThemeMaster "Check for updates" $app_autocheckupdate
-    Themes "Check for updates" $themes_autocheckupdate
+    ThemeMaster "Check updates at startup" $app_autocheckupdate
+    Themes "Check updates at startup" $themes_autocheckupdate
+    Prerelease "Allow use of beta versions" $app_prerelease
   )
   choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
   retval=$?
@@ -1448,10 +1468,12 @@ function StartupSettings() {
   0)
     app_autocheckupdate="off"
     themes_autocheckupdate="off"
+    $app_prerelease="off"
     for choice in "${choices[@]}"; do
       case $choice in
       ThemeMaster) app_autocheckupdate="on" ;;
       Themes) themes_autocheckupdate="on" ;;
+      Prerelease) app_prerelease="on" ;;
       esac
     done
     SaveSettings
@@ -1561,8 +1583,8 @@ function SettingsMenu() {
     A "$item_A"
     B "View changelog"
     C "UI color scheme"
-    D "Startup configuration"
-    E "Change App Mode"
+    D "App configuration"
+    E "App Mode"
   )
   if [ "$mode" == "A" ]; then
     options+=(F "Change active collection")
@@ -1602,7 +1624,7 @@ function SettingsMenu() {
       ;;
     B) AppChangeLog ;;
     C) ColorSchemeMenu ;;
-    D) StartupSettings ;;
+    D) AppSettings ;;
     E) SetModeMenu ;;
     F) SelectCollectionMenu ;;
     esac

@@ -41,7 +41,10 @@ function PostInstallUpdater() {
   #app_location is now dynamic, remove it from config file
   #from v3.1.0
   #add debug mode, add variable to config file
-  echo "app_conf_version=\"3.1.0\"" >ThemeMaster.cfg
+  #From v3.4.0
+  #user can now choose to use prerelease versions
+  echo "app_conf_version=\"3.4.0\"" >ThemeMaster.cfg
+  echo "app_prerelease=\"${app_prerelease}\"" >>ThemeMaster.cfg
   echo "debug=0" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
   echo "themes_location=\"${themes_location}\"" >>ThemeMaster.cfg
