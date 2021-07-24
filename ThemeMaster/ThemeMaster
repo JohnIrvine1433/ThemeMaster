@@ -732,96 +732,6 @@ function CheckGalleryUpdates() {
 ##################
 
 # Specfic to Theme Gallery mode
-function BACKUPBrowseMenu() {
-  local filter=$1
-  local selected_theme=$2
-  local cmd
-  local options
-  local choice
-  local retval
-  local theme
-  local browse_title
-  local temp
-
-  if [[ -z $filter ]]; then
-    browse_title="Select theme's resolution compatibility :"
-    options=(
-      A "Verified on 480x320"
-      B "Verified on 640x480"
-      C "Untested on 480x320"
-      D "Untested on 640x480"
-    )
-    cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --menu "$browse_title" "15" "50" "15")
-  else
-    if [[ "$filter" == "480verified" ]]; then
-      browse_title="Themes tested on 480x320 displays :"
-      for theme in "${gallery_480[@]}"; do
-        if [ ! -d "${themes_location}$theme" ]; then
-          options+=($theme "by ${gallery_array[$theme]}")
-        fi
-      done
-    elif [[ "$filter" == "480untested" ]]; then
-      browse_title="Themes not tested on 480x320 displays :"
-      for theme in "${gallery_480_untested[@]}"; do
-        if [ ! -d "${themes_location}$theme" ]; then
-          options+=($theme "by ${gallery_array[$theme]}")
-        fi
-      done
-    elif [[ "$filter" == "640verified" ]]; then
-      browse_title="Themes tested on 640x480 displays :"
-      for theme in "${gallery_640[@]}"; do
-        if [ ! -d "${themes_location}$theme" ]; then
-          options+=($theme "by ${gallery_array[$theme]}")
-        fi
-      done
-    elif [[ "$filter" == "640untested" ]]; then
-      browse_title="Themes untested on 640x480 displays :"
-      for theme in "${gallery_640_untested[@]}"; do
-        if [ ! -d "${themes_location}$theme" ]; then
-          options+=($theme "by ${gallery_array[$theme]}")
-        fi
-      done
-    else
-      #Safeguard
-      MainMenu
-    fi
-    cmd=(dialog --help-button --help-label "Details" --cancel-label "Back" --ok-label "Install" --backtitle "$mode_title" --default-item "$selected_theme" --menu "$browse_title" "15" "50" "15")
-  fi
-  if [[ -z $options ]]; then
-    dialog --clear --backtitle "$mode_title" --msgbox "None (left) available to be installed" 10 50 2>&1 >/dev/tty1
-    BrowseMenu
-  fi
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-  retval=$?
-  case $retval in
-  0)
-    if [[ -z $filter ]]; then
-      case $choice in
-        A) BrowseMenu "480verified" ;;
-        B) BrowseMenu "640verified" ;;
-        C) BrowseMenu "480untested" ;;
-        D) BrowseMenu "640untested" ;;
-      esac
-    else
-      InstallTheme "$choice"
-      MainMenu
-    fi
-    ;;
-  1)
-    if [[ -z $filter ]]; then
-      MainMenu
-    else
-      BrowseMenu
-    fi
-    ;;
-  2)
-    InstallSubMenu "$choice" "$filter" ;;
-  *)
-    ExitApp
-    ;;
-  esac
-}
-
 function BrowseMenu() {
   local filter=$1
   local selected_theme=$2
@@ -864,7 +774,6 @@ function BrowseMenu() {
       ;;
     esac
   fi
-
   if [[ "$filter" == "480verified" ]]; then
     browse_title="Themes tested on 480x320 displays :"
     for theme in "${gallery_480[@]}"; do
@@ -934,8 +843,8 @@ function BrowseMenu() {
     BrowseMenu
     ;;
   2)
-    theme="es-theme-""$choice"
-    InstallSubMenu "$theme" "$filter" ;;
+    InstallSubMenu "$tmp" "$filter"
+    ;;
   3)
     mode_title_saved="$mode_title"
     if [[ "$filter" == "480verified" ]]; then
@@ -987,7 +896,7 @@ function InstallSubMenu {
   local retval
 
   theme=${theme/HELP /}
-
+  theme="es-theme-""$theme"
   if [ -e "./data/${theme}.png" ]; then
     clear
     ./image-viewer ${app_location}ThemeMaster/data/${theme}.png > /dev/null 2>&1
@@ -1078,64 +987,7 @@ function InstallMenu() {
     MainMenu
     ;;
   2)
-    theme="es-theme-""$choices"
-    InstallSubMenu "$choices"
-    ;;
-  3)
-    mode_title_saved="$mode_title"
-    for theme in "${onlinethemes[@]}"; do
-      if [ ! -d "${themes_location}$theme" ]; then
-        mode_title="Batch processing : theme $i / $nb"
-        InstallTheme "$theme"
-        i=$((i+1))
-      fi
-    done
-    mode_title="$mode_title_saved"
-    MainMenu
-    ;;
-  *)
-    ExitApp
-    ;;
-  esac
-}
-
-function BACKUPInstallMenu() {
-  local selected_theme=$1
-  local theme
-  local options
-  local cmd
-  local choice
-  local retval
-  local nb=0
-  local i=1
-  local mode_title_saved
-
-  # Get themes not currently installed
-  for theme in "${onlinethemes[@]}"; do
-    if [ ! -d "${themes_location}$theme" ]; then
-      options+=($theme "Install")
-      nb=$((nb+1))
-    fi
-  done
-  # Check whether there is still at least a theme to be installed
-  if [[ -z $options ]]; then
-    dialog --clear --backtitle "$mode_title" --msgbox "No more themes to be installed" 10 50 2>&1 >/dev/tty1
-    MainMenu
-  fi
-  title="[ Install Themes ]"
-  cmd=(dialog --extra-button --extra-label "Install ALL" --help-button --help-label "Details" --ok-label "Install" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --default-item "$selected_theme" --menu "Select theme from the list:" "15" "50" "15")
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
-  retval=$?
-  case $retval in
-  0)
-    InstallTheme "$choice"
-    MainMenu
-    ;;
-  1)
-    MainMenu
-    ;;
-  2)
-    InstallSubMenu "$choice"
+    InstallSubMenu "$tmp"
     ;;
   3)
     mode_title_saved="$mode_title"
