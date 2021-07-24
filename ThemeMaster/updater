@@ -41,11 +41,12 @@ function PostInstallUpdater() {
   #app_location is now dynamic, remove it from config file
   #from v3.1.0
   #add debug mode, add variable to config file
-  #From v3.4.0
+  #From v4.0.0
   #user can now choose to use prerelease versions
-  echo "app_conf_version=\"3.4.0\"" >ThemeMaster.cfg
-  echo "app_prerelease=\"${app_prerelease}\"" >>ThemeMaster.cfg
-  echo "debug=0" >>ThemeMaster.cfg
+  #change debug variable from 1/0 to on/off
+  echo "app_conf_version=\"4.0.0\"" >ThemeMaster.cfg
+  echo "app_prerelease=\"off\"" >>ThemeMaster.cfg
+  echo "debug=\"off\"" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
   echo "themes_location=\"${themes_location}\"" >>ThemeMaster.cfg
   echo "temp_ram_folder=\"${temp_ram_folder}\"" >>ThemeMaster.cfg

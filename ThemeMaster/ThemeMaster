@@ -20,11 +20,11 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="3.4.0"
+current_app_version="4.0.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
-debug=0 #Debug mode off by default
+debug="off" #Debug mode off by default
 mode="A" #Default app mode to GitHub collection
 themes_location="" #Empty by default, managed through SetEnvironment
 temp_ram_folder="" #Empty by default, managed through SetEnvironment
@@ -151,9 +151,6 @@ function InitLoader() {
   local isitogs
   local isitchi
   local param_device=""
-  local param_debug=""
-  local set_environment=0
-  local save_settings=0
 
   #Make sure data folder is created
   mkdir -p ./data
@@ -164,22 +161,11 @@ function InitLoader() {
     source ThemeMaster.cfg
     #Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
     if [[ -z "$themes_location" || -z "$temp_ram_folder" ]]; then
-      set_environment=1
-      save_settings=1
-    fi
-    #Make the variable has been initialsed (could be removed later on)
-    if [[ -z "$app_prerelease" ]]; then
-      app_prerelease="off"
-      save_settings=1
+      SetEnvironment
+      SaveSettings
     fi
   else
-    set_environment=1
-    save_settings=1
-  fi
-  if [[ $set_environment -eq 1 ]]; then
     SetEnvironment
-  fi
-  if [[ $save_settings -eq 1 ]]; then
     SaveSettings
   fi
   SetColorScheme
@@ -187,7 +173,7 @@ function InitLoader() {
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   InstallDependencies
   #DEBUG
-  if [[ $debug -eq 1 ]]; then
+  if [[ "$debug" == "on" ]]; then
     echo "************** NEW THEMES DEBUG OUTPUTS **************" >> ./debug_themes.txt
     echo `date` >> ./debug_themes.txt
     echo "***** THEMEMASTER.CFG *****" >> ./debug_themes.txt
@@ -409,7 +395,7 @@ function InstallTheme() {
   local temp_array
 
   #DEBUG
-  if [[ $debug -eq 1 ]]; then
+  if [[ "$debug" == "on" ]]; then
     echo "InstallTheme $theme" >> ./debug_themes.txt
     echo "outdatedthemes before theme installation : ${outdatedthemes[@]}" >> ./debug_themes.txt
     echo "cached outdatedthemes before theme installation : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
@@ -459,7 +445,7 @@ function InstallTheme() {
     #In case of update, update outdated themes lists
     UpdateOutdatedThemes
     #DEBUG
-    if [[ $debug -eq 1 ]]; then
+    if [[ "$debug" == "on" ]]; then
       echo "outdatedthemes after theme installation : ${outdatedthemes[@]}" >> ./debug_themes.txt
       echo "cached outdatedthemes after theme installation : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
     fi
@@ -580,7 +566,7 @@ function CheckThemesUpdates() {
   # Check for online update only if necessary (installed and not already cached)
   unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f)))
   #DEBUG
-  if [[ $debug -eq 1 ]]; then
+  if [[ "$debug" == "on" ]]; then
     echo "CheckThemesUpdates" >> ./debug_themes.txt
     echo "onlinethemes : ${onlinethemes[@]}" >> ./debug_themes.txt
     echo "cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
@@ -626,7 +612,7 @@ function CheckThemesUpdates() {
     echo "cached_outdatedthemes=(${temp_array[@]})" > ./data/outdatedthemes.cache
   fi
   #DEBUG
-  if [[ $debug -eq 1 ]]; then
+  if [[ "$debug" == "on" ]]; then
     echo "outdatedthemes after online check : ${outdatedthemes[@]}" >> ./debug_themes.txt
     echo "updated cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
   fi
@@ -1449,18 +1435,19 @@ function ColorSchemeMenu() {
   esac
 }
 
-function AppSettings() {
+function AdvancedSettings() {
   local cmd
   local options
   local choice
   local choices
   local retval
 
-  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Configuration Options ] " --checklist "Define application behaviour :" "15" "50" "15")
+  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Advanced Settings ] " --checklist "Default settings are recommended for most users." "15" "50" "15")
   options=(
-    ThemeMaster "Check updates at startup" $app_autocheckupdate
-    Themes "Check updates at startup" $themes_autocheckupdate
-    Prerelease "Allow use of beta versions" $app_prerelease
+    A "Check for App updates at startup" $app_autocheckupdate
+    B "Check for Themes updates at startup" $themes_autocheckupdate
+    C "Use ThemeMaster beta versions" $app_prerelease
+    D "Debug mode" $debug
   )
   choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
   retval=$?
@@ -1468,12 +1455,14 @@ function AppSettings() {
   0)
     app_autocheckupdate="off"
     themes_autocheckupdate="off"
-    $app_prerelease="off"
+    app_prerelease="off"
+    debug="off"
     for choice in "${choices[@]}"; do
       case $choice in
-      ThemeMaster) app_autocheckupdate="on" ;;
-      Themes) themes_autocheckupdate="on" ;;
-      Prerelease) app_prerelease="on" ;;
+      A) app_autocheckupdate="on" ;;
+      B) themes_autocheckupdate="on" ;;
+      C) app_prerelease="on" ;;
+      D) debug="on" ;;
       esac
     done
     SaveSettings
@@ -1583,8 +1572,8 @@ function SettingsMenu() {
     A "$item_A"
     B "View changelog"
     C "UI color scheme"
-    D "App configuration"
-    E "App Mode"
+    D "Change app mode"
+    E "Advanced settings"
   )
   if [ "$mode" == "A" ]; then
     options+=(F "Change active collection")
@@ -1624,8 +1613,8 @@ function SettingsMenu() {
       ;;
     B) AppChangeLog ;;
     C) ColorSchemeMenu ;;
-    D) AppSettings ;;
-    E) SetModeMenu ;;
+    D) SetModeMenu ;;
+    E) AdvancedSettings ;;
     F) SelectCollectionMenu ;;
     esac
     ;;
@@ -1665,8 +1654,8 @@ function MainMenu() {
       C "View a theme changelog"
       D "Uninstall a theme"
       E "Reinstall a theme"
-      F "ThemeMaster Settings"
-      G "Exit to emulationstation"
+      F "Settings"
+      G "Exit"
     )
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
   retval=$?

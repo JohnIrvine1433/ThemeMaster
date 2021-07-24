@@ -1,10 +1,11 @@
-v3.4.0
+v4.0.0
 - Allow for installation of several themes at once (set Install menus as a checklist)
 - Add an option to install all themes at once
 - Add an option to update all themes at once
 - Remove 'es-theme' from theme's name when displayed
 - Check for internet connection before installing dependencies (helper)
-- Add an option to update ThemeMaster with prereleased versions
+- Implement use of ThemeMaster beta versions
+- Debug mode can now be set through settings
 - Fix removed themes not being deleted from outdated cache
 - Various code improvements
 v3.3.1

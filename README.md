@@ -27,9 +27,8 @@ In **Theme Gallery** mode, ThemeMaster relies on information from [Emulationstat
 Collection is cached locally and updated on start whenever new commit exists on [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) repository.
 
 # Nota Bene
-Please be aware of the following caveats :
 - Beware that name duplicates (between different GitHub accounts) is not managed ; this could lead to unwanted behaviour if you choose to swap between theme collections (e.g. replace a theme with another).
-- Beta versions may have been barely tested, set the Prerelease option at your own risk.
+- Beta versions may have been barely tested, use at your own risk.
 
 # Credits
 ThemeMaster reused some external code to emulated keyboards and display pictures :
