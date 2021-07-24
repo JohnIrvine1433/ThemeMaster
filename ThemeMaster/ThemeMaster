@@ -306,6 +306,7 @@ function CheckAppUpdates() {
 
 function UpdateApp() {
   local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
+  local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${latest_app_version}/ThemeMaster.nfo.zip"
   #local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball/Nightly"
   local package_folder
   local retval
@@ -314,17 +315,22 @@ function UpdateApp() {
   dialog --infobox "Downloading and installing ThemeMaster update..." 5 50 >/dev/tty1
   sleep 1
   mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
+  #Download release
   wget -nv -o /tmp/ThemeMaster_wget.log "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
   wget_result $? "SettingsMenu"
+  #Download asset
+  wget -nv -o /tmp/ThemeMaster_wget.log "$ASSET_URL" -O ${temp_ram_folder}app_update_temp/asset.zip
+  wget_result $? "SettingsMenu"
   if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
-    #Unzipping archive
-    # sudo
+    #Unzipping archives
     unzip -qo ${temp_ram_folder}app_update_temp/update.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
+    unzip -qo ${temp_ram_folder}app_update_temp/asset.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
     #Getting unzipped package folder's name
     package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
     package_folder="${package_folder##*/}"
     #Overwritting existing files
     cp -rf ${temp_ram_folder}app_update_temp/${package_folder}/* $app_location
+    cp -rf ${temp_ram_folder}app_update_temp/ThemeMaster.nfo $app_location
     chmod 777 ${app_location}*.sh #make sure newly downloaded scripts have right permission
     #Deleting temporary files...
     rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
