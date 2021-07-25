@@ -69,7 +69,7 @@ wget -O - https://github.com/${github_app_owner}/${github_app_repo}/releases/dow
 
 #Display changelog
   temp=$(grep -n "^v" ./changelog | head -2 | tail -1)
-  nbchanges=${temp:0:1}
+  nbchanges=${temp%:*}
   nbchanges=$((nbchanges-1))
   changes=$(head -n $nbchanges changelog)
   dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1 >/dev/tty1
