@@ -9,6 +9,7 @@ function PostInstallUpdater() {
   local changes
   local temp
   local nbchanges
+  local updater_2_version="4.0.0"
 
   dialog --clear
   dialog --infobox "Processing post-installation ..." 5 50 >/dev/tty1
@@ -62,6 +63,9 @@ function PostInstallUpdater() {
 #3.1.0 and 4.0.0
   #Fix cached_outdatedthemes, file reset
   rm -f ./data/outdatedthemes.cache
+
+#Downloading asset for countinf down installations
+wget -O - https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${updater_2_version}/ThemeMaster.nfo.zip > /dev/null
 
 #Display changelog
   temp=$(grep -n "^v" ./changelog | head -2 | tail -1)
