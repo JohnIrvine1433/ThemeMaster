@@ -4,7 +4,7 @@ v4.0.0
 - Add an option to update all themes at once
 - Remove 'es-theme' from theme's name when displayed
 - Check for internet connection before installing dependencies (helper)
-- Implement use of ThemeMaster beta versions
+- Implement a beta mode (based on prerelease versions)
 - Debug mode can now be set through settings
 - Fix removed themes not being deleted from outdated cache
 - Various code improvements
