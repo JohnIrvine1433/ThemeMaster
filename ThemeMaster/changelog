@@ -1,3 +1,6 @@
+v4.0.1
+- Fix plymouth file search for RetroOZ
+- Stop using dmesg in case buffer is purged
 v4.0.0
 - Allow for installation of several themes at once (set Install menus as a checklist)
 - Add an option to install all themes at once

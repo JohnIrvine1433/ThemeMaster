@@ -20,7 +20,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.0.0"
+current_app_version="4.0.1"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -182,17 +182,18 @@ function InitLoader() {
   #
   # Load Controls management
   #
-  isitoga=$(dmesg | grep odroidgo2-joypad/input/input2)
-  isitogs=$(dmesg | grep odroidgo3-joypad/input/input2)
-  isitchi=$(dmesg | grep gameforce-gamepad/input/input2)
-  if [[ ! -z "$isitoga" ]]; then
+  #
+  if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
+    param_device="anbernic"
+  elif [[ -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
     param_device="oga"
-  elif [[ ! -z "$isitogs" ]]; then
+  elif [[ -e "/dev/input/by-path/platform-odroidgo3-joypad-event-joystick" ]]; then
     param_device="ogs"
-  elif [[ ! -z "$isitchi" ]]; then
+  elif [[ -e "/dev/input/by-path/platform-gameforce-gamepad-event-joystick" ]]; then
     param_device="chi"
   else
-    param_device="anbernic"
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >/dev/tty1
+    ExitApp
   fi
   sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
   SetMode
@@ -212,13 +213,11 @@ function SetEnvironment() {
   local temp
   local plymouth
 
-  if [[ -e "/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth" ]]; then
-    plymouth="/usr/share/plymouth/themes/ubuntu-text/ubuntu-text.plymouth"
-  elif [[ -e "/usr/share/plymouth/themes/text.plymouth" ]]; then
+  if [[ -e "/usr/share/plymouth/themes/text.plymouth" ]]; then
     plymouth="/usr/share/plymouth/themes/text.plymouth"
   else
     SaveSettings
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised (plymouth file), please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Default plymouth file not found, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
     ExitApp
   fi
 
