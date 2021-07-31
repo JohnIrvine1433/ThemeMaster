@@ -1286,16 +1286,18 @@ function AdvancedSettings() {
   local choice
   local choices
   local retval
+  local tmp
 
   cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Advanced Settings ] " --checklist "Default settings are recommended for most users." "15" "50" "15")
   options=(
-    A "Check for App updates at startup" $app_autocheckupdate
-    B "Check for Themes updates at startup" $themes_autocheckupdate
-    C "Use ThemeMaster beta versions" $app_prerelease
-    D "Debug mode" $debug
+    A "Check for App updates at startup" "$app_autocheckupdate"
+    B "Check for Themes updates at startup" "$themes_autocheckupdate"
+    C "Use ThemeMaster beta versions" "$app_prerelease"
+    D "Debug mode" "$debug"
   )
-  choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
   retval=$?
+  choices=($tmp) #Convert dialog output as an array for options management
   case $retval in
   0)
     app_autocheckupdate="off"

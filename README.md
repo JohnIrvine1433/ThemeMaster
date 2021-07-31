@@ -2,7 +2,7 @@
 ThemeMaster is an EmulationStation theme manager for small screen devices (e.g. Chi, OGA, RGB10, RK2020, RG351p/m, RG351v and OGS, RGB10 Max) running ArkOS, RetroOZ or TheRA.
 
 # Controls
-### Navigation
+## Navigation
 - Controls are : d-pad to move, A to validate, B to select an item in radiolist and checklist.
 - Select key exits ThemeMaster.
 - You can force quit ThemeMaster by pressing Select + Start.
