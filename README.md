@@ -53,3 +53,6 @@ Place *ThemeMaster.sh* and *ThemeMaster* folder in `/opt/tools`
 ## RetroOZ
 Need to be on RetroOZ 0.50 - Beta - 2 July or newer.
 Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools` (or directly in /opt/system/Tools).
+
+# Support ThemeMaster
+No better support than ThemeMaster being used ! If you have a GitHub account you can show it by staring the project.
