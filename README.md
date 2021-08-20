@@ -57,5 +57,4 @@ Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools` (or directly in
 # Support ThemeMaster
 No better support than ThemeMaster being used! If you have a GitHub account you can show it by starring the project.
 
-Feel free to suggest any enhancement or report any issue directly through GitHub. 
-Alternatively and for any questions, comments and feedback, you can find me on Discord using this [link](https://discord.gg/wurh4WM).
+Feel free to suggest any enhancement or report any issue directly through GitHub. Alternatively, and for any questions, comments and feedback, you can find me on the [Retro Game Handhelds](https://discord.gg/wurh4WM) Discord’s server. 
