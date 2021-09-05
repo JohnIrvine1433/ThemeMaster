@@ -24,7 +24,7 @@ In **GitHub repository** mode, ThemeMaster creates live theme’s collection by 
 
 ## Theme Gallery mode
 In **Theme Gallery** mode, ThemeMaster relies on information from [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) by [Jetup](https://github.com/Jetup13) to create a bespoke theme collection (allowing access from different GitHub accounts at once).
-Collection is cached locally and updated on start whenever new commit exists on [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) repository.
+Collection is cached locally and updated at startup whenever new commit exists on [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) repository.
 
 # Nota Bene
 - Beware that name duplicates (between different GitHub accounts) is not managed ; this could lead to unwanted behaviour if you choose to swap between theme collections (e.g. replace a theme with another).
