@@ -24,7 +24,7 @@ In **GitHub repository** mode, ThemeMaster creates live theme’s collection by 
 
 ## Theme Gallery mode
 In **Theme Gallery** mode, ThemeMaster relies on information from [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) by [Jetup](https://github.com/Jetup13) to create a bespoke theme collection (allowing access from different GitHub accounts at once).
-Collection is cached locally and updated on start whenever new commit exists on [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) repository.
+Collection is cached locally and updated at startup whenever new commit exists on [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) repository.
 
 # Nota Bene
 - Beware that name duplicates (between different GitHub accounts) is not managed ; this could lead to unwanted behaviour if you choose to swap between theme collections (e.g. replace a theme with another).
@@ -53,3 +53,8 @@ Place *ThemeMaster.sh* and *ThemeMaster* folder in `/opt/tools`
 ## RetroOZ
 Need to be on RetroOZ 0.50 - Beta - 2 July or newer.
 Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools` (or directly in /opt/system/Tools).
+
+# Support ThemeMaster
+No better support than ThemeMaster being used! If you have a GitHub account you can show it by starring the project.
+
+Feel free to suggest any enhancement and to report any issue directly through GitHub. Alternatively - and for any questions, comments or feedback - you can find me on the [Retro Game Handhelds](https://discord.gg/wurh4WM) Discord’s server. 
