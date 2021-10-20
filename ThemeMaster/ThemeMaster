@@ -20,7 +20,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.0.1"
+current_app_version="4.0.2"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -119,9 +119,6 @@ function wget_result() {
 function InstallDependencies() {
   local install_dependencies
 
-  #Checking internet access
-  wget -nv -o /tmp/ThemeMaster_wget.log --spider http://google.com
-  wget_result $? "Restart"
   #Checking required modules (RetroOZ uses odroid)
   if id "ark" &>/dev/null || id "odroid" &>/dev/null; then
     if ! dpkg -s "dialog" &>/dev/null; then
@@ -171,7 +168,19 @@ function InitLoader() {
   SetColorScheme
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
-  InstallDependencies
+  #Checking internet access
+  ping -c 1 google.com &> /dev/null
+  if [ $? -eq 0 ]; then
+    InstallDependencies
+  else
+    dialog --backtitle "ThemeMaster - System" --yes-label "Restart" --no-label "Exit" --yesno "You appear to be offline, ThemeMaster require an internet access to run!" 15 50 2>&1 >/dev/tty1
+    case $? in
+      0)
+        ./$(basename $0) && exit ;;
+      *)
+        ExitApp ;;
+    esac
+  fi
   #DEBUG
   if [[ "$debug" == "on" ]]; then
     echo "************** NEW THEMES DEBUG OUTPUTS **************" >> ./debug_themes.txt
@@ -260,8 +269,8 @@ function SetColorScheme() {
 function CheckAppUpdates() {
   local retval
   local returnto=$1
-  local temp
   local prerelease
+  local isPRok
 
   dialog --clear
   dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >/dev/tty1
@@ -271,14 +280,22 @@ function CheckAppUpdates() {
   wget_result $? "SettingsMenu"
   latest_app_version=$(grep -m 1 '"tag_name":' /tmp/ThemeMaster_wget.output  | sed -E 's/.*"([^"]+)".*/\1/')
   prerelease=$(grep -m 1 '"prerelease":' /tmp/ThemeMaster_wget.output  | grep -c "true")
-  if [[ $app_prerelease == "off" ]]; then
-    temp=0
+  if [[ $app_prerelease == "on" ]]; then
+    isPRok=1
   else
-    temp=1
+    isPRok=0
+  fi
+  #Check if a new version to update to is available
+  app_outdated=0
+  if [[ "$latest_app_version" != "$current_app_version" ]]; then
+  	if [[ $isPRok -eq 1 ]]; then
+  		app_outdated=1
+  	elif [[ $prerelease -eq 0 ]]; then
+  		app_outdated=1
+  	fi
   fi
   app_updates_checked=1
-  if [ "${latest_app_version//.}" -gt "${current_app_version//.}" ] && [ "$prerelease" == "$temp" ]; then
-    app_outdated=1
+  if [ $app_outdated -eq 1 ]; then
     dialog --backtitle "ThemeMaster - System" --yes-label "Yes, now!" --no-label "No, later..." --yesno "A new release is available !! Launch update?" 10 50 2>&1 >/dev/tty1
     retval=$?
     case $retval in
@@ -294,7 +311,6 @@ function CheckAppUpdates() {
       ;;
     esac
   else
-    app_outdated=0
     dialog --clear
     dialog --infobox "ThemeMaster is up to date..." 5 50 >/dev/tty1
     sleep 1
@@ -1292,7 +1308,7 @@ function AdvancedSettings() {
   options=(
     A "Check for App updates at startup" "$app_autocheckupdate"
     B "Check for Themes updates at startup" "$themes_autocheckupdate"
-    C "Use ThemeMaster beta versions" "$app_prerelease"
+    C "Use ThemeMaster prerelease versions" "$app_prerelease"
     D "Debug mode" "$debug"
   )
   tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)

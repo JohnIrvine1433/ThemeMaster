@@ -1,3 +1,7 @@
+v4.0.2
+- Check internet connection with ping instead of wget
+- Fix and update management of prerelease
+- Add farfenkugell to GitHub repository mode
 v4.0.1
 - Fix plymouth file search for RetroOZ
 - Fix Advanced Settings not being saved

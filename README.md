@@ -20,7 +20,7 @@ ThemeMaster is an EmulationStation theme manager for small screen devices (e.g. 
 ## GitHub Repository mode
 In **GitHub repository** mode, ThemeMaster creates live theme’s collection by pulling information from a GitHub account based on repositories starting with "es-theme".
 - You can change the account to be used from **ThemeMaster Settings** menu.
-- The list of GitHub accounts to be used can be manually configured by editing the "collections" variable in "ThemeMaster.cfg" file.
+- The list of GitHub accounts to be used can be manually configured by editing the "collections" variable in "ThemeMaster.cfg" file. NB : before adding an account, please check that repositories are pre-set with the correct ES folder structure (as ThemeMaster relies on GitHub source).
 
 ## Theme Gallery mode
 In **Theme Gallery** mode, ThemeMaster relies on information from [Emulationstation-OGA-Theme-Gallery](https://github.com/Jetup13/Emulationstation-OGA-Theme-Gallery) by [Jetup](https://github.com/Jetup13) to create a bespoke theme collection (allowing access from different GitHub accounts at once).
