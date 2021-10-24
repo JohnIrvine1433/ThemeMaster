@@ -190,7 +190,7 @@ function InitLoader() {
   if [ $? -eq 0 ]; then
     InstallDependencies
   else
-    dialog --backtitle "ThemeMaster - System" --yes-label "Restart" --no-label "Exit" --yesno "You appear to be offline, ThemeMaster require an internet access to run!" 15 50 2>&1 >/dev/tty1
+    dialog --backtitle "ThemeMaster - System" --yes-label "Restart" --no-label "Exit" --yesno "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >/dev/tty1
     case $? in
       0)
         ./$(basename $0) && exit ;;
