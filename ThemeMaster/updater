@@ -11,7 +11,7 @@ function PostInstallUpdater() {
   local nbchanges
   local temp_array1
   local temp_array2
-  local updater_2_version="4.0.2"
+  local updater_2_version="4.0.3"
 
   dialog --clear
   dialog --infobox "Processing post-installation ..." 5 50 >/dev/tty1

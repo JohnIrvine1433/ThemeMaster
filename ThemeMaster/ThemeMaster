@@ -20,7 +20,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.0.2"
+current_app_version="4.0.3"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -87,7 +87,7 @@ function wget_result() {
     8) wget_error="Server issued an error response." ;;
     *) wget_error="Unmanaged error." ;;
     esac
-    dialog --backtitle "ThemeMaster - System" --yes-label "$label" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >/dev/tty1
+    dialog --backtitle "ThemeMaster - System" --yes-label "$yes_label" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >/dev/tty1
     case $? in
     0)
       if [[ $returnto == "InitLoader" ]]; then
@@ -152,6 +152,23 @@ function InitLoader() {
   #Make sure data folder is created
   mkdir -p ./data
   #
+  # Load Controls management
+  #
+  #
+  if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
+    param_device="anbernic"
+  elif [[ -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
+    param_device="oga"
+  elif [[ -e "/dev/input/by-path/platform-odroidgo3-joypad-event-joystick" ]]; then
+    param_device="ogs"
+  elif [[ -e "/dev/input/by-path/platform-gameforce-gamepad-event-joystick" ]]; then
+    param_device="chi"
+  else
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >/dev/tty1
+    ExitApp
+  fi
+  sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
+  #
   #App settings initialisation
   #
   if [ -e "ThemeMaster.cfg" ]; then
@@ -169,7 +186,7 @@ function InitLoader() {
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
-  ping -c 1 google.com &> /dev/null
+  sudo ping -c 1 google.com &> /dev/null
   if [ $? -eq 0 ]; then
     InstallDependencies
   else
@@ -188,23 +205,6 @@ function InitLoader() {
     echo "***** THEMEMASTER.CFG *****" >> ./debug_themes.txt
     cat ./ThemeMaster.cfg >> ./debug_themes.txt
   fi
-  #
-  # Load Controls management
-  #
-  #
-  if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
-    param_device="anbernic"
-  elif [[ -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
-    param_device="oga"
-  elif [[ -e "/dev/input/by-path/platform-odroidgo3-joypad-event-joystick" ]]; then
-    param_device="ogs"
-  elif [[ -e "/dev/input/by-path/platform-gameforce-gamepad-event-joystick" ]]; then
-    param_device="chi"
-  else
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >/dev/tty1
-    ExitApp
-  fi
-  sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
   SetMode
   LoadInstalledThemes
   # Check and update gallery data at startup

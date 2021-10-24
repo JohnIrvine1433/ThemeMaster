@@ -1,3 +1,7 @@
+v4.0.3
+- Fix internet checking
+- Fix controls management loading order
+- Fix wget_result dialog
 v4.0.2
 - Check internet connection with ping instead of wget
 - Fix and update management of prerelease
