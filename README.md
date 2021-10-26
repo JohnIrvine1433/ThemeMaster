@@ -28,7 +28,7 @@ Collection is cached locally and updated at startup whenever new commit exists o
 
 # Nota Bene
 - Beware that name duplicates (between different GitHub accounts) is not managed ; this could lead to unwanted behaviour if you choose to swap between theme collections (e.g. replace a theme with another).
-- Beta versions may have been barely tested, use at your own risk.
+- Prerelease versions may have been barely tested, use at your own risk.
 
 # Credits
 ThemeMaster reused some external code to emulated keyboards and display pictures :
