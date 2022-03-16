@@ -163,6 +163,8 @@ function InitLoader() {
     param_device="ogs"
   elif [[ -e "/dev/input/by-path/platform-gameforce-gamepad-event-joystick" ]]; then
     param_device="chi"
+  elif [[ -e "/dev/input/by-path/platform-singleadc-joypad-event-joystick" ]]; then
+    param_device="rg552"
   else
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >/dev/tty1
     ExitApp
@@ -186,7 +188,12 @@ function InitLoader() {
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
-  sudo ping -c 1 google.com &> /dev/null
+  if [[ "$EUID" = 0 ]]; then
+    ping -c 1 google.com &> /dev/null
+  else
+    sudo ping -c 1 google.com &> /dev/null
+  fi
+
   if [ $? -eq 0 ]; then
     InstallDependencies
   else
@@ -219,30 +226,24 @@ function InitLoader() {
 }
 
 function SetEnvironment() {
-  local temp
-  local plymouth
+  local otherOS=$(cat "/etc/os-release" | grep OS_NAME)
 
-  if [[ -e "/usr/share/plymouth/themes/text.plymouth" ]]; then
-    plymouth="/usr/share/plymouth/themes/text.plymouth"
-  else
-    SaveSettings
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Default plymouth file not found, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
-    ExitApp
-  fi
-
-  temp=$(grep "title=" $plymouth)
-  if [[ $temp == *"ArkOS"* ]]; then
+  if [[ $otherOS == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
-  elif [[ $temp == *"RetroOZ"* ]]; then
+  elif [[ $otherOS == *"RetroOZ"* ]]; then
     themes_location="/roms/themes/"
     temp_ram_folder="/dev/shm/"
-  elif [[ $temp == *"TheRA"* ]]; then
+  elif [[ $otherOS == *"TheRA"* ]]; then
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
+  elif [[ $otherOS == *"JELOS"* ]]; then
+    themes_location="/storage/.config/emulationstation/themes/"
+    temp_ram_folder="/dev/shm/"
+
   else
     SaveSettings
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised (plymouth title), please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised ($otherOS), please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
     ExitApp
   fi
 }
