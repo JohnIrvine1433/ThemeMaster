@@ -20,7 +20,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.0.3"
+current_app_version="4.1.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -31,7 +31,7 @@ temp_ram_folder="" #Empty by default, managed through SetEnvironment
 app_autocheckupdate="on" # Check for updates at startup
 themes_autocheckupdate="off" # Do not check for updates at startup
 active_collection="Jetup13" # GitHub Collection Mode - Default active collection
-collections=("Jetup13" "CodyV59" "EmuELEC" "RetroPie") # GitHub Collection Mode - Default collection list
+collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie") #GitHub Collection Mode - Default collection list
 app_colorscheme="All_Black" # Default app UI color scheme, "Default" for system's one
 
 #####################
@@ -149,6 +149,15 @@ function InitLoader() {
   local isitchi
   local param_device=""
 
+  #Splashscreen
+    if [ -e "ThemeMaster.nfo" ]; then
+      cat ThemeMaster.nfo
+    else
+      echo "***************"
+      echo "* ThemeMaster *"
+      echo "***************"
+    fi
+    echo $current_app_version
   #Make sure data folder is created
   mkdir -p ./data
   #
@@ -157,6 +166,8 @@ function InitLoader() {
   #
   if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
     param_device="anbernic"
+  elif [[ -e "/dev/input/by-path/platform-singleadc-joypad-event-joystick" ]]; then
+     param_device="rg552"
   elif [[ -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
     param_device="oga"
   elif [[ -e "/dev/input/by-path/platform-odroidgo3-joypad-event-joystick" ]]; then
@@ -186,7 +197,11 @@ function InitLoader() {
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
-  sudo ping -c 1 google.com &> /dev/null
+  if [[ "$EUID" = 0 ]]; then
+    ping -c 1 google.com &> /dev/null
+  else
+    sudo ping -c 1 google.com &> /dev/null
+  fi
   if [ $? -eq 0 ]; then
     InstallDependencies
   else
@@ -219,30 +234,23 @@ function InitLoader() {
 }
 
 function SetEnvironment() {
-  local temp
-  local plymouth
+  local otherOS=$(cat "/etc/os-release" | grep OS_NAME)
 
-  if [[ -e "/usr/share/plymouth/themes/text.plymouth" ]]; then
-    plymouth="/usr/share/plymouth/themes/text.plymouth"
-  else
-    SaveSettings
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Default plymouth file not found, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
-    ExitApp
-  fi
-
-  temp=$(grep "title=" $plymouth)
-  if [[ $temp == *"ArkOS"* ]]; then
+  if [[ $otherOS == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
-  elif [[ $temp == *"RetroOZ"* ]]; then
+  elif [[ $otherOS == *"RetroOZ"* ]]; then
     themes_location="/roms/themes/"
     temp_ram_folder="/dev/shm/"
-  elif [[ $temp == *"TheRA"* ]]; then
+  elif [[ $otherOS == *"TheRA"* ]]; then
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
+  elif [[ $otherOS == *"JELOS"* ]]; then
+     themes_location="/storage/.config/emulationstation/themes/"
+     temp_ram_folder="/dev/shm/"
   else
     SaveSettings
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised (plymouth title), please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised ($otherOS), please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
     ExitApp
   fi
 }

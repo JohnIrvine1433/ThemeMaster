@@ -49,7 +49,13 @@ function PostInstallUpdater() {
   #change debug variable from 1/0 to on/off
   #From v4.0.2
   #add farfenkugell to the GitHub repository list
-  echo "app_conf_version=\"4.0.0\"" >ThemeMaster.cfg
+  #From 4.1.0
+  #do not overwrite manually added collections
+  admin_collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie")
+  user_collections=($(comm -13 <(printf '%s\n' "${admin_collections[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${collections[@]}" | LC_COLLATE=C sort -f)))
+  new_collections=("${admin_collections[@]}" "${user_collections[@]}")
+
+  echo "app_conf_version=\"4.1.0\"" >ThemeMaster.cfg
   echo "app_prerelease=\"${app_prerelease}\"" >>ThemeMaster.cfg
   echo "debug=\"${debug}\"" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
@@ -58,7 +64,7 @@ function PostInstallUpdater() {
   echo "app_autocheckupdate=\"${app_autocheckupdate}\"" >>ThemeMaster.cfg
   echo "themes_autocheckupdate=\"${themes_autocheckupdate}\"" >>ThemeMaster.cfg
   echo "active_collection=\"${active_collection}\"" >>ThemeMaster.cfg
-  echo "collections=(\"Jetup13\" \"CodyV59\" \"farfenkugell\" \"EmuELEC\" \"RetroPie\")" >>ThemeMaster.cfg
+  echo "collections=(${new_collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
 
 ##########################

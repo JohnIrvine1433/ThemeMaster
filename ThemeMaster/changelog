@@ -1,3 +1,7 @@
+v4.1.0
+- Add support for RG552
+- Add splashscreen
+- Manually added collections are no longer overwritten
 v4.0.3
 - Fix internet checking
 - Fix controls management loading order
