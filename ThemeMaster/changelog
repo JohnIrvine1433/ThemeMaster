@@ -1,3 +1,8 @@
+v4.1.0
+- PLANNED - Add support for RG552, RK2020
+- Add splashscreen
+- Manually added collections are no longer overwritten
+- Various code improvements
 v4.0.3
 - Fix internet checking
 - Fix controls management loading order

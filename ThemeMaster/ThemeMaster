@@ -27,7 +27,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.0.3"
+current_app_version="4.1.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -38,7 +38,7 @@ temp_ram_folder="" #Empty by default, managed through SetEnvironment
 app_autocheckupdate="on" # Check for updates at startup
 themes_autocheckupdate="off" # Do not check for updates at startup
 active_collection="Jetup13" # GitHub Collection Mode - Default active collection
-collections=("Jetup13" "CodyV59" "EmuELEC" "RetroPie") # GitHub Collection Mode - Default collection list
+collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie") #GitHub Collection Mode - Default collection list
 app_colorscheme="All_Black" # Default app UI color scheme, "Default" for system's one
 os_name="unsupported"
 
@@ -159,6 +159,15 @@ function InitLoader() {
 
   SetOSName
 
+  #Splashscreen
+    if [ -e "ThemeMaster.nfo" ]; then
+      cat ThemeMaster.nfo
+    else
+      echo "***************"
+      echo "* ThemeMaster *"
+      echo "***************"
+    fi
+    echo $current_app_version
   #Make sure data folder is created
   mkdir -p ./data
   #
@@ -167,6 +176,8 @@ function InitLoader() {
   #
   if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
     param_device="anbernic"
+  elif [[ -e "/dev/input/by-path/platform-singleadc-joypad-event-joystick" ]]; then
+     param_device="rg552"
   elif [[ -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
     param_device="oga"
   elif [[ -e "/dev/input/by-path/platform-odroidgo3-joypad-event-joystick" ]]; then
