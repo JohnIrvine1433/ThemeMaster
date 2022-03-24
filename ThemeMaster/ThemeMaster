@@ -184,8 +184,6 @@ function InitLoader() {
     param_device="ogs"
   elif [[ -e "/dev/input/by-path/platform-gameforce-gamepad-event-joystick" ]]; then
     param_device="chi"
-  elif [[ -e "/dev/input/by-path/platform-singleadc-joypad-event-joystick" ]]; then
-    param_device="rg552"
   else
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >/dev/tty1
     ExitApp
