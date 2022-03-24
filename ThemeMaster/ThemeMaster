@@ -9,7 +9,14 @@
 # Environment settings
 #
 export TERM=linux
-sudo chmod 666 /dev/tty1
+sudo_prefix="sudo"
+# check that sudo is needed
+if [[ "$EUID" = 0 ]]; then
+  sudo_prefix=""
+fi
+
+
+$sudo_prefix chmod 666 /dev/tty1
 shopt -s extglob # required for extented pattern recognition
 app_location="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 app_location="${app_location%ThemeMaster}"
@@ -33,6 +40,7 @@ themes_autocheckupdate="off" # Do not check for updates at startup
 active_collection="Jetup13" # GitHub Collection Mode - Default active collection
 collections=("Jetup13" "CodyV59" "EmuELEC" "RetroPie") # GitHub Collection Mode - Default collection list
 app_colorscheme="All_Black" # Default app UI color scheme, "Default" for system's one
+os_name="unsupported"
 
 #####################
 #  GLOBAL VARIABLES #
@@ -136,7 +144,7 @@ function InstallDependencies() {
     if [ ! -z "$install_dependencies" ]; then
       dialog --clear
       dialog --infobox "Installing dependencies ... Please wait !" 5 50 >/dev/tty1
-      sudo apt update && sudo apt install -y $install_dependencies --no-install-recommends
+      $sudo_prefix apt update && $sudo_prefix apt install -y $install_dependencies --no-install-recommends
     fi
   fi
 }
@@ -148,6 +156,8 @@ function InitLoader() {
   local isitogs
   local isitchi
   local param_device=""
+
+  SetOSName
 
   #Make sure data folder is created
   mkdir -p ./data
@@ -169,7 +179,7 @@ function InitLoader() {
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >/dev/tty1
     ExitApp
   fi
-  sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
+  $sudo_prefix ./controls ThemeMaster $param_device > /dev/null 2>&1 &
   #
   #App settings initialisation
   #
@@ -188,11 +198,7 @@ function InitLoader() {
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
-  if [[ "$EUID" = 0 ]]; then
-    ping -c 1 google.com &> /dev/null
-  else
-    sudo ping -c 1 google.com &> /dev/null
-  fi
+  $sudo_prefix ping -c 1 google.com &> /dev/null
 
   if [ $? -eq 0 ]; then
     InstallDependencies
@@ -225,19 +231,31 @@ function InitLoader() {
   MainMenu
 }
 
-function SetEnvironment() {
-  local otherOS=$(cat "/etc/os-release" | grep OS_NAME)
+function SetOSName() {
+  local fullName=$(uname -a)
 
-  if [[ $otherOS == *"ArkOS"* ]]; then
+  if [[ $fullName == *"ArkOS"* ]]; then
+    os_name="ArkOS"     #RAM folder with trailing slash
+  elif [[ $fullName == *"RetroOZ"* ]]; then
+    os_name="RetroOZ"
+  elif [[ $fullName == *"TheRA"* ]]; then
+    os_name="TheRA"
+  elif [[ $fullName == *"JELOS"* ]]; then
+    os_name="JELOS"
+  fi
+}
+
+function SetEnvironment() {
+  if [[ $os_name == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
-  elif [[ $otherOS == *"RetroOZ"* ]]; then
+  elif [[ $os_name == *"RetroOZ"* ]]; then
     themes_location="/roms/themes/"
     temp_ram_folder="/dev/shm/"
-  elif [[ $otherOS == *"TheRA"* ]]; then
+  elif [[ $os_name == *"TheRA"* ]]; then
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
-  elif [[ $otherOS == *"JELOS"* ]]; then
+  elif [[ $os_name == *"JELOS"* ]]; then
     themes_location="/storage/.config/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
 
@@ -387,9 +405,9 @@ function SaveSettings() {
 
 function ExitApp() {
   rm /tmp/ThemeMaster_*
-  pgrep -f controls | sudo xargs kill -9
+  pgrep -f controls | $sudo_prefix xargs kill -9
   clear
-  sudo systemctl restart emulationstation
+  $sudo_prefix systemctl restart emulationstation
 }
 #
 # Theme Management functions
@@ -664,23 +682,23 @@ function LoadGallery() {
   unset gallery_640_untested
   unset gallery_480_untested
   {
-  read
-  while read -r author theme _480 _640 _854
-  do
-    if [[ "$_640" == "Yes" ]]; then
-      gallery_640+=("$theme")
-    elif [[ "$_640" == "Untested" ]]; then
-      gallery_640_untested+=("$theme")
-    fi
-    if [[ "$_480" == "Yes" ]]; then
-      gallery_480+=("$theme")
-    elif [[ "$_480" == "Untested" ]]; then
-      gallery_480_untested+=("$theme")
-    fi
-    onlinethemes+=("$theme")
-    gallery_array[$theme]="$author"
-  done
-} < ./data/gallery.db
+    read
+    while read -r author theme _480 _640 _854
+    do
+      if [[ "$_640" == "Yes" ]]; then
+        gallery_640+=("$theme")
+      elif [[ "$_640" == "Untested" ]]; then
+        gallery_640_untested+=("$theme")
+      fi
+      if [[ "$_480" == "Yes" ]]; then
+        gallery_480+=("$theme")
+      elif [[ "$_480" == "Untested" ]]; then
+        gallery_480_untested+=("$theme")
+      fi
+      onlinethemes+=("$theme")
+      gallery_array[$theme]="$author"
+    done
+  } < ./data/gallery.db
 }
 
 function UpdateGalleryDB() {
