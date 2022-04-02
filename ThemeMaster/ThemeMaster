@@ -242,14 +242,15 @@ function InitLoader() {
 
 function SetOSName() {
   local fullName=$(uname -a)
+  local altName=$(cat "/etc/os-release" | grep OS_NAME)
 
-  if [[ $fullName == *"ArkOS"* ]]; then
-    os_name="ArkOS"     #RAM folder with trailing slash
-  elif [[ $fullName == *"RetroOZ"* ]]; then
+  if [[ $fullName == *"ArkOS"* || $altName == *"ArkOS"* ]]; then
+    os_name="ArkOS"
+  elif [[ $fullName == *"RetroOZ"* || $altName == *"RetroOZ"*  ]]; then
     os_name="RetroOZ"
-  elif [[ $fullName == *"TheRA"* ]]; then
+  elif [[ $fullName == *"TheRA"* || $altName == *"TheRA"*  ]]; then
     os_name="TheRA"
-  elif [[ $fullName == *"JELOS"* ]]; then
+  elif [[ $fullName == *"JELOS"* || $altName == *"JELOS"*  ]]; then
     os_name="JELOS"
   fi
 }
