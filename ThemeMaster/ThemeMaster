@@ -15,7 +15,6 @@ if [[ "$EUID" = 0 ]]; then
   sudo_prefix=""
 fi
 
-
 $sudo_prefix chmod 666 /dev/tty1
 shopt -s extglob # required for extented pattern recognition
 app_location="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -208,7 +207,6 @@ function InitLoader() {
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
   $sudo_prefix ping -c 1 google.com &> /dev/null
-
   if [ $? -eq 0 ]; then
     InstallDependencies
   else
@@ -271,7 +269,7 @@ function SetEnvironment() {
 
   else
     SaveSettings
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised ($otherOS), please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
     ExitApp
   fi
 }
