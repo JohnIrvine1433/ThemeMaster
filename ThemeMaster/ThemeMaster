@@ -9,7 +9,12 @@
 # Environment settings
 #
 export TERM=linux
-sudo chmod 666 /dev/tty1
+sudo_prefix="sudo"
+# check that sudo is needed
+if [[ "$EUID" = 0 ]]; then
+  sudo_prefix=""
+fi
+$sudo_prefix chmod 666 /dev/tty1
 shopt -s extglob # required for extented pattern recognition
 app_location="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 app_location="${app_location%ThemeMaster}"
@@ -136,7 +141,7 @@ function InstallDependencies() {
     if [ ! -z "$install_dependencies" ]; then
       dialog --clear
       dialog --infobox "Installing dependencies ... Please wait !" 5 50 >/dev/tty1
-      sudo apt update && sudo apt install -y $install_dependencies --no-install-recommends
+      $sudo_prefix apt update && $sudo_prefix apt install -y $install_dependencies --no-install-recommends
     fi
   fi
 }
@@ -178,7 +183,7 @@ function InitLoader() {
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >/dev/tty1
     ExitApp
   fi
-  sudo ./controls ThemeMaster $param_device > /dev/null 2>&1 &
+  $sudo_prefix ./controls ThemeMaster $param_device > /dev/null 2>&1 &
   #
   #App settings initialisation
   #
@@ -197,11 +202,7 @@ function InitLoader() {
   dialog --clear
   dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
-  if [[ "$EUID" = 0 ]]; then
-    ping -c 1 google.com &> /dev/null
-  else
-    sudo ping -c 1 google.com &> /dev/null
-  fi
+  $sudo_prefix ping -c 1 google.com &> /dev/null
   if [ $? -eq 0 ]; then
     InstallDependencies
   else
@@ -234,23 +235,38 @@ function InitLoader() {
 }
 
 function SetEnvironment() {
-  local otherOS=$(cat "/etc/os-release" | grep OS_NAME)
+  local current_OS
+  local plymouth
 
-  if [[ $otherOS == *"ArkOS"* ]]; then
+  if [[ -e "/usr/share/plymouth/themes/text.plymouth" ]]; then
+    #plymouth="/usr/share/plymouth/themes/text.plymouth"
+    #current_OS=$(grep "title=" $plymouth)
+    current_OS=$(cat "/usr/share/plymouth/themes/text.plymouth" | grep "title=")
+  elif [[ -e "/etc/os-release" ]]; then
+    current_OS=$(cat "/etc/os-release" | grep "NAME")
+  elif [[ -e "/usr/lib/os-release" ]]; then
+    current_OS=$(cat "/usr/lib/os-release" | grep "NAME")
+  else
+    SaveSettings
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "No OS information found, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    ExitApp
+  fi
+
+  if [[ $current_OS == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
-  elif [[ $otherOS == *"RetroOZ"* ]]; then
+  elif [[ $current_OS == *"RetroOZ"* ]]; then
     themes_location="/roms/themes/"
     temp_ram_folder="/dev/shm/"
-  elif [[ $otherOS == *"TheRA"* ]]; then
+  elif [[ $current_OS == *"TheRA"* ]]; then
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
-  elif [[ $otherOS == *"JELOS"* ]]; then
+  elif [[ $current_OS == *"JELOS"* ]]; then
      themes_location="/storage/.config/emulationstation/themes/"
      temp_ram_folder="/dev/shm/"
   else
     SaveSettings
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised ($otherOS), please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
     ExitApp
   fi
 }
@@ -394,9 +410,9 @@ function SaveSettings() {
 
 function ExitApp() {
   rm /tmp/ThemeMaster_*
-  pgrep -f controls | sudo xargs kill -9
+  pgrep -f controls | $sudo_prefix xargs kill -9
   clear
-  sudo systemctl restart emulationstation
+  $sudo_prefix systemctl restart emulationstation
 }
 #
 # Theme Management functions
