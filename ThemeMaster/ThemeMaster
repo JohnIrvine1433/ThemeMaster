@@ -244,8 +244,6 @@ function SetEnvironment() {
     current_OS=$(cat "/usr/share/plymouth/themes/text.plymouth" | grep "title=")
   elif [[ -e "/etc/os-release" ]]; then
     current_OS=$(cat "/etc/os-release" | grep "NAME")
-  elif [[ -e "/usr/lib/os-release" ]]; then
-    current_OS=$(cat "/usr/lib/os-release" | grep "NAME")
   else
     SaveSettings
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "No OS information found, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
