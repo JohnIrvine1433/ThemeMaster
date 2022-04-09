@@ -11,7 +11,7 @@ function PostInstallUpdater() {
   local nbchanges
   local temp_array1
   local temp_array2
-  local updater_2_version="4.0.3"
+  local updater_2_version="4.1.0"
 
   dialog --clear
   dialog --infobox "Processing post-installation ..." 5 50 >/dev/tty1
@@ -29,6 +29,8 @@ function PostInstallUpdater() {
   rm -f ./anbernic_controls
   #from v4.0.0
   rm -f ./helper
+  #from v4.1.0
+  rm -f ./controls
 #
 # Renaming files
 #

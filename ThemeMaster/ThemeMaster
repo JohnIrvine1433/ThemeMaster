@@ -10,7 +10,7 @@
 #
 export TERM=linux
 sudo_prefix="sudo"
-# check that sudo is needed
+# check whether sudo is needed
 if [[ "$EUID" = 0 ]]; then
   sudo_prefix=""
 fi
@@ -30,7 +30,7 @@ current_app_version="4.1.0"
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
 debug="off" #Debug mode off by default
-mode="A" #Default app mode to GitHub collection
+mode="B" #Default app mode to Theme Gallery Mode from v4.1.0
 themes_location="" #Empty by default, managed through SetEnvironment
 temp_ram_folder="" #Empty by default, managed through SetEnvironment
 app_autocheckupdate="on" # Check for updates at startup
@@ -157,17 +157,14 @@ function InitLoader() {
   #Splashscreen
     if [ -e "ThemeMaster.nfo" ]; then
       cat ThemeMaster.nfo
-    else
-      echo "***************"
-      echo "* ThemeMaster *"
-      echo "***************"
+      echo "v$current_app_version"
     fi
-    echo $current_app_version
+    sleep 2
+    clear
   #Make sure data folder is created
   mkdir -p ./data
   #
   # Load Controls management
-  #
   #
   if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
     param_device="anbernic"
@@ -183,7 +180,11 @@ function InitLoader() {
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >/dev/tty1
     ExitApp
   fi
-  $sudo_prefix ./controls ThemeMaster $param_device > /dev/null 2>&1 &
+  #launch joypad
+  $sudo_prefix ./tm-joypad ThemeMaster $param_device > /dev/null 2>&1 &
+  #launch joypad in debug mode
+  #$sudo_prefix ./tm-joypad ThemeMaster $param_device debug > ./debug_joyad.txt 2>&1 &
+
   #
   #App settings initialisation
   #
@@ -200,7 +201,7 @@ function InitLoader() {
   fi
   SetColorScheme
   dialog --clear
-  dialog --infobox "Initialization... Please wait !" 5 50 >/dev/tty1
+  dialog --infobox "Initialisation... Please wait !" 5 50 >/dev/tty1
   #Checking internet access
   $sudo_prefix ping -c 1 google.com &> /dev/null
   if [ $? -eq 0 ]; then
