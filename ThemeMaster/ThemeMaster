@@ -155,12 +155,12 @@ function InitLoader() {
   local param_device=""
 
   #Splashscreen
-    if [ -e "ThemeMaster.nfo" ]; then
-      cat ThemeMaster.nfo
-      echo "v$current_app_version"
-    fi
+  if [ -e "ThemeMaster.nfo" ]; then
+    cat ThemeMaster.nfo
+    echo "v$current_app_version"
     sleep 2
     clear
+  fi
   #Make sure data folder is created
   mkdir -p ./data
   #
