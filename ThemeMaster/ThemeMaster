@@ -15,6 +15,7 @@ if [[ "$EUID" = 0 ]]; then
   sudo_prefix=""
 fi
 $sudo_prefix chmod 666 /dev/tty1
+$sudo_prefix chmod 666 /dev/uinput
 shopt -s extglob # required for extented pattern recognition
 app_location="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 app_location="${app_location%ThemeMaster}"
@@ -409,9 +410,17 @@ function SaveSettings() {
 
 function ExitApp() {
   rm /tmp/ThemeMaster_*
-  pgrep -f controls | $sudo_prefix xargs kill -9
-  clear
-  $sudo_prefix systemctl restart emulationstation
+  $sudo_prefix kill -9 $(pidof tm-joypad)
+  if command -v emulationstation &> /dev/null
+  then
+    $sudo_prefix systemctl restart emulationstation
+  fi
+  if command -v emustation &> /dev/null
+  then
+    $sudo_prefix systemctl restart emustation
+  fi
+  clear > /dev/tty1
+  exit 0
 }
 #
 # Theme Management functions

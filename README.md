@@ -56,8 +56,8 @@ Need to be on RetroOZ 0.50 - Beta - 2 July or newer.
 Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools` (or directly in /opt/system/Tools).
 
 ## JELOS
-Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools`.
-
+Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/ports`.
+Run ThemeMaster from JELOS Ports menu.
 
 # Support ThemeMaster
 No better support than ThemeMaster being used! If you have a GitHub account you can show it by starring the project.
