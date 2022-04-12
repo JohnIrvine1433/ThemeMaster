@@ -179,7 +179,7 @@ function InitLoader() {
     param_device="chi"
   else
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >/dev/tty1
-    ExitApp
+    exit
   fi
   #launch joypad
   $sudo_prefix ./tm-joypad ThemeMaster $param_device > /dev/null 2>&1 &
@@ -249,7 +249,7 @@ function SetEnvironment() {
   else
     SaveSettings
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "No OS information found, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
-    exit 0
+    exit
   fi
 
   if [[ $current_OS == *"ArkOS"* ]]; then
@@ -267,7 +267,7 @@ function SetEnvironment() {
   else
     SaveSettings
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
-    exit 0
+    exit
   fi
 }
 
@@ -376,7 +376,7 @@ function UpdateApp() {
     #Execute post-install updater function
     PostInstallUpdater
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >/dev/tty1
-    exit 0
+    exit
   else
     #Deleting temporary files...
     rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
