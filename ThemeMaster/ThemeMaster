@@ -113,7 +113,7 @@ function wget_result() {
       fi
       ;;
     *)
-      ExitApp
+      exit 1
       ;;
     esac
   fi
@@ -213,7 +213,7 @@ function InitLoader() {
       0)
         ./$(basename $0) && exit ;;
       *)
-        ExitApp ;;
+        exit 1 ;;
     esac
   fi
   #DEBUG
@@ -249,7 +249,7 @@ function SetEnvironment() {
   else
     SaveSettings
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "No OS information found, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
-    ExitApp
+    exit 0
   fi
 
   if [[ $current_OS == *"ArkOS"* ]]; then
@@ -267,7 +267,7 @@ function SetEnvironment() {
   else
     SaveSettings
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
-    ExitApp
+    exit 0
   fi
 }
 
@@ -376,7 +376,7 @@ function UpdateApp() {
     #Execute post-install updater function
     PostInstallUpdater
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >/dev/tty1
-    ExitApp
+    exit 0
   else
     #Deleting temporary files...
     rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
@@ -388,7 +388,7 @@ function UpdateApp() {
       UpdateApp
       ;;
     *)
-      ExitApp
+      exit 1
       ;;
     esac
   fi
@@ -409,8 +409,14 @@ function SaveSettings() {
 }
 
 function ExitApp() {
-  rm /tmp/ThemeMaster_*
-  $sudo_prefix kill -9 $(pidof tm-joypad)
+  rm /tmp/ThemeMaster_
+  #ensure that background subprocesses are killed (tm-joypad)
+  $sudo_prefix kill $(jobs -p) 2>/dev/null
+  sleep 1
+  if [[ -n "$(jobs -p)" ]]; then
+    $sudo_prefix kill -9 $(jobs -p) 2>/dev/null
+  fi
+
   if command -v emulationstation &> /dev/null
   then
     $sudo_prefix systemctl restart emulationstation
@@ -505,7 +511,7 @@ function InstallTheme() {
       MainMenu
       ;;
     *)
-      ExitApp
+      exit 1
       ;;
     esac
   fi
@@ -811,7 +817,7 @@ function BrowseMenu() {
       MainMenu
       ;;
     *)
-      ExitApp
+      exit 1
       ;;
     esac
   fi
@@ -925,7 +931,7 @@ function BrowseMenu() {
     MainMenu
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1043,7 +1049,7 @@ function InstallMenu() {
     MainMenu
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1072,7 +1078,7 @@ function UpdateSubMenu {
     UpdateMenu "$theme"
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1108,7 +1114,7 @@ function UpdateMenu() {
       MainMenu
       ;;
     *)
-      ExitApp
+      exit 1
       ;;
     esac
   fi
@@ -1144,7 +1150,7 @@ function UpdateMenu() {
     MainMenu
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1178,7 +1184,7 @@ function ChangeLogMenu() {
       MainMenu
       ;;
     *)
-      ExitApp
+      exit 1
       ;;
     esac
   else
@@ -1236,7 +1242,7 @@ function UninstallMenu() {
     MainMenu
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1271,7 +1277,7 @@ function ReinstallMenu() {
     MainMenu
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1323,7 +1329,7 @@ function ColorSchemeMenu() {
     SettingsMenu
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1367,7 +1373,7 @@ function AdvancedSettings() {
     SettingsMenu
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1406,7 +1412,7 @@ function SelectCollectionMenu() {
     SettingsMenu
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1443,7 +1449,7 @@ function SetModeMenu() {
     SettingsMenu
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1517,7 +1523,7 @@ function SettingsMenu() {
     MainMenu
     ;;
   *)
-    ExitApp
+    exit 1
     ;;
   esac
 }
@@ -1569,13 +1575,15 @@ function MainMenu() {
     D) UninstallMenu ;;
     E) ReinstallMenu ;;
     F) SettingsMenu ;;
-    G) ExitApp ;;
+    G) exit 0 ;;
     esac
     ;;
   *)
-    ExitApp ;;
+    exit 1 ;;
   esac
 }
 
 clear
+#Trap clean up function
+trap ExitApp EXIT
 InitLoader
