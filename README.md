@@ -1,6 +1,6 @@
 # ThemeMaster
-ThemeMaster is an EmulationStation theme manager for small screen devices running ArkOS, RetroOZ, TheRA or JELOS (in progress).
-Following devices are supported : Gameforce Chi, Powkiddy RGB10 and RGB10 Max, Anbernic RG351P/M/V and RG552 (in progress), RK2020, Odroid Go Advance and Odroid Go Super units.
+ThemeMaster is an EmulationStation theme manager for small screen devices running ArkOS, RetroOZ, TheRA or JELOS.
+Following devices are supported : Gameforce Chi, Powkiddy RGB10 and RGB10 Max, Anbernic RG351P/M/V and RG552, RK2020, Odroid Go Advance and Odroid Go Super units.
 
 # Controls
 ## Navigation
@@ -32,8 +32,8 @@ Collection is cached locally and updated at startup whenever new commit exists o
 - Prerelease versions may have been barely tested, use at your own risk.
 
 # Credits
-ThemeMaster reused some external code to emulated keyboards and display pictures :
-- 'controls' binary is based on [AnberPorts-Joystick](https://github.com/krishenriksen/AnberPorts-Joystick) by [Kris Henriksen](https://github.com/krishenriksen),
+ThemeMaster reused some external code to emulated keyboards and to display pictures :
+- 'tm-joypad' binary is based on [AnberPorts-Joystick](https://github.com/krishenriksen/AnberPorts-Joystick) by [Kris Henriksen](https://github.com/krishenriksen),
 - 'image-viewer' binary is based on [Image Viewer](https://github.com/RICCIARDI-Adrien/Image_Viewer) by [Adrien Ricciardi](https://github.com/RICCIARDI-Adrien).
 
 # Background
