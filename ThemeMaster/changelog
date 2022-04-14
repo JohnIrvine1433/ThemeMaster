@@ -1,6 +1,6 @@
 v4.1.0
-- ONGOING - Add support for RG552
-- ONGOING - Add support for JELOS
+- Add support for RG552
+- Add support for JELOS
 - Manually added collections are no longer overwritten
 - Unnecessary Splashscreen added :p
 - Various code improvements

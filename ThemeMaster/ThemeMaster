@@ -184,7 +184,7 @@ function InitLoader() {
   #launch joypad
   $sudo_prefix ./tm-joypad ThemeMaster $param_device > /dev/null 2>&1 &
   #launch joypad in debug mode
-  #$sudo_prefix ./tm-joypad ThemeMaster $param_device debug > ./debug_joyad.txt 2>&1 &
+  #$sudo_prefix ./tm-joypad ThemeMaster $param_device debug > ./debug_joyad.txt 2>&1
 
   #
   #App settings initialisation
@@ -426,7 +426,6 @@ function ExitApp() {
     $sudo_prefix systemctl restart emustation
   fi
   clear > /dev/tty1
-  exit 0
 }
 #
 # Theme Management functions
