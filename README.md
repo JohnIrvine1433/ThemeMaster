@@ -57,7 +57,7 @@ Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools` (or directly in
 
 ## JELOS
 ThemeMaster has been intergrated into their most recent releases. Just launch from tools and enjoy! 
-If you need to install it manually, place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/ports`.
+If you need to install it manually, place *ThemeMaster.sh* and *ThemeMaster* folder in `/storage/roms/ports`.
 
 # Support ThemeMaster
 No better support than ThemeMaster being used! If you have a GitHub account you can show it by starring the project.
