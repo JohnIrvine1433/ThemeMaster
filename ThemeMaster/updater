@@ -11,7 +11,7 @@ function PostInstallUpdater() {
   local nbchanges
   local temp_array1
   local temp_array2
-  local updater_2_version="4.1.0"
+  local updater_2_version="4.2.0"
 
   dialog --clear
   dialog --infobox "Processing post-installation ..." 5 50 >/dev/tty1
@@ -53,6 +53,8 @@ function PostInstallUpdater() {
   #add farfenkugell to the GitHub repository list
   #From 4.1.0
   #do not overwrite manually added collections
+  #From 4.2.0
+  #Add gallery_user_res (Theme Gammery mode now relies on device's resolution)
   admin_collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie")
   user_collections=($(comm -13 <(printf '%s\n' "${admin_collections[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${collections[@]}" | LC_COLLATE=C sort -f)))
   new_collections=("${admin_collections[@]}" "${user_collections[@]}")
@@ -68,6 +70,7 @@ function PostInstallUpdater() {
   echo "active_collection=\"${active_collection}\"" >>ThemeMaster.cfg
   echo "collections=(${new_collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
+  echo "gallery_user_res=\"${gallery_user_res}\"" >>ThemeMaster.cfg
 
 ##########################
 # ONE SHOT MODIFICATIONS #
@@ -75,6 +78,11 @@ function PostInstallUpdater() {
 #3.1.0 and 4.0.0
   #Fix cached_outdatedthemes, file reset
   #rm -f ./data/outdatedthemes.cache
+
+#4.2.0
+  #Update ThemeGallery sourcing, files reset
+  rm -f ./data/gallery.db
+  rm -f ./data/gallery.version
 
 ################
 # POST INSTALL #

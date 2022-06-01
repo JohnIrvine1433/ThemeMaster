@@ -1,3 +1,9 @@
+v4.2.0
+- All screen sizes from EmulationStation-OGA-Theme-Gallery are now managed
+- Themes in Theme Gallery are pre-filtered by resolution
+- Fix temporary files removal on exit
+- Fix tm-joypad termination on exit
+- Minor fixes and code improvements
 v4.1.0
 - Add support for RG552
 - Add support for JELOS

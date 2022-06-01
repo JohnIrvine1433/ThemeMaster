@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.1.0"
+current_app_version="4.2.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -39,6 +39,7 @@ themes_autocheckupdate="off" # Do not check for updates at startup
 active_collection="Jetup13" # GitHub Collection Mode - Default active collection
 collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie") #GitHub Collection Mode - Default collection list
 app_colorscheme="All_Black" # Default app UI color scheme, "Default" for system's one
+gallery_user_res="" #Empty by default, set by end user on first use
 
 #####################
 #  GLOBAL VARIABLES #
@@ -58,10 +59,15 @@ changelog=()
 themes_updates_checked=0
 github_user=""
 # Gallery mode variables
-gallery_640=()
-gallery_640_untested=()
-gallery_480=()
-gallery_480_untested=()
+gallery_res=("480x320" "640x480" "854x480" "960x544")
+gallery_960x544=()
+gallery_854x480=()
+gallery_640x480=()
+gallery_480x320=()
+gallery_960x544_untested=()
+gallery_854x480_untested=()
+gallery_640x480_untested=()
+gallery_480x320_untested=()
 declare -A gallery_array
 
 #########################
@@ -117,6 +123,29 @@ function wget_result() {
       ;;
     esac
   fi
+}
+
+function ExitApp() {
+  local temp
+
+  rm /tmp/ThemeMaster_*
+  #ensure that background subprocesses are killed (tm-joypad)
+  #$sudo_prefix kill $(jobs -p) > /dev/null 2>&1
+  #sleep 1
+  #if [[ -n "$(jobs -p)" ]]; then
+  #  $sudo_prefix kill -9 $(jobs -p) > /dev/null 2>&1
+  #fi
+  $sudo_prefix pkill tm-joypad > /dev/null 2>&1
+
+  if command -v emulationstation &> /dev/null
+  then
+    $sudo_prefix systemctl restart emulationstation
+  fi
+  if command -v emustation &> /dev/null
+  then
+    $sudo_prefix systemctl restart emustation
+  fi
+  clear > /dev/tty1
 }
 
 #
@@ -208,13 +237,15 @@ function InitLoader() {
   if [ $? -eq 0 ]; then
     InstallDependencies
   else
-    dialog --backtitle "ThemeMaster - System" --yes-label "Restart" --no-label "Exit" --yesno "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >/dev/tty1
-    case $? in
-      0)
-        ./$(basename $0) && exit ;;
-      *)
-        exit 1 ;;
-    esac
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >/dev/tty1
+    exit
+    # dialog --backtitle "ThemeMaster - System" --yes-label "Restart" --no-label "Exit" --yesno "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >/dev/tty1
+    # case $? in
+    #   0)
+    #     ./$(basename $0) && exit ;;
+    #   *)
+    #     exit 1 ;;
+    # esac
   fi
   #DEBUG
   if [[ "$debug" == "on" ]]; then
@@ -224,9 +255,12 @@ function InitLoader() {
     cat ./ThemeMaster.cfg >> ./debug_themes.txt
   fi
   SetMode
+  # Make sure resolution is set for ThemeGallery
+  # if [[ -z "$gallery_user_res" ]]; then
+  #   SetGalleryRes
+  # fi
   LoadInstalledThemes
-  # Check and update gallery data at startup
-  CheckGalleryUpdates
+  # Checks for update at startup
   if [[ "$themes_autocheckupdate" == "on" ]]; then
     CheckThemesUpdates
   fi
@@ -278,6 +312,10 @@ function SetMode() {
     LoadGitHubThemes
   else
     mode_title="Theme Gallery Mode"
+    # Make sure gallery data is available
+    if [ ! -e ./data/gallery.db ]; then
+      CheckGalleryUpdates
+    fi
     LoadGallery
   fi
 }
@@ -406,27 +444,9 @@ function SaveSettings() {
   echo "active_collection=\"${active_collection}\"" >>ThemeMaster.cfg
   echo "collections=(${collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
+  echo "gallery_user_res=\"${gallery_user_res}\"" >>ThemeMaster.cfg
 }
 
-function ExitApp() {
-  rm /tmp/ThemeMaster_
-  #ensure that background subprocesses are killed (tm-joypad)
-  $sudo_prefix kill $(jobs -p) 2>/dev/null
-  sleep 1
-  if [[ -n "$(jobs -p)" ]]; then
-    $sudo_prefix kill -9 $(jobs -p) 2>/dev/null
-  fi
-
-  if command -v emulationstation &> /dev/null
-  then
-    $sudo_prefix systemctl restart emulationstation
-  fi
-  if command -v emustation &> /dev/null
-  then
-    $sudo_prefix systemctl restart emustation
-  fi
-  clear > /dev/tty1
-}
 #
 # Theme Management functions
 #
@@ -663,6 +683,7 @@ function CheckThemesUpdates() {
     echo "updated cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
   fi
 }
+
 #
 # GitHub Repository mode functions
 #
@@ -679,6 +700,7 @@ function LoadGitHubThemes() {
   onlinethemes=("${onlinethemes[@]/#+([[:blank:]])/}") # remove leading space/tab from each element
   onlinethemes=("${onlinethemes[@]/%+([[:blank:]])/}") # remove trailing space/tab from each element
 }
+
 #
 # Gallery mode functions
 #
@@ -693,25 +715,40 @@ function LoadGallery() {
   local _480
   local _640
   local _854
+  local _960
 
   unset onlinethemes
-  unset gallery_640
-  unset gallery_480
-  unset gallery_640_untested
-  unset gallery_480_untested
+  unset gallery_960x544
+  unset gallery_854x480
+  unset gallery_640x480
+  unset gallery_480x320
+  unset gallery_960x544_untested
+  unset gallery_854x480_untested
+  unset gallery_640x480_untested
+  unset gallery_480x320_untested
   {
   read
-  while read -r author theme _480 _640 _854
+  while read -r author theme _480 _640 _854 _960
   do
+    if [[ "$_960" == "Yes" ]]; then
+      gallery_960x544+=("$theme")
+    elif [[ "$_960" == "Untested" ]]; then
+      gallery_960x544_untested+=("$theme")
+    fi
+    if [[ "$_854" == "Yes" ]]; then
+      gallery_854x480+=("$theme")
+    elif [[ "$_854" == "Untested" ]]; then
+      gallery_854x480_untested+=("$theme")
+    fi
     if [[ "$_640" == "Yes" ]]; then
-      gallery_640+=("$theme")
+      gallery_640x480+=("$theme")
     elif [[ "$_640" == "Untested" ]]; then
-      gallery_640_untested+=("$theme")
+      gallery_640x480_untested+=("$theme")
     fi
     if [[ "$_480" == "Yes" ]]; then
-      gallery_480+=("$theme")
+      gallery_480x320+=("$theme")
     elif [[ "$_480" == "Untested" ]]; then
-      gallery_480_untested+=("$theme")
+      gallery_480x320_untested+=("$theme")
     fi
     onlinethemes+=("$theme")
     gallery_array[$theme]="$author"
@@ -726,6 +763,8 @@ function UpdateGalleryDB() {
   local _480
   local _640
   local _854
+  local _960
+  local _XXX #unused variable allowing for asynchronous update between ThemeMaster and EmulationStation-OGA-Theme-Gallery when a new screen size is added to the gallery
   local account
   local theme_repo
 
@@ -735,14 +774,14 @@ function UpdateGalleryDB() {
   grep "|" /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
   tail -n+3 /tmp/ThemeMaster_temp.output > /tmp/ThemeMaster_wget.output
   sed 's/[][!() ]//g' /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
-  echo "*Account* *Repository* *480x320* *640x480* *854x480*" > ./data/gallery.db
+  echo "*Account* *Repository* *480x320* *640x480* *854x480* *960x544*" > ./data/gallery.db
   SAVEIFS=$IFS
   IFS='|'
-  while read -r temp1 temp preview_url _480 _640 _854
+  while read -r temp1 temp preview_url _480 _640 _854 _960 _XXX
   do
     account=$(echo $temp | awk -F"/" '{print $4}')
     theme_repo=$(echo $temp | awk -F"/" '{print $5}')
-    echo "${account} ${theme_repo} ${_480} ${_640}" >> ./data/gallery.db
+    echo "${account} ${theme_repo} ${_480} ${_640} ${_854} ${_960}" >> ./data/gallery.db
     if [ ! -e "./data/${theme_repo}.png" ]; then
       wget -nv -o /tmp/ThemeMaster_wget.log -O "./data/${theme_repo}.png" $preview_url
       wget_result $? "InitLoader"
@@ -773,6 +812,18 @@ function CheckGalleryUpdates() {
   fi
 }
 
+function SetGalleryRes() {
+  local device_res
+
+  device_res=$(xdpyinfo | awk '/dimensions/{print $2}')
+  if [[ "${gallery_res[*]}" =~ "${device_res}" ]]; then
+    gallery_user_res=$device_res
+  else
+    gallery_user_res="notmatched"
+  fi
+  SaveSettings
+}
+
 ##################
 # THEMEMASTER UI #
 ##################
@@ -791,14 +842,24 @@ function BrowseMenu() {
   local tmp
   local i=1
   local nb=0
+  local gallery_size=gallery_${gallery_user_res}[@]
+  local gallery_size_untested=gallery_${gallery_user_res}_untested[@]
+
+  # Make sure resolution is set for ThemeGallery
+  if [[ -z "$gallery_user_res" ]]; then
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Please select the resolution you want to use in order to use Theme Gallery mode." 10 50 2>&1 >/dev/tty1
+    SetGalleryResMenu
+  fi
+  # if [[ "$gallery_user_res" == "notmatched" ]]; then
+  #   dialog --clear --backtitle "ThemeMaster - System" --msgbox "No gallery's resolution matches your screen, please select the resolution you want to use." 10 50 2>&1 >/dev/tty1
+  #   SetGalleryResMenu
+  # fi
 
   if [[ -z $filter ]]; then
     browse_title="Select theme's resolution compatibility :"
     options=(
-      A "Verified on 480x320"
-      B "Verified on 640x480"
-      C "Untested on 480x320"
-      D "Untested on 640x480"
+      A "Verified on $gallery_user_res"
+      B "Untested on $gallery_user_res"
     )
     cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --menu "$browse_title" "15" "50" "15")
     choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
@@ -806,10 +867,8 @@ function BrowseMenu() {
     case $retval in
     0)
       case $choice in
-        A) BrowseMenu "480verified" ;;
-        B) BrowseMenu "640verified" ;;
-        C) BrowseMenu "480untested" ;;
-        D) BrowseMenu "640untested" ;;
+        A) BrowseMenu "${gallery_user_res}verified" ;;
+        B) BrowseMenu "${gallery_user_res}untested" ;;
       esac
       ;;
     1)
@@ -820,33 +879,17 @@ function BrowseMenu() {
       ;;
     esac
   fi
-  if [[ "$filter" == "480verified" ]]; then
-    browse_title="Themes tested on 480x320 displays :"
-    for theme in "${gallery_480[@]}"; do
+  if [[ "$filter" == "${gallery_user_res}verified" ]]; then
+    browse_title="Themes tested on ${gallery_user_res} displays :"
+    for theme in "${!gallery_size}"; do
       if [ ! -d "${themes_location}$theme" ]; then
         options+=(${theme#es-theme-} "by ${gallery_array[$theme]}" "off")
         nb=$((nb+1))
       fi
     done
-  elif [[ "$filter" == "480untested" ]]; then
-    browse_title="Themes not tested on 480x320 displays :"
-    for theme in "${gallery_480_untested[@]}"; do
-      if [ ! -d "${themes_location}$theme" ]; then
-        options+=(${theme#es-theme-} "by ${gallery_array[$theme]}" "off")
-        nb=$((nb+1))
-      fi
-    done
-  elif [[ "$filter" == "640verified" ]]; then
-    browse_title="Themes tested on 640x480 displays :"
-    for theme in "${gallery_640[@]}"; do
-      if [ ! -d "${themes_location}$theme" ]; then
-        options+=(${theme#es-theme-} "by ${gallery_array[$theme]}" "off")
-        nb=$((nb+1))
-      fi
-    done
-  elif [[ "$filter" == "640untested" ]]; then
-    browse_title="Themes untested on 640x480 displays :"
-    for theme in "${gallery_640_untested[@]}"; do
+  elif [[ "$filter" == "${gallery_user_res}untested" ]]; then
+    browse_title="Themes not tested on ${gallery_user_res} displays :"
+    for theme in "${!gallery_size_untested}"; do
       if [ ! -d "${themes_location}$theme" ]; then
         options+=(${theme#es-theme-} "by ${gallery_array[$theme]}" "off")
         nb=$((nb+1))
@@ -893,32 +936,16 @@ function BrowseMenu() {
     ;;
   3)
     mode_title_saved="$mode_title"
-    if [[ "$filter" == "480verified" ]]; then
-      for theme in "${gallery_480[@]}"; do
+    if [[ "$filter" == "${gallery_user_res}verified" ]]; then
+      for theme in "${!gallery_size[@]}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
           InstallTheme "$theme"
           i=$((i+1))
         fi
       done
-    elif [[ "$filter" == "480untested" ]]; then
-      for theme in "${gallery_480_untested[@]}"; do
-        if [ ! -d "${themes_location}$theme" ]; then
-          mode_title="Batch processing : theme $i / $nb"
-          InstallTheme "$theme"
-          i=$((i+1))
-        fi
-      done
-    elif [[ "$filter" == "640verified" ]]; then
-      for theme in "${gallery_640[@]}"; do
-        if [ ! -d "${themes_location}$theme" ]; then
-          mode_title="Batch processing : theme $i / $nb"
-          InstallTheme "$theme"
-          i=$((i+1))
-        fi
-      done
-    elif [[ "$filter" == "640untested" ]]; then
-      for theme in "${gallery_640_untested[@]}"; do
+    elif [[ "$filter" == "${gallery_user_res}untested" ]]; then
+      for theme in "${!gallery_size_untested[@]}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
           InstallTheme "$theme"
@@ -1416,6 +1443,41 @@ function SelectCollectionMenu() {
   esac
 }
 
+# Specfic to Theme Gallery mode
+function SetGalleryResMenu() {
+  local cmd
+  local options
+  local choice
+  local retval
+  local temp
+
+  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Theme's Resolution ] " --radiolist "Select resolution to be shown in Gallery :" "15" "50" "15")
+  for temp in "${gallery_res[@]}"; do
+    if [ "$temp" == "$gallery_user_res" ]; then
+      options+=($temp "screen size" "on")
+    else
+      options+=($temp "screen size" "off")
+    fi
+  done
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  retval=$?
+  case $retval in
+  0)
+    if [ "$choice" != "$gallery_user_res" ]; then
+      gallery_user_res=$choice
+      SaveSettings
+    fi
+    SettingsMenu
+    ;;
+  1)
+    SettingsMenu
+    ;;
+  *)
+    exit 1
+    ;;
+  esac
+}
+
 function SetModeMenu() {
   local cmd
   local options
@@ -1473,10 +1535,11 @@ function SettingsMenu() {
     B "View changelog"
     C "UI color scheme"
     D "Change app mode"
-    E "Advanced settings"
+    E "Screen size"
+    F "Advanced settings"
   )
   if [ "$mode" == "A" ]; then
-    options+=(F "Change active collection")
+    options+=(G "Change active collection")
   fi
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
   retval=$?
@@ -1514,8 +1577,9 @@ function SettingsMenu() {
     B) AppChangeLog ;;
     C) ColorSchemeMenu ;;
     D) SetModeMenu ;;
-    E) AdvancedSettings ;;
-    F) SelectCollectionMenu ;;
+    E) SetGalleryResMenu ;;
+    F) AdvancedSettings ;;
+    G) SelectCollectionMenu ;;
     esac
     ;;
   1)
