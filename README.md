@@ -44,17 +44,23 @@ Most evolutions have been initially implemented on [ArkThemes-fork](https://gith
 
 # Installation
 ## ArkOS
-Need to be on ArkOS 2021-02-13 (02132021) or newer.  
-Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools`.
-NB : on RG351V, if SD2 is being used for roms, installation must be in `/roms2/tools/`.
-Run ThemeMaster from ArkOS Options > Tools menu.
+- Need to be on ArkOS 2021-02-13 (02132021) or newer.  \
+- Click the green code button at the top and then click on Download Zip. \
+- Open the zip file and extract the *ThemeMaster.sh* file and *ThemeMaster* folder. \
+- Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools`. \
+   - NB : on RG351V, if SD2 is being used for roms, installation must be in `/roms2/tools/`. \
+- Run ThemeMaster from ArkOS Options > Tools menu.
 
 ## TheRA
-Place *ThemeMaster.sh* and *ThemeMaster* folder in `/opt/tools`
+- Click the green code button at the top and then click on Download Zip. \
+- Open the zip file and extract the *ThemeMaster.sh* file and *ThemeMaster* folder. \
+- Place *ThemeMaster.sh* and *ThemeMaster* folder in `/opt/tools`
 
 ## RetroOZ
-Need to be on RetroOZ 0.50 - Beta - 2 July or newer.
-Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools` (or directly in /opt/system/Tools).
+- Need to be on RetroOZ 0.50 - Beta - 2 July or newer. \
+- Click the green code button at the top and then click on Download Zip. \
+- Open the zip file and extract the *ThemeMaster.sh* file and *ThemeMaster* folder. \
+- Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools` (or directly in /opt/system/Tools).
 
 ## JELOS
 ThemeMaster has been intergrated into their most recent releases. Just launch from tools and enjoy! 
