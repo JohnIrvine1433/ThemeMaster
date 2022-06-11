@@ -103,7 +103,7 @@ else
   #Unzipping archives
   unzip -qo ${temp_ram_folder}app_update_temp/asset.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
   #Copying logo file
-  cp -rf ${temp_ram_folder}app_update_temp/ThemeMaster.nfo $app_location/ThemeMaster/
+  cp -f ${temp_ram_folder}app_update_temp/ThemeMaster.nfo $app_location/ThemeMaster/
 fi
 
 #Display changelog
