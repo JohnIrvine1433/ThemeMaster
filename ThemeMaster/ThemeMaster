@@ -869,7 +869,7 @@ function BrowseMenu() {
 
 
   if [[ "${gallery_user_res}" == "other" ]]; then
-    browse_title="All themes available from EmulationStation-OGA-Theme by Jetup (some themes may not dispay properly) :"
+    browse_title="All available themes (some may not work on your device):"
     for theme in "${onlinethemes[@]}"; do
       if [ ! -d "${themes_location}$theme" ]; then
         options+=(${theme#es-theme-} "by ${gallery_array[$theme]}" "off")
@@ -950,7 +950,11 @@ function BrowseMenu() {
     fi
     ;;
   1)
-    BrowseMenu
+    if [[ "${gallery_user_res}" == "other" ]]; then
+      MainMenu
+    else
+      BrowseMenu
+    fi
     ;;
   2)
     InstallSubMenu "$tmp" "$filter"
