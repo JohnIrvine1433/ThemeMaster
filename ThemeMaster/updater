@@ -11,7 +11,7 @@ function PostInstallUpdater() {
   local nbchanges
   local temp_array1
   local temp_array2
-  local updater_2_version="4.2.0"
+  local updater_2_version="4.3.0"
   local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${updater_2_version}/ThemeMaster.nfo.zip"
 
   dialog --clear
@@ -78,12 +78,17 @@ function PostInstallUpdater() {
 ##########################
 #3.1.0 and 4.0.0
   #Fix cached_outdatedthemes, file reset
-  #rm -f ./data/outdatedthemes.cache
+  if [ $current_app_version \< "4.0.0" ]; then
+    rm -f ./data/outdatedthemes.cache
+  fi
 
 #4.2.0
   #Update ThemeGallery sourcing, files reset
-  rm -f ./data/gallery.db
-  rm -f ./data/gallery.version
+  if [ $current_app_version \< "4.2.0" ]; then
+    rm -f ./data/gallery.db
+    rm -f ./data/gallery.version
+  fi
+
 
 ################
 # POST INSTALL #

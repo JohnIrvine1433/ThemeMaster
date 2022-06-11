@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.2.0"
+current_app_version="4.3.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -183,14 +183,26 @@ function InitLoader() {
   local isitogs
   local isitchi
   local param_device=""
+  local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${current_app_version}/ThemeMaster.nfo.zip"
+
 
   #Splashscreen
-  if [ -e "ThemeMaster.nfo" ]; then
-    cat ThemeMaster.nfo
-    echo "v$current_app_version"
-    sleep 2
-    clear
+  if [ ! -e "ThemeMaster.nfo" ]; then
+    #Downloading and install logo asset
+    mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
+    wget -nv "$ASSET_URL" -O ${temp_ram_folder}app_update_temp/asset.zip
+    #Unzipping archives
+    unzip -qo ${temp_ram_folder}app_update_temp/asset.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
+    #Overwritting existing files
+    cp -rf ${temp_ram_folder}app_update_temp/ThemeMaster.nfo $app_location
+    #Deleting temporary files...
+    rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
   fi
+  cat ThemeMaster.nfo
+  echo "v$current_app_version"
+  sleep 2
+  clear
+
   #Make sure data folder is created
   mkdir -p ./data
   #
@@ -855,7 +867,16 @@ function BrowseMenu() {
   #   SetGalleryResMenu
   # fi
 
-  if [[ -z $filter ]]; then
+
+  if [[ "${gallery_user_res}" == "other" ]]; then
+    browse_title="All themes available from EmulationStation-OGA-Theme by Jetup (some themes may not dispay properly) :"
+    for theme in "${onlinethemes[@]}"; do
+      if [ ! -d "${themes_location}$theme" ]; then
+        options+=(${theme#es-theme-} "by ${gallery_array[$theme]}" "off")
+        nb=$((nb+1))
+      fi
+    done
+  elif [[ -z $filter ]]; then
     browse_title="Select theme's resolution compatibility :"
     options=(
       A "Verified on $gallery_user_res"
@@ -878,8 +899,7 @@ function BrowseMenu() {
       exit 1
       ;;
     esac
-  fi
-  if [[ "$filter" == "${gallery_user_res}verified" ]]; then
+  elif [[ "$filter" == "${gallery_user_res}verified" ]]; then
     browse_title="Themes tested on ${gallery_user_res} displays :"
     for theme in "${!gallery_size}"; do
       if [ ! -d "${themes_location}$theme" ]; then
@@ -903,6 +923,7 @@ function BrowseMenu() {
     dialog --clear --backtitle "$mode_title" --msgbox "None (left) available to be installed" 10 50 2>&1 >/dev/tty1
     BrowseMenu
   fi
+
   cmd=(dialog --extra-button --extra-label "ALL" --help-button --help-label "Details" --cancel-label "Back" --ok-label "Selected" --backtitle "$mode_title" --default-item "$selected_theme" --checklist "$browse_title" "15" "50" "15")
   tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
   retval=$?
@@ -936,7 +957,15 @@ function BrowseMenu() {
     ;;
   3)
     mode_title_saved="$mode_title"
-    if [[ "$filter" == "${gallery_user_res}verified" ]]; then
+    if [[ "${gallery_user_res}" == "other" ]]; then
+      for theme in "${onlinethemes[@]}"; do
+        if [ ! -d "${themes_location}$theme" ]; then
+          mode_title="Batch processing : theme $i / $nb"
+          InstallTheme "$theme"
+          i=$((i+1))
+        fi
+      done
+    elif [[ "$filter" == "${gallery_user_res}verified" ]]; then
       for theme in "${!gallery_size[@]}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
@@ -1459,6 +1488,12 @@ function SetGalleryResMenu() {
       options+=($temp "screen size" "off")
     fi
   done
+  if [ "other" == "$gallery_user_res" ]; then
+    options+=("other" "screen size" "on")
+  else
+    options+=("other" "screen size" "off")
+  fi
+
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
   retval=$?
   case $retval in
