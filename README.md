@@ -5,7 +5,7 @@ Following devices are supported : Gameforce Chi, Powkiddy RGB10 and RGB10 Max, A
 
 # User Guide
 ## Installation
-- First, download the latest version of ThemeMaster from [here](https://api.github.com/repos/JohnIrvine1433/ThemeMaster/zipball).
+- First, download the latest version of ThemeMaster from [here](https://github.com/JohnIrvine1433/ThemeMaster/archive/refs/tags/4.2.0.zip)
 - Open the zip file and extract the *ThemeMaster.sh* file and *ThemeMaster* folder.
 
 ### ArkOS (021-02-13 or newer)
