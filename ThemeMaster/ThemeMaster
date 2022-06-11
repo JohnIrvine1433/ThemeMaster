@@ -183,25 +183,14 @@ function InitLoader() {
   local isitogs
   local isitchi
   local param_device=""
-  local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${current_app_version}/ThemeMaster.nfo.zip"
-
 
   #Splashscreen
-  if [ ! -e "ThemeMaster.nfo" ]; then
-    #Downloading and install logo asset
-    mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
-    wget -nv "$ASSET_URL" -O ${temp_ram_folder}app_update_temp/asset.zip
-    #Unzipping archives
-    unzip -qo ${temp_ram_folder}app_update_temp/asset.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
-    #Overwritting existing files
-    cp -rf ${temp_ram_folder}app_update_temp/ThemeMaster.nfo $app_location
-    #Deleting temporary files...
-    rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
+  if [ -e "ThemeMaster.nfo" ]; then
+    cat ThemeMaster.nfo
+    echo "v$current_app_version"
+    sleep 2
+    clear
   fi
-  cat ThemeMaster.nfo
-  echo "v$current_app_version"
-  sleep 2
-  clear
 
   #Make sure data folder is created
   mkdir -p ./data
