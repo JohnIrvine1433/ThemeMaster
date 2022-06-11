@@ -100,11 +100,11 @@ if [ -e "ThemeMaster.nfo" ]; then
 else
   #Downloading and install logo asset
   mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
-  wget -nv "$ASSET_URL" -O ${temp_ram_folder}app_update_temp/asset.zip
+  wget -o /dev/null "$ASSET_URL" -O ${temp_ram_folder}app_update_temp/asset.zip
   #Unzipping archives
   unzip -qo ${temp_ram_folder}app_update_temp/asset.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
-  #Overwritting existing files
-  cp -rf ${temp_ram_folder}app_update_temp/ThemeMaster.nfo $app_location
+  #Copying logo file
+  cp -rf ${temp_ram_folder}app_update_temp/ThemeMaster.nfo $app_location/ThemeMaster/
   #Deleting temporary files...
   rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
 fi
