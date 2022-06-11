@@ -408,12 +408,12 @@ function UpdateApp() {
     #Overwritting existing files
     cp -rf ${temp_ram_folder}app_update_temp/${package_folder}/* $app_location
     chmod 777 ${app_location}*.sh #make sure newly downloaded scripts have right permission
-    #Deleting temporary files...
-    rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
     #Load updater module from new release
     source ./updater
     #Execute post-install updater function
     PostInstallUpdater
+    #Deleting temporary files...
+    rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >/dev/tty1
     exit
   else
