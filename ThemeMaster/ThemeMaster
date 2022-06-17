@@ -128,7 +128,12 @@ function wget_result() {
 function ExitApp() {
   local temp
 
-  rm /tmp/ThemeMaster_*
+  if [[ "$debug" == "on" ]]; then
+    cp /tmp/ThemeMaster_* ${app_location}debug/
+    rm /tmp/ThemeMaster_*
+  else
+    rm /tmp/ThemeMaster_*
+  fi
   #ensure that background subprocesses are killed (tm-joypad)
   #$sudo_prefix kill $(jobs -p) > /dev/null 2>&1
   #sleep 1
@@ -212,9 +217,11 @@ function InitLoader() {
     exit
   fi
   #launch joypad
-  $sudo_prefix ./tm-joypad ThemeMaster $param_device > /dev/null 2>&1 &
-  #launch joypad in debug mode
-  #$sudo_prefix ./tm-joypad ThemeMaster $param_device debug > ./debug_joyad.txt 2>&1
+  if [[ "$debug" == "on" ]]; then
+    $sudo_prefix ./tm-joypad ThemeMaster $param_device debug > /dev/null 2>&1 &
+  else
+    $sudo_prefix ./tm-joypad ThemeMaster $param_device > /dev/null 2>&1 &
+  fi
 
   #
   #App settings initialisation
@@ -250,10 +257,12 @@ function InitLoader() {
   fi
   #DEBUG
   if [[ "$debug" == "on" ]]; then
-    echo "************** NEW THEMES DEBUG OUTPUTS **************" >> ./debug_themes.txt
-    echo `date` >> ./debug_themes.txt
-    echo "***** THEMEMASTER.CFG *****" >> ./debug_themes.txt
-    cat ./ThemeMaster.cfg >> ./debug_themes.txt
+    #Make sure debug folder is created
+    mkdir -p ./debug
+    echo "************** NEW THEMES DEBUG OUTPUTS **************" >> ./debug/debug_themes.txt
+    echo `date` >> ./debug/debug_themes.txt
+    echo "***** THEMEMASTER.CFG *****" >> ./debug/debug_themes.txt
+    cat ./ThemeMaster.cfg >> ./debug/debug_themes.txt
   fi
   SetMode
   # Make sure resolution is set for ThemeGallery
@@ -463,9 +472,9 @@ function InstallTheme() {
 
   #DEBUG
   if [[ "$debug" == "on" ]]; then
-    echo "InstallTheme $theme" >> ./debug_themes.txt
-    echo "outdatedthemes before theme installation : ${outdatedthemes[@]}" >> ./debug_themes.txt
-    echo "cached outdatedthemes before theme installation : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
+    echo "InstallTheme $theme" >> ./debug/debug_themes.txt
+    echo "outdatedthemes before theme installation : ${outdatedthemes[@]}" >> ./debug/debug_themes.txt
+    echo "cached outdatedthemes before theme installation : ${cached_outdatedthemes[@]}" >> ./debug/debug_themes.txt
   fi
   # In gallery mode, set $github_user according to current $theme
   if [[ $mode == "B" ]]; then
@@ -513,8 +522,8 @@ function InstallTheme() {
     UpdateOutdatedThemes
     #DEBUG
     if [[ "$debug" == "on" ]]; then
-      echo "outdatedthemes after theme installation : ${outdatedthemes[@]}" >> ./debug_themes.txt
-      echo "cached outdatedthemes after theme installation : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
+      echo "outdatedthemes after theme installation : ${outdatedthemes[@]}" >> ./debug/debug_themes.txt
+      echo "cached outdatedthemes after theme installation : ${cached_outdatedthemes[@]}" >> ./debug/debug_themes.txt
     fi
     dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} successfully installed!" 8 50 >/dev/tty1
     sleep 1
@@ -634,11 +643,11 @@ function CheckThemesUpdates() {
   unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f)))
   #DEBUG
   if [[ "$debug" == "on" ]]; then
-    echo "CheckThemesUpdates" >> ./debug_themes.txt
-    echo "onlinethemes : ${onlinethemes[@]}" >> ./debug_themes.txt
-    echo "cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
-    echo "outdatedthemes from cache : ${outdatedthemes[@]}" >> ./debug_themes.txt
-    echo "unchecked_themes : ${unchecked_themes[@]}\n" >> ./debug_themes.txt
+    echo "CheckThemesUpdates" >> ./debug/debug_themes.txt
+    echo "onlinethemes : ${onlinethemes[@]}" >> ./debug/debug_themes.txt
+    echo "cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug/debug_themes.txt
+    echo "outdatedthemes from cache : ${outdatedthemes[@]}" >> ./debug/debug_themes.txt
+    echo "unchecked_themes : ${unchecked_themes[@]}\n" >> ./debug/debug_themes.txt
   fi
   for theme in "${unchecked_themes[@]}"; do
     latest=""
@@ -680,8 +689,8 @@ function CheckThemesUpdates() {
   fi
   #DEBUG
   if [[ "$debug" == "on" ]]; then
-    echo "outdatedthemes after online check : ${outdatedthemes[@]}" >> ./debug_themes.txt
-    echo "updated cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug_themes.txt
+    echo "outdatedthemes after online check : ${outdatedthemes[@]}" >> ./debug/debug_themes.txt
+    echo "updated cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug/debug_themes.txt
   fi
 }
 
