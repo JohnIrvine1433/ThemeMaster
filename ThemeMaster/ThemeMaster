@@ -196,9 +196,25 @@ function InitLoader() {
     sleep 2
     clear
   fi
-
+  #Load parameters
+  if [ -e "ThemeMaster.cfg" ]; then
+    source ThemeMaster.cfg
+    #Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
+    if [[ -z "$themes_location" || -z "$temp_ram_folder" ]]; then
+      SetEnvironment
+      SaveSettings
+    fi
+  else
+    SetEnvironment
+    SaveSettings
+  fi
   #Make sure data folder is created
   mkdir -p ./data
+  #Make sure debug folder is created
+  if [[ "$debug" == "on" ]]; then
+    mkdir -p ./debug
+  fi
+
   #
   # Load Controls management
   #
@@ -218,13 +234,13 @@ function InitLoader() {
   fi
   #launch joypad
   if [[ "$debug" == "on" ]]; then
-    $sudo_prefix ./tm-joypad ThemeMaster $param_device debug > /dev/null 2>&1 &
+    $sudo_prefix ./tm-joypad ThemeMaster $param_device debug &
   else
     $sudo_prefix ./tm-joypad ThemeMaster $param_device > /dev/null 2>&1 &
   fi
 
   #
-  #App settings initialisation
+  #App initialisation
   #
   if [ -e "ThemeMaster.cfg" ]; then
     source ThemeMaster.cfg
@@ -257,8 +273,6 @@ function InitLoader() {
   fi
   #DEBUG
   if [[ "$debug" == "on" ]]; then
-    #Make sure debug folder is created
-    mkdir -p ./debug
     echo "************** NEW THEMES DEBUG OUTPUTS **************" >> ./debug/debug_themes.txt
     echo `date` >> ./debug/debug_themes.txt
     echo "***** THEMEMASTER.CFG *****" >> ./debug/debug_themes.txt
@@ -445,7 +459,7 @@ function UpdateApp() {
 function SaveSettings() {
   echo "app_conf_version=\"${app_conf_version}\"" >ThemeMaster.cfg
   echo "app_prerelease=\"${app_prerelease}\"" >>ThemeMaster.cfg
-  echo "debug=${debug}" >>ThemeMaster.cfg
+  echo "debug=\"${debug}"\" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
   echo "themes_location=\"${themes_location}\"" >>ThemeMaster.cfg
   echo "temp_ram_folder=\"${temp_ram_folder}\"" >>ThemeMaster.cfg
