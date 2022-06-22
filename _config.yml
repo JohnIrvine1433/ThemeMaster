@@ -1,4 +1,6 @@
 theme: jekyll-theme-cayman
+title: ThemeMaster
+description: An emulationStation theme manager for small screen devices
 show_downloads: true
 github:
   zip_url: https://api.github.com/repos/JohnIrvine1433/ThemeMaster/zipball
