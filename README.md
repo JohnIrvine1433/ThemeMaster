@@ -1,4 +1,5 @@
- _____ _                             
+```
+_____ _                             
 |_   _| |__   ___ _ __ ___   ___     
   | | | '_ \ / _ \ '_ ` _ \ / _ \    
   | | | | | |  __/ | | | | |  __/    
@@ -7,6 +8,7 @@
       | |\/| |/ _` / __| __/ _ \ '__|
       | |  | | (_| \__ \ ||  __/ |   
       |_|  |_|\__,_|___/\__\___|_| 
+```      
 # ThemeMaster
 ThemeMaster is an EmulationStation theme manager for small screen devices running [ArkOS](https://github.com/christianhaitian/arkos), [RetroOZ](https://github.com/southoz/RetroOZ), [TheRA](https://techtoytinker.com/theretroarena) or [JELOS](https://github.com/JustEnoughLinuxOS/distribution).
 
