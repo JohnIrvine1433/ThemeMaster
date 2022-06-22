@@ -2,3 +2,4 @@ theme: jekyll-theme-cayman
 show_downloads: true
 github:
   zip_url: https://api.github.com/repos/JohnIrvine1433/ThemeMaster/zipball
+  tar_url: https://api.github.com/repos/JohnIrvine1433/ThemeMaster/tarball
