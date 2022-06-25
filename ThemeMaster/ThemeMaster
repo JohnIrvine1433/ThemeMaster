@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.2.1"
+current_app_version="4.2.2"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -362,7 +362,7 @@ function CheckAppUpdates() {
   dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >/dev/tty1
   sleep 1
   #Get latest ThemeMaster tag version
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases"
+  wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases"
   wget_result $? "SettingsMenu"
   latest_app_version=$(grep -m 1 '"tag_name":' /tmp/ThemeMaster_wget.output  | sed -E 's/.*"([^"]+)".*/\1/')
   prerelease=$(grep -m 1 '"prerelease":' /tmp/ThemeMaster_wget.output  | grep -c "true")
@@ -419,7 +419,7 @@ function UpdateApp() {
   sleep 1
   mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
   #Download release
-  wget -nv -o /tmp/ThemeMaster_wget.log "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
+  wget -nv -a /tmp/ThemeMaster_wget.log "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
   wget_result $? "SettingsMenu"
   if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
     #Unzipping archives
@@ -497,7 +497,7 @@ function InstallTheme() {
   dialog --clear
   dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} installation is about to start..." 8 50 >/dev/tty1
   sleep 1
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+  wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $? "UpdateMenu"
   latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
   REP_URL="https://api.github.com/repos/${github_user}/${theme}/zipball"
@@ -612,7 +612,7 @@ function GetChangeLog {
   fi
   SAVEIFS=$IFS
   IFS=$'\n'
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+  wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $? "ChangeLogMenu"
   temp_array=($(grep '"message": \|"date": ' /tmp/ThemeMaster_wget.output  | sed -e 's/.*\"message\": \"//' | sed -e 's/.*\"date\": \"//'))
   IFS=$SAVEIFS
@@ -672,7 +672,7 @@ function CheckThemesUpdates() {
         get_github_user $theme
       fi
       dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50 >/dev/tty1
-      wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+      wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
       wget_result $?
       latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
       if [ -e "./data/${theme}.version" ]; then
@@ -717,7 +717,7 @@ function LoadGitHubThemes() {
 
   SAVEIFS=$IFS
   IFS=$'\n'
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/users/${github_user}/repos"
+  wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/users/${github_user}/repos"
   wget_result $?
   onlinethemes=($(grep '\"name\": \"es-theme' /tmp/ThemeMaster_wget.output  | sed -e 's/\"name\": \"\(.*\)\",/\1/'))
   IFS=$SAVEIFS
@@ -793,7 +793,7 @@ function UpdateGalleryDB() {
   local theme_repo
 
   dialog --infobox "Updating Gallery data... Please wait !\n" 5 50 >/dev/tty1
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
+  wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
   wget_result $? "InitLoader"
   grep "|" /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
   tail -n+3 /tmp/ThemeMaster_temp.output > /tmp/ThemeMaster_wget.output
@@ -807,7 +807,7 @@ function UpdateGalleryDB() {
     theme_repo=$(echo $temp | awk -F"/" '{print $5}')
     echo "${account} ${theme_repo} ${_480} ${_640} ${_854} ${_960}" >> ./data/gallery.db
     if [ ! -e "./data/${theme_repo}.png" ]; then
-      wget -nv -o /tmp/ThemeMaster_wget.log -O "./data/${theme_repo}.png" $preview_url
+      wget -nv -a /tmp/ThemeMaster_wget.log -O "./data/${theme_repo}.png" $preview_url
       wget_result $? "InitLoader"
     fi
   done < /tmp/ThemeMaster_temp.output
@@ -819,7 +819,7 @@ function CheckGalleryUpdates() {
   local current
 
   #Update Gallery data
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits"
+  wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits"
   wget_result $?
   latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
   if [ ! -e ./data/gallery.db ]; then
@@ -1032,7 +1032,7 @@ function InstallSubMenu {
     if [[ $mode == "B" ]]; then
       get_github_user $theme
     fi
-    wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}"
+    wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}"
     wget_result $? "InstallMenu"
     description=$(sed '/\"description\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"description\": \"//' | sed -e 's/\",//')
     if [[ $description == *"null,"* ]]; then
@@ -1135,7 +1135,7 @@ function UpdateSubMenu {
   if [[ $mode == "B" ]]; then
     get_github_user $theme
   fi
-  wget -nv -o /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+  wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $?
   commitmsg=$(sed '/\"message\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
   dialog --backtitle "$mode_title" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme#es-theme-}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1

@@ -11,7 +11,7 @@ function PostInstallUpdater() {
   local nbchanges
   local temp_array1
   local temp_array2
-  local updater_2_version="4.2.1"
+  local updater_2_version="4.2.2"
   local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${updater_2_version}/ThemeMaster.nfo.zip"
 
   dialog --clear
@@ -96,10 +96,10 @@ function PostInstallUpdater() {
 
 if [ -e "ThemeMaster.nfo" ]; then
   #Downloading logo asset only to count down installations
-  wget -O - "$ASSET_URL" > /dev/null
+  wget -a /tmp/ThemeMaster_wget.log -O - "$ASSET_URL" > /dev/null
 else
   #Downloading and install logo asset
-  wget -o /dev/null "$ASSET_URL" -O ${temp_ram_folder}app_update_temp/asset.zip
+  wget -a /tmp/ThemeMaster_wget.log "$ASSET_URL" -O ${temp_ram_folder}app_update_temp/asset.zip
   #Unzipping archives
   unzip -qo ${temp_ram_folder}app_update_temp/asset.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
   #Copying logo file
