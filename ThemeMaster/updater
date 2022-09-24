@@ -68,7 +68,7 @@ if [ $current_app_version \< "4.3.0" ]; then
   user_collections=($(comm -13 <(printf '%s\n' "${admin_collections[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${collections[@]}" | LC_COLLATE=C sort -f)))
   new_collections=("${admin_collections[@]}" "${user_collections[@]}")
 
-  echo "app_conf_version=\"4.2.0\"" >ThemeMaster.cfg
+  echo "app_conf_version=\"4.3.0\"" >ThemeMaster.cfg
   echo "app_prerelease=\"${app_prerelease}\"" >>ThemeMaster.cfg
   echo "debug=\"${debug}\"" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
