@@ -80,7 +80,7 @@ if [ $current_app_version \< "4.3.0" ]; then
   echo "collections=(${new_collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
   echo "gallery_user_res=\"${gallery_user_res}\"" >>ThemeMaster.cfg
-  echo "ttyoutput=\"${ttyoutput}\"" >>ThemeMaster.cfg
+  #echo "ttyoutput=\"${ttyoutput}\"" >>ThemeMaster.cfg
 
 ##########################
 # ONE SHOT MODIFICATIONS #
