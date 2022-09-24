@@ -1,5 +1,9 @@
+v4.3.0
+- Add support for Weston on JELOS
+- Minor improvements
 v4.2.2
 - Append wget log file for debug
+- Fix updater
 v4.2.1
 - Add an option in Theme Gallery mode for unsupported resolutions
 - Fix updater and logo asset installation
@@ -15,7 +19,7 @@ v4.1.0
 - Add support for RG552
 - Add support for JELOS
 - Manually added collections are no longer overwritten
-- Unnecessary Splashscreen added :p
+- Add unnecessary splashscreen :p
 - Various code improvements
 v4.0.3
 - Fix internet checking

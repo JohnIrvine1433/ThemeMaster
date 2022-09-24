@@ -11,11 +11,11 @@ function PostInstallUpdater() {
   local nbchanges
   local temp_array1
   local temp_array2
-  local updater_2_version="4.2.2"
+  local updater_2_version="4.3.0"
   local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${updater_2_version}/ThemeMaster.nfo.zip"
 
   dialog --clear
-  dialog --infobox "Processing post-installation ..." 5 50 >/dev/tty1
+  dialog --infobox "Processing post-installation ..." 5 50 >$ttyoutput
 
 ####################################
 # FORWARD COMPATIBLE MODIFICATIONS #
@@ -37,9 +37,11 @@ function PostInstallUpdater() {
 #
   #from v3.0.0
   mkdir -p ./data/
-  for file in *.log; do
-    mv -- "$file" "./data/${file%.log}.version"
-  done
+  if [ $current_app_version \< "3.0.0" ]; then
+    for file in *.log; do
+      mv -- "$file" "./data/${file%.log}.version"
+    done
+  fi
 #
 # ThemeMaster configuration file changes
 #
@@ -56,6 +58,8 @@ function PostInstallUpdater() {
   #do not overwrite manually added collections
   #From 4.2.0
   #Add gallery_user_res (Theme Gammery mode now relies on device's resolution)
+  #From 4.3.0
+  #Add variable to manage tty output
   admin_collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie")
   user_collections=($(comm -13 <(printf '%s\n' "${admin_collections[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${collections[@]}" | LC_COLLATE=C sort -f)))
   new_collections=("${admin_collections[@]}" "${user_collections[@]}")
@@ -72,6 +76,7 @@ function PostInstallUpdater() {
   echo "collections=(${new_collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
   echo "gallery_user_res=\"${gallery_user_res}\"" >>ThemeMaster.cfg
+  echo "ttyoutput=\"${ttyoutput}\"" >>ThemeMaster.cfg
 
 ##########################
 # ONE SHOT MODIFICATIONS #
@@ -111,5 +116,5 @@ fi
   nbchanges=${temp%:*}
   nbchanges=$((nbchanges-1))
   changes=$(head -n $nbchanges changelog)
-  dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1 >/dev/tty1
+  dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1 >$ttyoutput
 }

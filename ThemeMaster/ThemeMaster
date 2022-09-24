@@ -40,6 +40,7 @@ active_collection="Jetup13" # GitHub Collection Mode - Default active collection
 collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie") #GitHub Collection Mode - Default collection list
 app_colorscheme="All_Black" # Default app UI color scheme, "Default" for system's one
 gallery_user_res="" #Empty by default, set by end user on first use
+ttyoutput="" #Empty by default, managed through SetEnvironment
 
 #####################
 #  GLOBAL VARIABLES #
@@ -99,7 +100,7 @@ function wget_result() {
     8) wget_error="Server issued an error response." ;;
     *) wget_error="Unmanaged error." ;;
     esac
-    dialog --backtitle "ThemeMaster - System" --yes-label "$yes_label" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >/dev/tty1
+    dialog --backtitle "ThemeMaster - System" --yes-label "$yes_label" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >$ttyoutput
     case $? in
     0)
       if [[ $returnto == "InitLoader" ]]; then
@@ -175,7 +176,7 @@ function InstallDependencies() {
     fi
     if [ ! -z "$install_dependencies" ]; then
       dialog --clear
-      dialog --infobox "Installing dependencies ... Please wait !" 5 50 >/dev/tty1
+      dialog --infobox "Installing dependencies ... Please wait !" 5 50 >$ttyoutput
       $sudo_prefix apt update && $sudo_prefix apt install -y $install_dependencies --no-install-recommends
     fi
   fi
@@ -199,8 +200,8 @@ function InitLoader() {
   #Load parameters
   if [ -e "ThemeMaster.cfg" ]; then
     source ThemeMaster.cfg
-    #Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
-    if [[ -z "$themes_location" || -z "$temp_ram_folder" ]]; then
+    #Make sure envrionnement variables are set (see SetEnvironment )
+    if [[ -z "$themes_location" || -z "$temp_ram_folder" || -z "$ttyoutput" ]]; then
       SetEnvironment
       SaveSettings
     fi
@@ -229,7 +230,7 @@ function InitLoader() {
   elif [[ -e "/dev/input/by-path/platform-gameforce-gamepad-event-joystick" ]]; then
     param_device="chi"
   else
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >$ttyoutput
     exit
   fi
   #launch joypad
@@ -255,15 +256,15 @@ function InitLoader() {
   fi
   SetColorScheme
   dialog --clear
-  dialog --infobox "Initialisation... Please wait !" 5 50 >/dev/tty1
+  dialog --infobox "Initialisation... Please wait !" 5 50 >$ttyoutput
   #Checking internet access
   $sudo_prefix ping -c 1 google.com &> /dev/null
   if [ $? -eq 0 ]; then
     InstallDependencies
   else
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >$ttyoutput
     exit
-    # dialog --backtitle "ThemeMaster - System" --yes-label "Restart" --no-label "Exit" --yesno "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >/dev/tty1
+    # dialog --backtitle "ThemeMaster - System" --yes-label "Restart" --no-label "Exit" --yesno "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >$ttyoutput
     # case $? in
     #   0)
     #     ./$(basename $0) && exit ;;
@@ -306,10 +307,11 @@ function SetEnvironment() {
     current_OS=$(cat "/etc/os-release" | grep "NAME")
   else
     SaveSettings
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "No OS information found, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "No OS information found, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >$ttyoutput
     exit
   fi
 
+  ttyoutput="/dev/tty1" #Default tty
   if [[ $current_OS == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
@@ -322,9 +324,13 @@ function SetEnvironment() {
   elif [[ $current_OS == *"JELOS"* ]]; then
      themes_location="/storage/.config/emulationstation/themes/"
      temp_ram_folder="/dev/shm/"
+     #add support for Weston on JELOS
+     if [ "${UI_SERVICE}" = "weston.service" ]; then
+       ttyoutput="/dev/tty"
+     fi
   else
     SaveSettings
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >$ttyoutput
     exit
   fi
 }
@@ -359,7 +365,7 @@ function CheckAppUpdates() {
   local isPRok
 
   dialog --clear
-  dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >/dev/tty1
+  dialog --infobox "Checking for ThemeMaster updates...\nPlease wait !" 5 50 >$ttyoutput
   sleep 1
   #Get latest ThemeMaster tag version
   wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases"
@@ -382,7 +388,7 @@ function CheckAppUpdates() {
   fi
   app_updates_checked=1
   if [ $app_outdated -eq 1 ]; then
-    dialog --backtitle "ThemeMaster - System" --yes-label "Yes, now!" --no-label "No, later..." --yesno "A new release is available !! Launch update?" 10 50 2>&1 >/dev/tty1
+    dialog --backtitle "ThemeMaster - System" --yes-label "Yes, now!" --no-label "No, later..." --yesno "A new release is available !! Launch update?" 10 50 2>&1 >$ttyoutput
     retval=$?
     case $retval in
     0)
@@ -398,7 +404,7 @@ function CheckAppUpdates() {
     esac
   else
     dialog --clear
-    dialog --infobox "ThemeMaster is up to date..." 5 50 >/dev/tty1
+    dialog --infobox "ThemeMaster is up to date..." 5 50 >$ttyoutput
     sleep 1
     if [ $returnto == "MainMenu" ]; then
       MainMenu
@@ -415,7 +421,7 @@ function UpdateApp() {
   local retval
 
   dialog --clear
-  dialog --infobox "Downloading and installing ThemeMaster update..." 5 50 >/dev/tty1
+  dialog --infobox "Downloading and installing ThemeMaster update..." 5 50 >$ttyoutput
   sleep 1
   mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
   #Download release
@@ -437,13 +443,13 @@ function UpdateApp() {
     PostInstallUpdater
     #Deleting temporary files...
     rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1 >$ttyoutput
     exit
   else
     #Deleting temporary files...
     rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
 
-    dialog --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Update have failed because the downloaded archive couldn't be extracted." 20 50 2>&1 >/dev/tty1
+    dialog --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Update have failed because the downloaded archive couldn't be extracted." 20 50 2>&1 >$ttyoutput
     retval=$?
     case $retval in
     0)
@@ -469,6 +475,7 @@ function SaveSettings() {
   echo "collections=(${collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
   echo "gallery_user_res=\"${gallery_user_res}\"" >>ThemeMaster.cfg
+  echo "ttyoutput=\"${ttyoutput}\"" >>ThemeMaster.cfg
 }
 
 #
@@ -495,7 +502,7 @@ function InstallTheme() {
     get_github_user $theme
   fi
   dialog --clear
-  dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} installation is about to start..." 8 50 >/dev/tty1
+  dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} installation is about to start..." 8 50 >$ttyoutput
   sleep 1
   wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $? "UpdateMenu"
@@ -507,11 +514,11 @@ function InstallTheme() {
   # wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+%" | grep -o "[0-9]\+" | dialog --gauge "Downloading ${theme} package..." 10 50 0
   # Alternative for chunked encoding if file size can be known/estimated
   # estimated_size=($(wget --no-check-certificate -qO - "https://api.github.com/repos/${github_user}/${theme}" | grep -m 1 '\"size\": ' | sed -e 's/.*\"size\": \(.*\),/\1/'))
-  # wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+K \." | stdbuf -oL grep -o "[0-9]\+" | stdbuf -oL awk "{print int(\$1*100/$estimated_size)}" | dialog --gauge "Downloading package..." 10 50 0 >/dev/tty1
+  # wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+K \." | stdbuf -oL grep -o "[0-9]\+" | stdbuf -oL awk "{print int(\$1*100/$estimated_size)}" | dialog --gauge "Downloading package..." 10 50 0 >$ttyoutput
   # Display download progress directly form wget
-  wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox "Downloading ${theme#es-theme-} package..." 10 50 >/dev/tty1
+  wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox "Downloading ${theme#es-theme-} package..." 10 50 >$ttyoutput
   if unzip -qt "${temp_ram_folder}theme_update_temp/update.zip" | grep 'No errors detected'; then
-    dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} installation in progress..." 8 50 >/dev/tty1
+    dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} installation in progress..." 8 50 >$ttyoutput
     #Unzipping archive
     # sudo
     unzip -qo "${temp_ram_folder}theme_update_temp/update.zip" -d "${temp_ram_folder}theme_update_temp/" #unzip directly in RAM
@@ -539,7 +546,7 @@ function InstallTheme() {
       echo "outdatedthemes after theme installation : ${outdatedthemes[@]}" >> ./debug/debug_themes.txt
       echo "cached outdatedthemes after theme installation : ${cached_outdatedthemes[@]}" >> ./debug/debug_themes.txt
     fi
-    dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} successfully installed!" 8 50 >/dev/tty1
+    dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} successfully installed!" 8 50 >$ttyoutput
     sleep 1
     dialog --clear
   else
@@ -547,7 +554,7 @@ function InstallTheme() {
     #Deleting temporary files
     rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
 
-    dialog --clear --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Exit" --yesno "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 15 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Exit" --yesno "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 15 50 2>&1 >$ttyoutput
     retval=$?
     case $retval in
     0)
@@ -564,14 +571,14 @@ function RemoveTheme() {
   local theme="$1"
 
   dialog --clear
-  dialog --backtitle "$mode_title" --infobox "Removing ${theme#es-theme-}..." 8 50 >/dev/tty1
+  dialog --backtitle "$mode_title" --infobox "Removing ${theme#es-theme-}..." 8 50 >$ttyoutput
   # sudo
   rm -rf ${themes_location}$theme
   # sudo
   rm -f ./data/${theme}.version
   LoadInstalledThemes
   UpdateOutdatedThemes
-  dialog --backtitle "$mode_title" --infobox "Theme ${theme#es-theme-} successfully removed!" 8 50 >/dev/tty1
+  dialog --backtitle "$mode_title" --infobox "Theme ${theme#es-theme-} successfully removed!" 8 50 >$ttyoutput
   sleep 1
   UninstallMenu
 }
@@ -642,7 +649,7 @@ function CheckThemesUpdates() {
   local temp
 
   dialog --clear
-  dialog --infobox "Checking for themes updates... Please wait !" 5 50 >/dev/tty1
+  dialog --infobox "Checking for themes updates... Please wait !" 5 50 >$ttyoutput
   sleep 1
   #(re)Load installed themes with new release
   unset outdatedthemes
@@ -671,7 +678,7 @@ function CheckThemesUpdates() {
       if [[ $mode == "B" ]]; then
         get_github_user $theme
       fi
-      dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50 >/dev/tty1
+      dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50 >$ttyoutput
       wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
       wget_result $?
       latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
@@ -687,11 +694,11 @@ function CheckThemesUpdates() {
   themes_updates_checked=1
   if [[ -z $outdatedthemes ]]; then
     dialog --clear
-    dialog --infobox "All themes are up to date..." 5 50 >/dev/tty1
+    dialog --infobox "All themes are up to date..." 5 50 >$ttyoutput
     sleep 1
   else
     dialog --clear
-    dialog --infobox "New updates avalaible !" 5 50 >/dev/tty1
+    dialog --infobox "New updates avalaible !" 5 50 >$ttyoutput
     sleep 1
     # Update cached outdated themes
     SAVEIFS=$IFS
@@ -792,7 +799,7 @@ function UpdateGalleryDB() {
   local account
   local theme_repo
 
-  dialog --infobox "Updating Gallery data... Please wait !\n" 5 50 >/dev/tty1
+  dialog --infobox "Updating Gallery data... Please wait !\n" 5 50 >$ttyoutput
   wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
   wget_result $? "InitLoader"
   grep "|" /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
@@ -871,11 +878,11 @@ function BrowseMenu() {
 
   # Make sure resolution is set for ThemeGallery
   if [[ -z "$gallery_user_res" ]]; then
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Please select the resolution you want to use in order to use Theme Gallery mode." 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Please select the resolution you want to use in order to use Theme Gallery mode." 10 50 2>&1 >$ttyoutput
     SetGalleryResMenu
   fi
   # if [[ "$gallery_user_res" == "notmatched" ]]; then
-  #   dialog --clear --backtitle "ThemeMaster - System" --msgbox "No gallery's resolution matches your screen, please select the resolution you want to use." 10 50 2>&1 >/dev/tty1
+  #   dialog --clear --backtitle "ThemeMaster - System" --msgbox "No gallery's resolution matches your screen, please select the resolution you want to use." 10 50 2>&1 >$ttyoutput
   #   SetGalleryResMenu
   # fi
 
@@ -895,7 +902,7 @@ function BrowseMenu() {
       B "Untested on $gallery_user_res"
     )
     cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --menu "$browse_title" "15" "50" "15")
-    choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+    choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
     retval=$?
     case $retval in
     0)
@@ -932,18 +939,18 @@ function BrowseMenu() {
     MainMenu
   fi
   if [[ -z $options ]]; then
-    dialog --clear --backtitle "$mode_title" --msgbox "None (left) available to be installed" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "$mode_title" --msgbox "None (left) available to be installed" 10 50 2>&1 >$ttyoutput
     BrowseMenu
   fi
 
   cmd=(dialog --extra-button --extra-label "ALL" --help-button --help-label "Details" --cancel-label "Back" --ok-label "Selected" --backtitle "$mode_title" --default-item "$selected_theme" --checklist "$browse_title" "15" "50" "15")
-  tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   choices=($tmp) #Convert dialog output as an array for options management
   case $retval in
   0)
     if [[ ${#choices[@]} == 0 ]]; then
-      dialog --clear --backtitle "$mode_title" --msgbox "No theme selected (press B to select)" 5 50 2>&1 >/dev/tty1
+      dialog --clear --backtitle "$mode_title" --msgbox "No theme selected (press B to select)" 5 50 2>&1 >$ttyoutput
       InstallMenu
     elif [[ ${#choices[@]} == 1 ]]; then
       theme="es-theme-""$choices"
@@ -1038,7 +1045,7 @@ function InstallSubMenu {
     if [[ $description == *"null,"* ]]; then
       description="** No information available **"
     fi
-    dialog --clear --backtitle "$mode_title" --title " [ ${theme#es-theme-} ] " --msgbox "About:\n ${description}" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "$mode_title" --title " [ ${theme#es-theme-} ] " --msgbox "About:\n ${description}" 10 50 2>&1 >$ttyoutput
     if [ "$mode" == "A" ]; then
       InstallMenu "$theme"
     else
@@ -1072,18 +1079,18 @@ function InstallMenu() {
   done
   # Check whether there is still at least a theme to be installed
   if [[ -z $options ]]; then
-    dialog --clear --backtitle "$mode_title" --msgbox "No more themes to be installed" 10 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "$mode_title" --msgbox "No more themes to be installed" 10 50 2>&1 >$ttyoutput
     MainMenu
   fi
   title="[ Install Themes ]"
   cmd=(dialog --extra-button --extra-label "ALL" --help-button --help-label "Details" --ok-label "Selected" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --default-item "$selected_theme" --checklist "Select theme(s) from the list: :" "15" "50" "15")
-  tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   choices=($tmp) #Convert dialog output as an array for options management
   case $retval in
   0)
     if [[ ${#choices[@]} == 0 ]]; then
-      dialog --clear --backtitle "$mode_title" --msgbox "No theme selected (press B to select)" 10 50 2>&1 >/dev/tty1
+      dialog --clear --backtitle "$mode_title" --msgbox "No theme selected (press B to select)" 10 50 2>&1 >$ttyoutput
       InstallMenu
     elif [[ ${#choices[@]} == 1 ]]; then
       theme="es-theme-""$choices"
@@ -1138,7 +1145,7 @@ function UpdateSubMenu {
   wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
   wget_result $?
   commitmsg=$(sed '/\"message\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
-  dialog --backtitle "$mode_title" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme#es-theme-}\nUpdate content : ${commitmsg}" 15 50 2>&1 >/dev/tty1
+  dialog --backtitle "$mode_title" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme#es-theme-}\nUpdate content : ${commitmsg}" 15 50 2>&1 >$ttyoutput
   retval=$?
   case $retval in
   0)
@@ -1174,7 +1181,7 @@ function UpdateMenu() {
     fi
   fi
   if [[ -z "$outdatedthemes" ]]; then
-    dialog --backtitle "$mode_title" --yesno "No updates available... Do you really want to check again ?" 8 50 2>&1 >/dev/tty1
+    dialog --backtitle "$mode_title" --yesno "No updates available... Do you really want to check again ?" 8 50 2>&1 >$ttyoutput
     retval=$?
     case $retval in
     0)
@@ -1195,7 +1202,7 @@ function UpdateMenu() {
     nb=$((nb+1))
   done
   cmd=(dialog --extra-button --extra-label "Update ALL" --help-button --help-label "Details" --ok-label "Update" --cancel-label "Cancel" --backtitle "$mode_title" --title " [ New releases ] " --default-item "$selected_theme" --menu "Select theme to update:" "15" "50" "15")
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
   0)
@@ -1241,11 +1248,11 @@ function ChangeLogMenu() {
       options+=($theme "See Changelog")
     done
     if [[ -z $options ]]; then
-      dialog --clear --backtitle "$mode_title" --msgbox "No installed theme from $github_user" 5 50 2>&1 >/dev/tty1
+      dialog --clear --backtitle "$mode_title" --msgbox "No installed theme from $github_user" 5 50 2>&1 >$ttyoutput
       MainMenu
     fi
     cmd=(dialog --cancel-label "Cancel" --backtitle "$mode_title" --title " [ Themes Changelog ] " --menu "Select theme :" "15" "50" "15")
-    choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+    choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
     retval=$?
     case $retval in
     0)
@@ -1262,7 +1269,7 @@ function ChangeLogMenu() {
     GetChangeLog $1
     SAVEIFS=$IFS
     IFS=$'\n'
-    dialog --clear --backtitle "$mode_title" --msgbox "$theme changelog :\n${changelog[*]}" 15 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "$mode_title" --msgbox "$theme changelog :\n${changelog[*]}" 15 50 2>&1 >$ttyoutput
     IFS=$SAVEIFS
     MainMenu
   fi
@@ -1292,13 +1299,13 @@ function UninstallMenu() {
       options+=(${theme#es-theme-} "Uninstall")
     done
     if [[ -z $options ]]; then
-      dialog --clear --backtitle "$mode_title" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >/dev/tty1
+      dialog --clear --backtitle "$mode_title" --msgbox "No unmanaged theme installed !" 5 50 2>&1 >$ttyoutput
       UninstallMenu
     fi
     title="\Zb\Z1[ Caution - not part of active collection ]"
   fi
   cmd=(dialog --colors --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
   0)
@@ -1332,12 +1339,12 @@ function ReinstallMenu() {
     fi
   done
   if [[ -z $options ]]; then
-    dialog --clear --backtitle "$mode_title" --msgbox "No theme to be reinstalled !" 5 50 2>&1 >/dev/tty1
+    dialog --clear --backtitle "$mode_title" --msgbox "No theme to be reinstalled !" 5 50 2>&1 >$ttyoutput
     MainMenu
   fi
   title=" [ Reinstall Themes ] "
   cmd=(dialog --ok-label "OK" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
   0)
@@ -1357,7 +1364,7 @@ function AppChangeLog() {
   local temp
 
   temp=$(<changelog)
-  dialog --clear --backtitle "ThemeMaster - v$current_app_version" --msgbox "$temp" 15 50 2>&1 >/dev/tty1
+  dialog --clear --backtitle "ThemeMaster - v$current_app_version" --msgbox "$temp" 15 50 2>&1 >$ttyoutput
   SettingsMenu
 }
 
@@ -1385,7 +1392,7 @@ function ColorSchemeMenu() {
       options+=($temp "Customized color scheme" "off")
     fi
   done
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
   0)
@@ -1420,7 +1427,7 @@ function AdvancedSettings() {
     C "Use ThemeMaster prerelease versions" "$app_prerelease"
     D "Debug mode" "$debug"
   )
-  tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   choices=($tmp) #Convert dialog output as an array for options management
   case $retval in
@@ -1465,14 +1472,14 @@ function SelectCollectionMenu() {
       options+=($temp "Themes collection" "off")
     fi
   done
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
   0)
     if [ "$choice" != "$active_collection" ]; then
       active_collection=$choice
       dialog --clear
-      dialog --infobox "Reloading parameters... Please wait !" 5 50 >/dev/tty1
+      dialog --infobox "Reloading parameters... Please wait !" 5 50 >$ttyoutput
       themes_updates_checked=0
       SetMode
       SaveSettings
@@ -1510,7 +1517,7 @@ function SetGalleryResMenu() {
     options+=("other" "screen size" "off")
   fi
 
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
   0)
@@ -1543,14 +1550,14 @@ function SetModeMenu() {
     options+=(A "GitHub repository" "off")
     options+=(B "Theme gallery by Jetup" "on")
   fi
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
   0)
     if [ "$choice" != "$mode" ]; then
       mode=$choice
       dialog --clear
-      dialog --infobox "Reloading parameters... Please wait !" 5 50 >/dev/tty1
+      dialog --infobox "Reloading parameters... Please wait !" 5 50 >$ttyoutput
       SetMode
       SaveSettings
       themes_updates_checked=0
@@ -1592,7 +1599,7 @@ function SettingsMenu() {
   if [ "$mode" == "A" ]; then
     options+=(G "Change active collection")
   fi
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
   0)
@@ -1601,7 +1608,7 @@ function SettingsMenu() {
       if [[ $app_updates_checked -eq 0 ]]; then
         CheckAppUpdates
       elif [[ $app_outdated -eq 1 ]]; then
-        dialog --backtitle "ThemeMaster - System" --yes-label "Yes, go!" --no-label "No, later..." --yesno "You're about to update ThemeMaster, no further confirmation..." 10 50 2>&1 >/dev/tty1
+        dialog --backtitle "ThemeMaster - System" --yes-label "Yes, go!" --no-label "No, later..." --yesno "You're about to update ThemeMaster, no further confirmation..." 10 50 2>&1 >$ttyoutput
         retval=$?
         case $retval in
         0)
@@ -1612,7 +1619,7 @@ function SettingsMenu() {
           ;;
         esac
       else
-        dialog --backtitle "ThemeMaster - System" --yes-label "Yes" --no-label "No" --yesno "No update available, check again ?" 5 50 2>&1 >/dev/tty1
+        dialog --backtitle "ThemeMaster - System" --yes-label "Yes" --no-label "No" --yesno "No update available, check again ?" 5 50 2>&1 >$ttyoutput
         retval=$?
         case $retval in
         0)
@@ -1672,7 +1679,7 @@ function MainMenu() {
       F "Settings"
       G "Exit"
     )
-  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty1)
+  choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
   0)
