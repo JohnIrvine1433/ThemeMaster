@@ -39,7 +39,7 @@ themes_autocheckupdate="off" # Do not check for updates at startup
 active_collection="Jetup13" # GitHub Collection Mode - Default active collection
 collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie") #GitHub Collection Mode - Default collection list
 app_colorscheme="All_Black" # Default app UI color scheme, "Default" for system's one
-gallery_user_res="" #Empty by default, set by end user on first use
+gallery_user_res="" #Empty by default, set by end user on first access to BrowseMenu
 ttyoutput="" #Empty by default, managed through SetEnvironment
 
 #####################
@@ -190,14 +190,18 @@ function InitLoader() {
   local isitchi
   local param_device=""
 
-  #Splashscreen
+  # Splashscreen
   if [ -e "ThemeMaster.nfo" ]; then
     cat ThemeMaster.nfo
     echo "v$current_app_version"
     sleep 2
     clear
   fi
-  #Load parameters
+
+  #
+  # Loading
+  #
+  # Parameters
   if [ -e "ThemeMaster.cfg" ]; then
     source ThemeMaster.cfg
     #Make sure envrionnement variables are set (see SetEnvironment )
@@ -216,9 +220,7 @@ function InitLoader() {
     mkdir -p ./debug
   fi
 
-  #
-  # Load Controls management
-  #
+  # Controls management
   if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
     param_device="anbernic"
   elif [[ -e "/dev/input/by-path/platform-singleadc-joypad-event-joystick" ]]; then
@@ -233,7 +235,7 @@ function InitLoader() {
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >$ttyoutput
     exit
   fi
-  #launch joypad
+  #Launch joypad
   if [[ "$debug" == "on" ]]; then
     $sudo_prefix ./tm-joypad ThemeMaster $param_device debug &
   else
@@ -241,19 +243,8 @@ function InitLoader() {
   fi
 
   #
-  #App initialisation
+  # App initialisation
   #
-  if [ -e "ThemeMaster.cfg" ]; then
-    source ThemeMaster.cfg
-    #Make sure envrionnement variables are set (in case system is not recognised, see SetEnvironment )
-    if [[ -z "$themes_location" || -z "$temp_ram_folder" ]]; then
-      SetEnvironment
-      SaveSettings
-    fi
-  else
-    SetEnvironment
-    SaveSettings
-  fi
   SetColorScheme
   dialog --clear
   dialog --infobox "Initialisation... Please wait !" 5 50 >$ttyoutput
@@ -280,10 +271,6 @@ function InitLoader() {
     cat ./ThemeMaster.cfg >> ./debug/debug_themes.txt
   fi
   SetMode
-  # Make sure resolution is set for ThemeGallery
-  # if [[ -z "$gallery_user_res" ]]; then
-  #   SetGalleryRes
-  # fi
   LoadInstalledThemes
   # Checks for update at startup
   if [[ "$themes_autocheckupdate" == "on" ]]; then
@@ -324,7 +311,7 @@ function SetEnvironment() {
   elif [[ $current_OS == *"JELOS"* ]]; then
      themes_location="/storage/.config/emulationstation/themes/"
      temp_ram_folder="/dev/shm/"
-     #add support for Weston on JELOS
+     #Add support for Weston on JELOS
      if [ "${UI_SERVICE}" = "weston.service" ]; then
        ttyoutput="/dev/tty"
      fi
@@ -859,7 +846,7 @@ function SetGalleryRes() {
 # THEMEMASTER UI #
 ##################
 
-# Specfic to Theme Gallery mode
+#Specfic to Theme Gallery mode
 function BrowseMenu() {
   local filter=$1
   local selected_theme=$2
@@ -1456,7 +1443,7 @@ function AdvancedSettings() {
   esac
 }
 
-# Specfic to GitHub Repository mode
+#Specfic to GitHub Repository mode
 function SelectCollectionMenu() {
   local cmd
   local options
@@ -1495,7 +1482,7 @@ function SelectCollectionMenu() {
   esac
 }
 
-# Specfic to Theme Gallery mode
+#Specfic to Theme Gallery mode
 function SetGalleryResMenu() {
   local cmd
   local options
