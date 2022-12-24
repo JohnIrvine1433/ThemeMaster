@@ -308,7 +308,7 @@ function SetEnvironment() {
   elif [[ $current_OS == *"TheRA"* ]]; then
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
-  elif [[ $current_OS == *"JELOS"* ]]; then
+  elif [[ $current_OS == *"JELOS"* ]] || [[ $current_OS == *"UnofficialOS"* ]]; then
      themes_location="/storage/.config/emulationstation/themes/"
      temp_ram_folder="/dev/shm/"
      #Add support for Weston on JELOS
