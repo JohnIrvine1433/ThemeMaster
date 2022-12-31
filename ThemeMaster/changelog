@@ -1,5 +1,6 @@
 v4.3.0
 - Add support for Weston on JELOS
+- Add support for UnofficialOS
 - Minor improvements
 v4.2.2
 - Append wget log file for debug
