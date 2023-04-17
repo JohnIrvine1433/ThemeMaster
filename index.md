@@ -4,7 +4,7 @@ Following devices are supported : Gameforce Chi, Powkiddy RGB10 and RGB10 Max, A
 
 # User Guide
 ## Installation
-- First, download the latest version of ThemeMaster from [here](https://api.github.com/repos/JohnIrvine1433/ThemeMaster/zipball)
+- First, download the latest version of ThemeMaster from [here](https://api.github.com/repos/JohnIrvine1433/ThemeMaster/zipball).
 - Open the zip file and extract the *ThemeMaster.sh* file and *ThemeMaster* folder.
 
 ### ArkOS (021-02-13 or newer)
@@ -13,14 +13,13 @@ Following devices are supported : Gameforce Chi, Powkiddy RGB10 and RGB10 Max, A
 - Run ThemeMaster from ArkOS Options > Tools menu.
 
 ### TheRA
-- Place *ThemeMaster.sh* and *ThemeMaster* folder in `/opt/tools`
+- Place *ThemeMaster.sh* and *ThemeMaster* folder in `/opt/tools`.
 
 ### RetroOZ (0.50 - Beta - 2 July or newer)
 - Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools` (or directly in /opt/system/Tools).
 
 ### JELOS
-ThemeMaster has been intergrated into their most recent releases. Just launch from tools and enjoy!
-If you need to install it manually, place *ThemeMaster.sh* and *ThemeMaster* folder in `/storage/roms/ports`.
+- Place *ThemeMaster.sh* and *ThemeMaster* folder in `/storage/roms/ports`.
 
 ## Controls
 ### Navigation
