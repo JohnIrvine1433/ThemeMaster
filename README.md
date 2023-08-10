@@ -15,6 +15,4 @@ Following devices are supported : Gameforce Chi; Powkiddy RGB10, RGB10 Max and X
 
 See the [ThemeMaster's page](https://johnirvine1433.github.io/ThemeMaster/) for more information and installation guide.
 
-No better support than ThemeMaster being used! If you have a GitHub account you can show it by starring the project.
-
 Feel free to suggest any enhancement and to report any issue directly through GitHub. Alternatively - and for any questions, comments or feedback - you can find me on the Retro Game Handhelds Discord’s server
