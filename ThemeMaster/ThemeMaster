@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.4.2"
+current_app_version="4.5.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -229,6 +229,8 @@ function InitLoader() {
     param_device="oga"
   elif [[ -e "/dev/input/by-path/platform-odroidgo3-joypad-event-joystick" ]]; then
     param_device="ogs"
+  elif [[ -e "/dev/input/by-path/platform-gou_joypad-joystick" ]]; then
+    param_device="ogu"
   elif [[ -e "/dev/input/by-path/platform-gameforce-gamepad-event-joystick" ]]; then
     param_device="chi"
   elif [[ -e "/dev/input/by-path/platform-zed_joystick-event-joystick" ]]; then
