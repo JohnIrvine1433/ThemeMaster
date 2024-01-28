@@ -20,6 +20,7 @@ Following devices are supported : Gameforce Chi, Powkiddy RGB10 RGB10 Max/3, RGB
 
 ### JELOS
 - Place *ThemeMaster.sh* and *ThemeMaster* folder in `/storage/roms/ports`.
+- Run ThemeMaster from JELOS Ports menu.
 
 ## Controls
 ### Navigation
