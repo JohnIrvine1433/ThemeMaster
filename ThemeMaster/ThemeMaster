@@ -481,6 +481,8 @@ function SaveSettings() {
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
   echo "gallery_user_res=\"${gallery_user_res}\"" >>ThemeMaster.cfg
   echo "ttyoutput=\"${ttyoutput}\"" >>ThemeMaster.cfg
+  echo "nblines=\"${nblines}\"" >>ThemeMaster.cfg
+  echo "nbcols=\"${nbcols}\"" >>ThemeMaster.cfg
 }
 
 #
