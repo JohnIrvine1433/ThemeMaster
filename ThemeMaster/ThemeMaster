@@ -207,7 +207,7 @@ function InitLoader() {
   if [ -e "ThemeMaster.cfg" ]; then
     source ThemeMaster.cfg
     #Make sure envrionnement variables are set (see SetEnvironment )
-    if [[ -z "$themes_location" || -z "$temp_ram_folder" || -z "$ttyoutput" ]]; then
+    if [[ -z "$themes_location" || -z "$temp_ram_folder" || -z "$ttyoutput" || -z "$nblines" ]]; then
       SetEnvironment
       SaveSettings
     fi
