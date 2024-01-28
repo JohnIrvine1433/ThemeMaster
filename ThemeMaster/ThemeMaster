@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.5.0"
+current_app_version="4.6.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -41,6 +41,8 @@ collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie") #GitHub Co
 app_colorscheme="All_Black" # Default app UI color scheme, "Default" for system's one
 gallery_user_res="" #Empty by default, set by end user on first access to BrowseMenu
 ttyoutput="" #Empty by default, managed through SetEnvironment
+nblines="" #Empty by default, managed through SetEnvironment
+nbcols="" #Empty by default, managed through SetEnvironment
 
 #####################
 #  GLOBAL VARIABLES #
@@ -302,6 +304,18 @@ function SetEnvironment() {
     exit
   fi
 
+  #Set UI dialog boxes size
+  if ! type tput > /dev/null; then
+    #Default for any screen size
+    nblines="15"
+    nbcols="50"
+  else
+    nblines=$(tput lines)
+    nbcols=$(tput cols)
+    nblines=$((nblines*60/100))
+    nbcols=$((nbcols*60/100))
+  fi
+
   ttyoutput="/dev/tty1" #Default tty
   if [[ $current_OS == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
@@ -313,12 +327,12 @@ function SetEnvironment() {
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
   elif [[ $current_OS == *"JELOS"* ]] || [[ $current_OS == *"UnofficialOS"* ]]; then
-     themes_location="/storage/.config/emulationstation/themes/"
-     temp_ram_folder="/dev/shm/"
-     #Add support for Weston on JELOS
-     if [ "${UI_SERVICE}" = "weston.service" ]; then
-       ttyoutput="/dev/tty"
-     fi
+    themes_location="/storage/.config/emulationstation/themes/"
+    temp_ram_folder="/dev/shm/"
+    #Add support for Weston on JELOS
+    if [ "${UI_SERVICE}" = "weston.service" ]; then
+      ttyoutput="/dev/tty"
+    fi
   else
     SaveSettings
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "OS not recognised, please manually edit ThemeMaster.cfg and relaunch." 10 50 2>&1 >$ttyoutput
@@ -892,7 +906,7 @@ function BrowseMenu() {
       A "Verified on $gallery_user_res"
       B "Untested on $gallery_user_res"
     )
-    cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --menu "$browse_title" "15" "50" "15")
+    cmd=(dialog --cancel-label "Back" --backtitle "$mode_title" --menu "$browse_title" "$nblines" "$nbcols" "$nblines")
     choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
     retval=$?
     case $retval in
@@ -934,7 +948,7 @@ function BrowseMenu() {
     BrowseMenu
   fi
 
-  cmd=(dialog --extra-button --extra-label "ALL" --help-button --help-label "Details" --cancel-label "Back" --ok-label "Selected" --backtitle "$mode_title" --default-item "$selected_theme" --checklist "$browse_title" "15" "50" "15")
+  cmd=(dialog --extra-button --extra-label "ALL" --help-button --help-label "Details" --cancel-label "Back" --ok-label "Selected" --backtitle "$mode_title" --default-item "$selected_theme" --checklist "$browse_title" "$nblines" "$nbcols" "$nblines")
   tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   choices=($tmp) #Convert dialog output as an array for options management
@@ -1074,7 +1088,7 @@ function InstallMenu() {
     MainMenu
   fi
   title="[ Install Themes ]"
-  cmd=(dialog --extra-button --extra-label "ALL" --help-button --help-label "Details" --ok-label "Selected" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --default-item "$selected_theme" --checklist "Select theme(s) from the list: :" "15" "50" "15")
+  cmd=(dialog --extra-button --extra-label "ALL" --help-button --help-label "Details" --ok-label "Selected" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --default-item "$selected_theme" --checklist "Select theme(s) from the list: :" "$nblines" "$nbcols" "$nblines")
   tmp=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   choices=($tmp) #Convert dialog output as an array for options management
@@ -1192,7 +1206,7 @@ function UpdateMenu() {
     options+=(${theme#es-theme-} "Update")
     nb=$((nb+1))
   done
-  cmd=(dialog --extra-button --extra-label "Update ALL" --help-button --help-label "Details" --ok-label "Update" --cancel-label "Cancel" --backtitle "$mode_title" --title " [ New releases ] " --default-item "$selected_theme" --menu "Select theme to update:" "15" "50" "15")
+  cmd=(dialog --extra-button --extra-label "Update ALL" --help-button --help-label "Details" --ok-label "Update" --cancel-label "Cancel" --backtitle "$mode_title" --title " [ New releases ] " --default-item "$selected_theme" --menu "Select theme to update:" "$nblines" "$nbcols" "$nblines")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
@@ -1242,7 +1256,7 @@ function ChangeLogMenu() {
       dialog --clear --backtitle "$mode_title" --msgbox "No installed theme from $github_user" 5 50 2>&1 >$ttyoutput
       MainMenu
     fi
-    cmd=(dialog --cancel-label "Cancel" --backtitle "$mode_title" --title " [ Themes Changelog ] " --menu "Select theme :" "15" "50" "15")
+    cmd=(dialog --cancel-label "Cancel" --backtitle "$mode_title" --title " [ Themes Changelog ] " --menu "Select theme :" "$nblines" "$nbcols" "$nblines")
     choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
     retval=$?
     case $retval in
@@ -1295,7 +1309,7 @@ function UninstallMenu() {
     fi
     title="\Zb\Z1[ Caution - not part of active collection ]"
   fi
-  cmd=(dialog --colors --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  cmd=(dialog --colors --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "$nblines" "$nbcols" "$nblines")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
@@ -1334,7 +1348,7 @@ function ReinstallMenu() {
     MainMenu
   fi
   title=" [ Reinstall Themes ] "
-  cmd=(dialog --ok-label "OK" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "15" "50" "15")
+  cmd=(dialog --ok-label "OK" --cancel-label "Cancel" --backtitle "$mode_title" --title "$title" --menu "Select theme from the list:" "$nblines" "$nbcols" "$nblines")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
@@ -1370,7 +1384,7 @@ function ColorSchemeMenu() {
   dialog_config=(${app_location}ThemeMaster/*.dialogrc)         # This creates an array of the full paths to all .dialogrc files
   dialog_config=("${dialog_config[@]##*/}") #Remove path prefix
   dialog_config=("${dialog_config[@]%.*}") #Get filename without extension
-  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Color Scheme Selection ] " --radiolist "Select the ThemeMaster UI color scheme :" "15" "50" "15")
+  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Color Scheme Selection ] " --radiolist "Select the ThemeMaster UI color scheme :" "$nblines" "$nbcols" "$nblines")
   if [[ "$app_colorscheme" == "Default" || -z $app_colorscheme ]]; then
     options+=(Default "System's color scheme" "on")
   else
@@ -1411,7 +1425,7 @@ function AdvancedSettings() {
   local retval
   local tmp
 
-  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Advanced Settings ] " --checklist "Default settings are recommended for most users." "15" "50" "15")
+  cmd=(dialog --ok-label "Apply" --separate-output --backtitle "ThemeMaster - System" --title " [ Advanced Settings ] " --checklist "Default settings are recommended for most users." "$nblines" "$nbcols" "$nblines")
   options=(
     A "Check for App updates at startup" "$app_autocheckupdate"
     B "Check for Themes updates at startup" "$themes_autocheckupdate"
@@ -1455,7 +1469,7 @@ function SelectCollectionMenu() {
   local retval
   local temp
 
-  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Theme Configuration ] " --radiolist "Set the collection to be used :" "15" "50" "15")
+  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Theme Configuration ] " --radiolist "Set the collection to be used :" "$nblines" "$nbcols" "$nblines")
   for temp in "${collections[@]}"; do
     if [ "$temp" == "$active_collection" ]; then
       options+=($temp "Themes collection" "on")
@@ -1494,7 +1508,7 @@ function SetGalleryResMenu() {
   local retval
   local temp
 
-  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Theme's Resolution ] " --radiolist "Select resolution to be shown in Gallery :" "15" "50" "15")
+  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Theme's Resolution ] " --radiolist "Select resolution to be shown in Gallery :" "$nblines" "$nbcols" "$nblines")
   for temp in "${gallery_res[@]}"; do
     if [ "$temp" == "$gallery_user_res" ]; then
       options+=($temp "screen size" "on")
@@ -1533,7 +1547,7 @@ function SetModeMenu() {
   local choice
   local retval
 
-  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Mode Selection ] " --radiolist "Select the application mode to be used :" "15" "50" "15")
+  cmd=(dialog --backtitle "ThemeMaster - System" --title " [ Mode Selection ] " --radiolist "Select the application mode to be used :" "$nblines" "$nbcols" "$nblines")
   if [ "$mode" == "A" ]; then
     options+=(A "GitHub repository" "on")
     options+=(B "Theme gallery by Jetup" "off")
@@ -1571,7 +1585,7 @@ function SettingsMenu() {
   local retval
   local item_A
 
-  cmd=(dialog --cancel-label "Back" --backtitle "ThemeMaster - System" --title " [ Settings ] " --menu "" "15" "50" "15")
+  cmd=(dialog --cancel-label "Back" --backtitle "ThemeMaster - System" --title " [ Settings ] " --menu "" "$nblines" "$nbcols" "$nblines")
   if [[ $app_updates_checked -eq 0 ]]; then
     item_A="Check for update"
   elif [[ $app_outdated -eq 1 ]]; then
@@ -1648,7 +1662,7 @@ function MainMenu() {
   local item_A
   local item_B
 
-  cmd=(dialog --no-cancel --backtitle "$mode_title" --title " [ Main Menu ] " --menu "D-pad to move, A for <enter>, B for <space>:" "15" "50" "15")
+  cmd=(dialog --no-cancel --backtitle "$mode_title" --title " [ Main Menu ] " --menu "D-pad to move, A for <enter>, B for <space>:" "$nblines" "$nbcols" "$nblines")
   if [[ "$mode" == "A" ]]; then
     item_A="Install a theme"
   else
