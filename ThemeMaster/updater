@@ -74,7 +74,7 @@ function PostInstallUpdater() {
   user_collections=($(comm -13 <(printf '%s\n' "${admin_collections[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${collections[@]}" | LC_COLLATE=C sort -f)))
   new_collections=("${admin_collections[@]}" "${user_collections[@]}")
 
-  echo "app_conf_version=\"4.4.0\"" >ThemeMaster.cfg
+  echo "app_conf_version=\"4.6.0\"" >ThemeMaster.cfg
   echo "app_prerelease=\"${app_prerelease}\"" >>ThemeMaster.cfg
   echo "debug=\"${debug}\"" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
