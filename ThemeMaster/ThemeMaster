@@ -240,8 +240,12 @@ function InitLoader() {
   elif [[ -e "/dev/input/by-path/platform-xu10-joypad-event-joystick" ]]; then
     param_device="xu10"
   else
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >$ttyoutput
-    exit
+    if [ -e "paramcontrols.txt" ]; then
+      param_device="paramcontrols"
+    else
+      dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >$ttyoutput
+      exit
+    fi
   fi
   #Launch joypad
   if [[ "$debug" == "on" ]]; then
