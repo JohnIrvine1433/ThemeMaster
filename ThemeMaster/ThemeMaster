@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.6.1"
+current_app_version="4.6.2"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -237,6 +237,8 @@ function InitLoader() {
     param_device="chi"
   elif [[ -e "/dev/input/by-path/platform-zed_joystick-event-joystick" ]]; then
     param_device="x55"
+  elif [[ -e "/dev/input/by-path/platform-xu10-joypad-event-joystick" ]]; then
+    param_device="xu10"
   else
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1 >$ttyoutput
     exit

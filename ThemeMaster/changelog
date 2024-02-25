@@ -1,5 +1,8 @@
+v4.6.2
+- Add support for XU10
+- Ensure execute access on weston
 v4.6.1
-- Fix output log on weston 
+- Fix output log on weston
 v4.6.0
 - Adjust UI dialog boxes to screen size
 v4.5.0
