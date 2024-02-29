@@ -2,6 +2,8 @@ v4.7.0
 - Add support for XU10
 - Add manual configuration to tm-joypad
 - Ensure execute access on weston
+- Updates to debug mode
+- Minor improvements
 v4.6.1
 - Fix output log on weston
 v4.6.0

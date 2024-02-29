@@ -81,12 +81,12 @@ declare -A gallery_array
 #
 function wget_result() {
   local wget_return=$1
-  local returnto=$2
+  local comingfrom=$2
   local err_msg
   local wget_error
   local yes_label="Continue"
 
-  if [[ $returnto == "Restart" ]]; then
+  if [[ $comingfrom == "InitLoader" ]]; then
     yes_label="Restart"
   fi
   if [[ $wget_return -ne 0 ]]; then
@@ -105,17 +105,19 @@ function wget_result() {
     dialog --backtitle "ThemeMaster - System" --yes-label "$yes_label" --no-label "Exit ThemeMaster" --yesno "$wget_error\n$err_msg" 15 50 2>&1 >$ttyoutput
     case $? in
     0)
-      if [[ $returnto == "InitLoader" ]]; then
-        InitLoader
-      elif [[ $returnto == "SettingsMenu" ]]; then
+      if [[ $comingfrom == "SettingsMenu" ]]; then
         SettingsMenu
-      elif [[[ $returnto == "UpdateMenu" ]]; then
+      elif [[ $comingfrom == "BrowseMenu" ]]; then
+        BrowseMenu
+      elif [[ $comingfrom == "UpdateMenu" ]]; then
         UpdateMenu
-      elif [[ $returnto == "ChangeLogMenu" ]]; then
+      elif [[ $comingfrom == "ChangeLogMenu" ]]; then
         ChangeLogMenu
-      elif [[ $returnto == "InstallMenu" ]]; then
+      elif [[ $comingfrom == "InstallMenu" ]]; then
         InstallMenu
-      elif [[ $returnto == "Restart" ]]; then
+      elif [[ $comingfrom == "ReinstallMenu" ]]; then
+        ReinstallMenu
+      elif [[ $comingfrom == "InitLoader" ]]; then
         ./$(basename $0) && exit
       else
         MainMenu
@@ -286,10 +288,10 @@ function InitLoader() {
   LoadInstalledThemes
   # Checks for update at startup
   if [[ "$themes_autocheckupdate" == "on" ]]; then
-    CheckThemesUpdates
+    CheckThemesUpdates "InitLoader"
   fi
   if [[ "$app_autocheckupdate" == "on" ]]; then
-    CheckAppUpdates "MainMenu"
+    CheckAppUpdates "InitLoader"
   fi
   MainMenu
 }
@@ -371,7 +373,7 @@ function SetColorScheme() {
 
 function CheckAppUpdates() {
   local retval
-  local returnto=$1
+  local comingfrom=$1
   local prerelease
   local isPRok
 
@@ -380,7 +382,7 @@ function CheckAppUpdates() {
   sleep 1
   #Get latest ThemeMaster tag version
   wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases"
-  wget_result $? "SettingsMenu"
+  wget_result $? "$comingfrom"
   latest_app_version=$(grep -m 1 '"tag_name":' /tmp/ThemeMaster_wget.output  | sed -E 's/.*"([^"]+)".*/\1/')
   prerelease=$(grep -m 1 '"prerelease":' /tmp/ThemeMaster_wget.output  | grep -c "true")
   if [[ $app_prerelease == "on" ]]; then
@@ -403,13 +405,15 @@ function CheckAppUpdates() {
     retval=$?
     case $retval in
     0)
-      UpdateApp
+      UpdateApp "$comingfrom"
       ;;
     1)
-      if [ $returnto == "MainMenu" ]; then
+      if [ $comingfrom == "MainMenu" || $comingfrom == "InitLoader" ]; then
         MainMenu
-      else
+      elif [[ $comingfrom == "SettingsMenu" ]]; then
         SettingsMenu
+      else
+        MainMenu
       fi
       ;;
     esac
@@ -417,15 +421,18 @@ function CheckAppUpdates() {
     dialog --clear
     dialog --infobox "ThemeMaster is up to date..." 5 50 >$ttyoutput
     sleep 1
-    if [ $returnto == "MainMenu" ]; then
+    if [ $comingfrom == "MainMenu" || $comingfrom == "InitLoader" ]; then
       MainMenu
-    else
+    elif [[ $comingfrom == "SettingsMenu" ]]; then
       SettingsMenu
+    else
+      MainMenu
     fi
   fi
 }
 
 function UpdateApp() {
+  local comingfrom=$1
   #local UPDATE_URL="https://api.github.com/repos/${github_app_owner}/${github_app_repo}/zipball"
   local UPDATE_URL="https://github.com/${github_app_owner}/${github_app_repo}/archive/refs/tags/${latest_app_version}.zip"
   local package_folder
@@ -437,7 +444,7 @@ function UpdateApp() {
   mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
   #Download release
   wget -nv -a /tmp/ThemeMaster_wget.log "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
-  wget_result $? "SettingsMenu"
+  wget_result $? "$comingfrom"
   if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
     #Unzipping archives
     unzip -qo ${temp_ram_folder}app_update_temp/update.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
@@ -464,7 +471,7 @@ function UpdateApp() {
     retval=$?
     case $retval in
     0)
-      UpdateApp
+      UpdateApp "$comingfrom"
       ;;
     *)
       exit 1
@@ -496,6 +503,7 @@ function SaveSettings() {
 #
 function InstallTheme() {
   local theme=$1
+  local comingfrom=$2
   local latest
   local REP_URL
   local temp
@@ -506,7 +514,8 @@ function InstallTheme() {
 
   #DEBUG
   if [[ "$debug" == "on" ]]; then
-    echo "InstallTheme $theme" >> ./debug/debug_themes.txt
+    echo "***** InstallTheme *****" >> ./debug/debug_themes.txt
+    echo "theme to be installed : $theme" >> ./debug/debug_themes.txt
     echo "outdatedthemes before theme installation : ${outdatedthemes[@]}" >> ./debug/debug_themes.txt
     echo "cached outdatedthemes before theme installation : ${cached_outdatedthemes[@]}" >> ./debug/debug_themes.txt
   fi
@@ -518,7 +527,7 @@ function InstallTheme() {
   dialog --backtitle "$mode_title" --infobox "${theme#es-theme-} installation is about to start..." 8 50 >$ttyoutput
   sleep 1
   wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
-  wget_result $? "UpdateMenu"
+  wget_result $? "$comingfrom"
   latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
   REP_URL="https://api.github.com/repos/${github_user}/${theme}/zipball"
   mkdir -p ${temp_ram_folder}theme_update_temp #create a temp folder in RAM
@@ -571,7 +580,17 @@ function InstallTheme() {
     retval=$?
     case $retval in
     0)
-      MainMenu
+      if [[ $comingfrom == "BrowseMenu" ]]; then
+        BrowseMenu
+      elif [[ $comingfrom == "InstallMenu" ]]; then
+        InstallMenu
+      elif [[ $comingfrom == "UpdateMenu" ]]; then
+        UpdateMenu
+      elif [[[ $comingfrom == "ReinstallMenu" ]]; then
+        ReinstallMenu
+      else
+        MainMenu
+      fi
       ;;
     *)
       exit 1
@@ -602,9 +621,19 @@ function LoadInstalledThemes {
 
   installedthemes=(${themes_location}*)         # This creates an array of the full paths to all subdirs
   installedthemes=("${installedthemes[@]##*/}") # This removes the path prefix, leaving just the dir names
+  #DEBUG
+  if [[ "$debug" == "on" ]]; then
+    echo "***** LoadInstalledThemes *****" >> ./debug/debug_themes.txt
+    echo "${installedthemes[@]}" >> ./debug/debug_themes.txt
+  fi
 }
 
 function UpdateOutdatedThemes() {
+  #DEBUG
+  if [[ "$debug" == "on" ]]; then
+    echo "***** UpdateOutdatedThemes *****" >> ./debug/debug_themes.txt
+    echo "outdated themes before update : ${outdatedthemes[@]}" >> ./debug/debug_themes.txt
+  fi
   #Remove theme from outdated themes list
   for temp in "${outdatedthemes[@]}"
   do
@@ -619,6 +648,11 @@ function UpdateOutdatedThemes() {
   done
   cached_outdatedthemes=("${temp_array[@]}")
   echo "cached_outdatedthemes=(${temp_array[@]})" > ./data/outdatedthemes.cache
+  #DEBUG
+  if [[ "$debug" == "on" ]]; then
+    echo "outdated themes after update : ${outdatedthemes[@]}" >> ./debug/debug_themes.txt
+    echo "cached_outdatedthemes themes after update : ${cached_outdatedthemes[@]}" >> ./debug/debug_themes.txt
+  fi
 }
 
 function GetChangeLog {
@@ -653,6 +687,7 @@ function GetChangeLog {
 }
 
 function CheckThemesUpdates() {
+  local comingfrom="$1"
   local theme
   local latest
   local current
@@ -677,7 +712,7 @@ function CheckThemesUpdates() {
   unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f)))
   #DEBUG
   if [[ "$debug" == "on" ]]; then
-    echo "CheckThemesUpdates" >> ./debug/debug_themes.txt
+    echo "***** CheckThemesUpdates *****" >> ./debug/debug_themes.txt
     echo "onlinethemes : ${onlinethemes[@]}" >> ./debug/debug_themes.txt
     echo "cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug/debug_themes.txt
     echo "outdatedthemes from cache : ${outdatedthemes[@]}" >> ./debug/debug_themes.txt
@@ -693,7 +728,7 @@ function CheckThemesUpdates() {
       fi
       dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50 >$ttyoutput
       wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
-      wget_result $?
+      wget_result $? "$comingfrom"
       latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
       if [ -e "./data/${theme}.version" ]; then
         current=$(cat "./data/${theme}.version")
@@ -734,11 +769,17 @@ function CheckThemesUpdates() {
 function LoadGitHubThemes() {
   #(re)Load online themes
   unset onlinethemes
+  local wget_return
 
   SAVEIFS=$IFS
   IFS=$'\n'
   wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/users/${github_user}/repos"
-  wget_result $?
+  wget_return=$?
+  #Give a retry
+  if [[ $wget_return -ne 0 ]]; then
+    wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/users/${github_user}/repos"
+    wget_result $? "InitLoader"
+  fi
   onlinethemes=($(grep '\"name\": \"es-theme' /tmp/ThemeMaster_wget.output  | sed -e 's/\"name\": \"\(.*\)\",/\1/'))
   IFS=$SAVEIFS
   onlinethemes=("${onlinethemes[@]/#+([[:blank:]])/}") # remove leading space/tab from each element
@@ -811,10 +852,16 @@ function UpdateGalleryDB() {
   local _XXX #unused variable allowing for asynchronous update between ThemeMaster and EmulationStation-OGA-Theme-Gallery when a new screen size is added to the gallery
   local account
   local theme_repo
+  local wget_return
 
   dialog --infobox "Updating Gallery data... Please wait !\n" 5 50 >$ttyoutput
   wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
-  wget_result $? "InitLoader"
+  wget_return=$?
+  #Give a retry
+  if [[ $wget_return -ne 0 ]]; then
+    wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
+    wget_result $? "InitLoader"
+  fi
   grep "|" /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
   tail -n+3 /tmp/ThemeMaster_temp.output > /tmp/ThemeMaster_wget.output
   sed 's/[][!() ]//g' /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
@@ -828,7 +875,12 @@ function UpdateGalleryDB() {
     echo "${account} ${theme_repo} ${_480} ${_640} ${_854} ${_960}" >> ./data/gallery.db
     if [ ! -e "./data/${theme_repo}.png" ]; then
       wget -nv -a /tmp/ThemeMaster_wget.log -O "./data/${theme_repo}.png" $preview_url
-      wget_result $? "InitLoader"
+      wget_return=$?
+      #Give a retry
+      if [[ $wget_return -ne 0 ]]; then
+        wget -nv -a /tmp/ThemeMaster_wget.log -O "./data/${theme_repo}.png" $preview_url
+        wget_result $? "InitLoader"
+      fi
     fi
   done < /tmp/ThemeMaster_temp.output
   IFS=$SAVEIFS
@@ -837,10 +889,16 @@ function UpdateGalleryDB() {
 function CheckGalleryUpdates() {
   local latest
   local current
+  local wget_return
 
   #Update Gallery data
   wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits"
-  wget_result $?
+  wget_return=$?
+  #Give a retry
+  if [[ $wget_return -ne 0 ]]; then
+    wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits"
+    wget_result $? "InitLoader"
+  fi
   latest=$(sed '/\"date\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
   if [ ! -e ./data/gallery.db ]; then
     UpdateGalleryDB
@@ -967,14 +1025,14 @@ function BrowseMenu() {
       InstallMenu
     elif [[ ${#choices[@]} == 1 ]]; then
       theme="es-theme-""$choices"
-      InstallTheme "$theme"
+      InstallTheme "$theme" "BrowseMenu"
       MainMenu
     else
       mode_title_saved="$mode_title"
       for choice in "${choices[@]}"; do
         mode_title="Batch processing : theme $i / ${#choices[@]}"
         theme="es-theme-""$choice"
-        InstallTheme "$theme"
+        InstallTheme "$theme" "BrowseMenu"
         i=$((i+1))
       done
       mode_title="$mode_title_saved"
@@ -997,7 +1055,7 @@ function BrowseMenu() {
       for theme in "${onlinethemes[@]}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
-          InstallTheme "$theme"
+          InstallTheme "$theme" "BrowseMenu"
           i=$((i+1))
         fi
       done
@@ -1005,7 +1063,7 @@ function BrowseMenu() {
       for theme in "${!gallery_size[@]}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
-          InstallTheme "$theme"
+          InstallTheme "$theme" "BrowseMenu"
           i=$((i+1))
         fi
       done
@@ -1013,7 +1071,7 @@ function BrowseMenu() {
       for theme in "${!gallery_size_untested[@]}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
-          InstallTheme "$theme"
+          InstallTheme "$theme" "BrowseMenu"
           i=$((i+1))
         fi
       done
@@ -1107,14 +1165,14 @@ function InstallMenu() {
       InstallMenu
     elif [[ ${#choices[@]} == 1 ]]; then
       theme="es-theme-""$choices"
-      InstallTheme "$theme"
+      InstallTheme "$theme" "InstallMenu"
       MainMenu
     else
       mode_title_saved="$mode_title"
       for choice in "${choices[@]}"; do
         mode_title="Batch processing : theme $i / ${#choices[@]}"
         theme="es-theme-""$choice"
-        InstallTheme "$theme"
+        InstallTheme "$theme" "InstallMenu"
         i=$((i+1))
       done
       mode_title="$mode_title_saved"
@@ -1132,7 +1190,7 @@ function InstallMenu() {
     for theme in "${onlinethemes[@]}"; do
       if [ ! -d "${themes_location}$theme" ]; then
         mode_title="Batch processing : theme $i / $nb"
-        InstallTheme "$theme"
+        InstallTheme "$theme" "InstallMenu"
         i=$((i+1))
       fi
     done
@@ -1156,13 +1214,13 @@ function UpdateSubMenu {
     get_github_user $theme
   fi
   wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
-  wget_result $?
+  wget_result $? "UpdateMenu"
   commitmsg=$(sed '/\"message\":/!d;q' /tmp/ThemeMaster_wget.output  | sed -e 's/\"message\": \"//' | sed -e 's/\",//')
   dialog --backtitle "$mode_title" --yes-label "Update" --no-label "Back" --yesno "Theme : ${theme#es-theme-}\nUpdate content : ${commitmsg}" 15 50 2>&1 >$ttyoutput
   retval=$?
   case $retval in
   0)
-    InstallTheme "$theme"
+    InstallTheme "$theme" "UpdateMenu"
     MainMenu
     ;;
   1)
@@ -1186,7 +1244,7 @@ function UpdateMenu() {
   local mode_title_saved
 
   if [[ $themes_updates_checked -eq 0 ]]; then
-    CheckThemesUpdates
+    CheckThemesUpdates "UpdateMenu"
     if [[ -z "$outdatedthemes" ]]; then
       MainMenu
     else
@@ -1220,7 +1278,7 @@ function UpdateMenu() {
   case $retval in
   0)
     theme="es-theme-""$choice"
-    InstallTheme "$theme"
+    InstallTheme "$theme" "UpdateMenu"
     MainMenu
     ;;
   1)
@@ -1234,7 +1292,7 @@ function UpdateMenu() {
     mode_title_saved="$mode_title"
     for theme in "${outdatedthemes[@]}"; do
       mode_title="Batch processing : theme $i / $nb"
-      InstallTheme "$theme"
+      InstallTheme "$theme" "UpdateMenu"
       i=$((i+1))
     done
     bmode_title="$mode_title_saved"
@@ -1361,7 +1419,7 @@ function ReinstallMenu() {
   retval=$?
   case $retval in
   0)
-    InstallTheme "$choice"
+    InstallTheme "$choice" "ReinstallMenu"
     MainMenu
     ;;
   1)
@@ -1619,13 +1677,13 @@ function SettingsMenu() {
     case $choice in
     A)
       if [[ $app_updates_checked -eq 0 ]]; then
-        CheckAppUpdates
+        CheckAppUpdates "SettingsMenu"
       elif [[ $app_outdated -eq 1 ]]; then
         dialog --backtitle "ThemeMaster - System" --yes-label "Yes, go!" --no-label "No, later..." --yesno "You're about to update ThemeMaster, no further confirmation..." 10 50 2>&1 >$ttyoutput
         retval=$?
         case $retval in
         0)
-          UpdateApp
+          UpdateApp "SettingsMenu"
           ;;
         1)
           SettingsMenu
@@ -1637,7 +1695,7 @@ function SettingsMenu() {
         case $retval in
         0)
           app_updates_checked=0
-          CheckAppUpdates
+          CheckAppUpdates "SettingsMenu"
           ;;
         1)
           SettingsMenu
