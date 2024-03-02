@@ -1,3 +1,7 @@
+v4.8.0
+- Add support for NostixOS
+- Reset cached data from advanced settings
+- Fix app update
 v4.7.0
 - Add support for XU10
 - Add manual configuration to tm-joypad

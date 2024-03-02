@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.7.0"
+current_app_version="4.8.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -284,7 +284,7 @@ function InitLoader() {
     echo "***** THEMEMASTER.CFG *****" >> ./debug/debug_themes.txt
     cat ./ThemeMaster.cfg >> ./debug/debug_themes.txt
   fi
-  SetMode
+  SetMode "InitLoader"
   LoadInstalledThemes
   # Checks for update at startup
   if [[ "$themes_autocheckupdate" == "on" ]]; then
@@ -334,7 +334,7 @@ function SetEnvironment() {
   elif [[ $current_OS == *"TheRA"* ]]; then
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
-  elif [[ $current_OS == *"JELOS"* ]] || [[ $current_OS == *"UnofficialOS"* ]]; then
+  elif [[ $current_OS == *"JELOS"* ]] || [[ $current_OS == *"UnofficialOS"* ]] || [[ $current_OS == *"NOSTIX"* ]]; then
     themes_location="/storage/.config/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
     #Add support for Weston on JELOS
@@ -349,6 +349,8 @@ function SetEnvironment() {
 }
 
 function SetMode() {
+  local comingfrom=$1
+
   if [[ $mode == "A" ]]; then
     github_user=$active_collection
     mode_title="GitHub Repository Mode - Collection: $github_user"
@@ -408,7 +410,7 @@ function CheckAppUpdates() {
       UpdateApp "$comingfrom"
       ;;
     1)
-      if [ $comingfrom == "MainMenu" || $comingfrom == "InitLoader" ]; then
+      if [[ $comingfrom == "MainMenu" || $comingfrom == "InitLoader" ]]; then
         MainMenu
       elif [[ $comingfrom == "SettingsMenu" ]]; then
         SettingsMenu
@@ -421,7 +423,7 @@ function CheckAppUpdates() {
     dialog --clear
     dialog --infobox "ThemeMaster is up to date..." 5 50 >$ttyoutput
     sleep 1
-    if [ $comingfrom == "MainMenu" || $comingfrom == "InitLoader" ]; then
+    if [[ $comingfrom == "MainMenu" || $comingfrom == "InitLoader" ]]; then
       MainMenu
     elif [[ $comingfrom == "SettingsMenu" ]]; then
       SettingsMenu
@@ -842,6 +844,7 @@ function LoadGallery() {
 }
 
 function UpdateGalleryDB() {
+  local comingfrom=$1
   local temp1
   local temp
   local preview_url
@@ -860,7 +863,7 @@ function UpdateGalleryDB() {
   #Give a retry
   if [[ $wget_return -ne 0 ]]; then
     wget -nv -a /tmp/ThemeMaster_wget.log -O /tmp/ThemeMaster_wget.output --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
-    wget_result $? "InitLoader"
+    wget_result $? "$comingfrom"
   fi
   grep "|" /tmp/ThemeMaster_wget.output > /tmp/ThemeMaster_temp.output
   tail -n+3 /tmp/ThemeMaster_temp.output > /tmp/ThemeMaster_wget.output
@@ -879,7 +882,7 @@ function UpdateGalleryDB() {
       #Give a retry
       if [[ $wget_return -ne 0 ]]; then
         wget -nv -a /tmp/ThemeMaster_wget.log -O "./data/${theme_repo}.png" $preview_url
-        wget_result $? "InitLoader"
+        wget_result $? "$comingfrom"
       fi
     fi
   done < /tmp/ThemeMaster_temp.output
@@ -924,6 +927,29 @@ function SetGalleryRes() {
     gallery_user_res="notmatched"
   fi
   SaveSettings
+}
+
+function RebuildGalleryCache() {
+  #Only called from SettingsMenu
+  local retval
+
+  dialog --backtitle "$mode_title" --yes-label "Rebuild" --no-label "Cancel" --yesno "Gallery cached data will be erased and redownloaded." 15 50 2>&1 >$ttyoutput
+  retval=$?
+  case $retval in
+  0)
+    rm ./data/gallery.db
+    rm ./data/*.png
+    #Force return to SettingsMenu
+    UpdateGalleryDB "SettingsMenu"
+    SettingsMenu
+    ;;
+  1)
+    SettingsMenu
+    ;;
+  *)
+    exit 1
+    ;;
+  esac
 }
 
 ##################
@@ -1552,7 +1578,7 @@ function SelectCollectionMenu() {
       dialog --clear
       dialog --infobox "Reloading parameters... Please wait !" 5 50 >$ttyoutput
       themes_updates_checked=0
-      SetMode
+      SetMode "SettingsMenu"
       SaveSettings
     fi
     MainMenu
@@ -1670,6 +1696,7 @@ function SettingsMenu() {
   if [ "$mode" == "A" ]; then
     options+=(G "Change active collection")
   fi
+  options+=(H "Rebuild Gallery cache")
   choice=$("${cmd[@]}" "${options[@]}" 2>&1 >$ttyoutput)
   retval=$?
   case $retval in
@@ -1709,6 +1736,7 @@ function SettingsMenu() {
     E) SetGalleryResMenu ;;
     F) AdvancedSettings ;;
     G) SelectCollectionMenu ;;
+    H) RebuildGalleryCache ;;
     esac
     ;;
   1)
