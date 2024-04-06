@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.8.0"
+current_app_version="4.8.1"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -90,7 +90,7 @@ function wget_result() {
     yes_label="Restart"
   fi
   if [[ $wget_return -ne 0 ]]; then
-    err_msg=$(</tmp/ThemeMaster_wget.log)
+    err_msg=$(tail -n 2 /tmp/ThemeMaster_wget.log)
     case $wget_return in
     1) wget_error="Generic error code." ;;
     2) wget_error="Parse error—for instance, when parsing command-line options." ;;
@@ -267,7 +267,7 @@ function InitLoader() {
   if [ $? -eq 0 ]; then
     InstallDependencies
   else
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >$ttyoutput
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "You appear to be offline, ThemeMaster requires an internet access to run!" 10 50 2>&1 >$ttyoutput
     exit
     # dialog --backtitle "ThemeMaster - System" --yes-label "Restart" --no-label "Exit" --yesno "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >$ttyoutput
     # case $? in
@@ -313,15 +313,25 @@ function SetEnvironment() {
   fi
 
   #Set UI dialog boxes size
-  if ! type tput > /dev/null; then
-    #Default for any screen size
-    nblines="15"
-    nbcols="50"
-  else
+  if command -v tput &>/dev/null; then
     nblines=$(tput lines)
     nbcols=$(tput cols)
     nblines=$((nblines*60/100))
     nbcols=$((nbcols*60/100))
+  elif [ -n "$LINES" ] && [ -n "$COLUMNS" ]; then
+    nblines=${LINES}
+    nbcols=${COLUMNS}
+    nblines=$((nblines*60/100))
+    nbcols=$((nbcols*60/100))
+  elif command -v stty &>/dev/null; then
+    nblines=$(stty size | cut -d ' ' -f 1)
+    nbcols=$(stty size | cut -d ' ' -f 2)
+    nblines=$((nblines*60/100))
+    nbcols=$((nbcols*60/100))
+  else
+    #Default for any screen size
+    nblines="15"
+    nbcols="50"
   fi
 
   ttyoutput="/dev/tty1" #Default tty
@@ -697,6 +707,9 @@ function CheckThemesUpdates() {
   local temp_array=()
   local unchecked_themes=()
   local temp
+  local sorted_online
+  local sorted_cached
+  local sorted_outdated
 
   dialog --clear
   dialog --infobox "Checking for themes updates... Please wait !" 5 50 >$ttyoutput
@@ -707,18 +720,26 @@ function CheckThemesUpdates() {
   # Load cached outdated themes from current collection
   if [[ -e "./data/outdatedthemes.cache" ]]; then
     source ./data/outdatedthemes.cache
-    outdatedthemes=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f)))
+    # Sort the arrays
+    sorted_online=($(printf "%s\n" "${onlinethemes[@]}" | LC_COLLATE=C sort -f))
+    sorted_cached=($(printf "%s\n" "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f))
+    # Find outdated themes
+    outdatedthemes=($(comm -12 <(printf '%s\n' "${sorted_online[@]}") <(printf '%s\n' "${sorted_cached[@]}")))
+    #outdatedthemes=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f)))
   fi
-
   # Check for online update only if necessary (installed and not already cached)
-  unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f)))
+  # Sort the arrays
+  sorted_online=($(printf "%s\n" "${onlinethemes[@]}" | LC_COLLATE=C sort -f))
+  sorted_outdated=($(printf "%s\n" "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f))
+  unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}") <(printf '%s\n' "${onlinethemes[@]}")))
+  #unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f)))
   #DEBUG
   if [[ "$debug" == "on" ]]; then
     echo "***** CheckThemesUpdates *****" >> ./debug/debug_themes.txt
     echo "onlinethemes : ${onlinethemes[@]}" >> ./debug/debug_themes.txt
     echo "cached outdatedthemes : ${cached_outdatedthemes[@]}" >> ./debug/debug_themes.txt
     echo "outdatedthemes from cache : ${outdatedthemes[@]}" >> ./debug/debug_themes.txt
-    echo "unchecked_themes : ${unchecked_themes[@]}\n" >> ./debug/debug_themes.txt
+    echo "unchecked_themes : ${unchecked_themes[@]}" >> ./debug/debug_themes.txt
   fi
   for theme in "${unchecked_themes[@]}"; do
     latest=""
@@ -1121,7 +1142,12 @@ function InstallSubMenu {
   theme="es-theme-""$theme"
   if [ -e "./data/${theme}.png" ]; then
     clear
-    ./image-viewer ${app_location}ThemeMaster/data/${theme}.png > /dev/null 2>&1
+    if [[ "$debug" == "on" ]]; then
+      ./image-viewer ${app_location}ThemeMaster/data/${theme}.png >> ./debug/image_viewer.log 2>&1
+
+    else
+      ./image-viewer ${app_location}ThemeMaster/data/${theme}.png > /dev/null 2>&1
+    fi
     if [ "$mode" == "A" ]; then
       InstallMenu "$theme"
     else
@@ -1337,15 +1363,33 @@ function ChangeLogMenu() {
   local choice
   local retval
   local themes
+  local sorted_online
+  local sorted_installed
 
   if [[ -z $1 ]]; then
-    # Load installed and managed themes
-    themes=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    # Sort the arrays
+    sorted_online=($(printf "%s\n" "${onlinethemes[@]}" | LC_COLLATE=C sort -f))
+    sorted_installed=($(printf "%s\n" "${installedthemes[@]}" | LC_COLLATE=C sort -f))
+    # Find common elements
+    themes=$(comm -12 <(printf '%s\n' "${sorted_online[@]}") <(printf '%s\n' "${sorted_installed[@]}"))
+    #Broken pipe error when onlinethemes is too long
+    #themes=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
     for theme in "${themes[@]}"; do
       options+=($theme "See Changelog")
     done
+    #DEBUG
+    if [[ "$debug" == "on" ]]; then
+      echo "***** ChangeLogMenu *****" >> ./debug/debug_themes.txt
+      echo "onlinethemes : ${onlinethemes[@]}" >> ./debug/debug_themes.txt
+      echo "installed themes : ${installedthemes[@]}" >> ./debug/debug_themes.txt
+      echo "themes : ${themes[@]}" >> ./debug/debug_themes.txt
+    fi
     if [[ -z $options ]]; then
-      dialog --clear --backtitle "$mode_title" --msgbox "No installed theme from $github_user" 5 50 2>&1 >$ttyoutput
+      if [[ $mode == "B" ]]; then
+        dialog --clear --backtitle "$mode_title" --msgbox "No installed theme from Gallery" 5 50 2>&1 >$ttyoutput
+      else
+        dialog --clear --backtitle "$mode_title" --msgbox "No installed theme from $github_user" 5 50 2>&1 >$ttyoutput
+      fi
       MainMenu
     fi
     cmd=(dialog --cancel-label "Cancel" --backtitle "$mode_title" --title " [ Themes Changelog ] " --menu "Select theme :" "$nblines" "$nbcols" "$nblines")
@@ -1380,10 +1424,17 @@ function UninstallMenu() {
   local cmd
   local choice
   local retval
+  local sorted_online
+  local sorted_installed
 
   if [[ -z "$1" ]]; then
     # Uninstall managed themes
-    themes2remove=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    # Sort the arrays
+    sorted_online=($(printf "%s\n" "${onlinethemes[@]}" | LC_COLLATE=C sort -f))
+    sorted_installed=($(printf "%s\n" "${installedthemes[@]}" | LC_COLLATE=C sort -f))
+    # Find managed themes
+    themes2remove=$(comm -12 <(printf '%s\n' "${sorted_online[@]}") <(printf '%s\n' "${sorted_installed[@]}"))
+    #themes2remove=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
     for theme in "${themes2remove[@]}"; do
       options+=(${theme#es-theme-} "Uninstall")
     done
@@ -1391,7 +1442,12 @@ function UninstallMenu() {
     title="[ Remove Themes ]"
   else
     # Uninstall non managed themes
-    themes2remove=($(comm -13 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    # Sort the arrays
+    sorted_online=($(printf "%s\n" "${onlinethemes[@]}" | LC_COLLATE=C sort -f))
+    sorted_installed=($(printf "%s\n" "${installedthemes[@]}" | LC_COLLATE=C sort -f))
+    # Find non managed themes
+    themes2remove=$(comm -13 <(printf '%s\n' "${sorted_online[@]}") <(printf '%s\n' "${sorted_installed[@]}"))
+    #themes2remove=($(comm -13 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
     for theme in "${themes2remove[@]}"; do
       options+=(${theme#es-theme-} "Uninstall")
     done

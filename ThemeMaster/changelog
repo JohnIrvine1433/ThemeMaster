@@ -1,3 +1,7 @@
+v4.8.1
+- Fix preview display on JELOS & NostixOS
+- Fix broken pipe when sorting long arrays
+- Fix wget error message
 v4.8.0
 - Add support for NostixOS
 - Reset cached data from advanced settings
