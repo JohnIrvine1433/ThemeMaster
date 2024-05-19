@@ -1,3 +1,7 @@
+v4.9.0
+- Add comm fallback function (for OS missing coreutils)
+- Fix printf SGR errors
+- Fix temp debug files copy
 v4.8.1
 - Fix preview display on JELOS & NostixOS
 - Fix broken pipe when sorting long arrays

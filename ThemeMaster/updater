@@ -12,7 +12,7 @@ function PostInstallUpdater() {
   local temp_array1
   local temp_array2
   local updater_tty
-  local updater_2_version="4.8.1"
+  local updater_2_version="4.9.0"
   local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${updater_2_version}/ThemeMaster.nfo.zip"
 
   #ttyoutput global variable added from 4.3.0

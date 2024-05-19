@@ -14,7 +14,6 @@ sudo_prefix="sudo"
 if [[ "$EUID" = 0 ]]; then
   sudo_prefix=""
 fi
-$sudo_prefix chmod 666 /dev/tty1
 $sudo_prefix chmod 666 /dev/uinput
 shopt -s extglob # required for extented pattern recognition
 app_location="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -26,7 +25,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.8.1"
+current_app_version="4.9.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -79,6 +78,63 @@ declare -A gallery_array
 #
 # Global functions
 #
+# Function to mimic the 'comm' command with options -12 and -13
+comm_fallback() {
+    local opt1="$1"
+    local file1="$2"
+    local file2="$3"
+
+    # Read the sorted files line by line
+    local f1_line f2_line
+    exec 3<"$file1"
+    exec 4<"$file2"
+
+    read -u 3 f1_line
+    read -u 4 f2_line
+
+    while [[ -n "$f1_line" || -n "$f2_line" ]]; do
+        if [[ -z "$f1_line" ]]; then
+            # File1 is empty, print remaining lines of File2
+            [[ "$opt1" != "-12" ]] && echo -e "\t\t$f2_line"
+            read -u 4 f2_line
+        elif [[ -z "$f2_line" ]]; then
+            # File2 is empty, print remaining lines of File1
+            [[ "$opt1" != "-13" ]] && echo -e "$f1_line"
+            read -u 3 f1_line
+        elif [[ "$f1_line" < "$f2_line" ]]; then
+            # Line is unique to File1
+            [[ "$opt1" != "-13" ]] && echo -e "$f1_line"
+            read -u 3 f1_line
+        elif [[ "$f1_line" > "$f2_line" ]]; then
+            # Line is unique to File2
+            [[ "$opt1" != "-12" ]] && echo -e "\t\t$f2_line"
+            read -u 4 f2_line
+        else
+            # Line is common to both files
+            [[ "$opt1" == "-12" || "$opt1" == "-13" ]] || echo -e "\t$f1_line"
+            read -u 3 f1_line
+            read -u 4 f2_line
+        fi
+    done
+
+    # Close the file descriptors
+    exec 3<&-
+    exec 4<&-
+}
+
+# Function to choose between comm and comm_fallback with options -12 and -13
+compare_files() {
+    local opt1="$1"
+    local file1="$2"
+    local file2="$3"
+
+    if type comm >/dev/null 2>&1; then
+        comm "$opt1" "$file1" "$file2"
+    else
+        comm_fallback "$opt1" "$file1" "$file2"
+    fi
+}
+
 function wget_result() {
   local wget_return=$1
   local comingfrom=$2
@@ -134,11 +190,14 @@ function ExitApp() {
   local temp
 
   if [[ "$debug" == "on" ]]; then
-    cp /tmp/ThemeMaster_* ${app_location}debug/
+    cp /tmp/ThemeMaster_* ${app_location}ThemeMaster/debug/
     rm /tmp/ThemeMaster_*
   else
     rm /tmp/ThemeMaster_*
   fi
+  #Clean temp files
+  rm -f "$tmp_onlinethemes" "$tmp_cached_outdatedthemes" "$tmp_outdatedthemes" "$tmp_installedthemes"
+
   #ensure that background subprocesses are killed (tm-joypad)
   #$sudo_prefix kill $(jobs -p) > /dev/null 2>&1
   #sleep 1
@@ -223,6 +282,11 @@ function InitLoader() {
   if [[ "$debug" == "on" ]]; then
     mkdir -p ./debug
   fi
+  #Create temp files
+  tmp_onlinethemes=$(mktemp)
+  tmp_cached_outdatedthemes=$(mktemp)
+  tmp_outdatedthemes=$(mktemp)
+  tmp_installedthemes=$(mktemp)
 
   # Controls management
   if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
@@ -266,16 +330,19 @@ function InitLoader() {
   $sudo_prefix ping -c 1 google.com &> /dev/null
   if [ $? -eq 0 ]; then
     InstallDependencies
+    if ! type comm &>/dev/null; then
+      dialog --clear --backtitle "ThemeMaster - System" --msgbox "<comm> command not available in your system, fallback function will be used instead, install coreutils for better performance." 10 50 2>&1 >$ttyoutput
+    fi
   else
-    dialog --clear --backtitle "ThemeMaster - System" --msgbox "You appear to be offline, ThemeMaster requires an internet access to run!" 10 50 2>&1 >$ttyoutput
-    exit
-    # dialog --backtitle "ThemeMaster - System" --yes-label "Restart" --no-label "Exit" --yesno "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >$ttyoutput
-    # case $? in
-    #   0)
-    #     ./$(basename $0) && exit ;;
-    #   *)
-    #     exit 1 ;;
-    # esac
+    #dialog --clear --backtitle "ThemeMaster - System" --msgbox "You appear to be offline, ThemeMaster requires an internet access to run!" 10 50 2>&1 >$ttyoutput
+    #exit
+    dialog --backtitle "ThemeMaster - System" --yes-label "Restart" --no-label "Exit" --yesno "You appear to be offline, ThemeMaster require an internet access to run!" 10 50 2>&1 >$ttyoutput
+    case $? in
+       0)
+         exec ../ThemeMaster.sh ;;
+       *)
+         exit 1 ;;
+    esac
   fi
   #DEBUG
   if [[ "$debug" == "on" ]]; then
@@ -335,6 +402,7 @@ function SetEnvironment() {
   fi
 
   ttyoutput="/dev/tty1" #Default tty
+  $sudo_prefix chmod 666 /dev/tty1
   if [[ $current_OS == *"ArkOS"* ]]; then
     themes_location="/roms/themes/" #ES themes location path with trailing slash
     temp_ram_folder="/dev/shm/"     #RAM folder with trailing slash
@@ -344,12 +412,13 @@ function SetEnvironment() {
   elif [[ $current_OS == *"TheRA"* ]]; then
     themes_location="/etc/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
-  elif [[ $current_OS == *"JELOS"* ]] || [[ $current_OS == *"UnofficialOS"* ]] || [[ $current_OS == *"NOSTIX"* ]]; then
+  elif [[ $current_OS == *"JELOS"* ]] ||[[ $current_OS == *"UnofficialOS"* ]] || [[ $current_OS == *"NOSTIX"* ]]; then
     themes_location="/storage/.config/emulationstation/themes/"
     temp_ram_folder="/dev/shm/"
     #Add support for Weston on JELOS
     if [ "${UI_SERVICE}" = "weston.service" ]; then
       ttyoutput="/dev/tty"
+      $sudo_prefix chmod 666 /dev/tty
     fi
   else
     SaveSettings
@@ -598,7 +667,7 @@ function InstallTheme() {
         InstallMenu
       elif [[ $comingfrom == "UpdateMenu" ]]; then
         UpdateMenu
-      elif [[[ $comingfrom == "ReinstallMenu" ]]; then
+      elif [[ $comingfrom == "ReinstallMenu" ]]; then
         ReinstallMenu
       else
         MainMenu
@@ -707,9 +776,6 @@ function CheckThemesUpdates() {
   local temp_array=()
   local unchecked_themes=()
   local temp
-  local sorted_online
-  local sorted_cached
-  local sorted_outdated
 
   dialog --clear
   dialog --infobox "Checking for themes updates... Please wait !" 5 50 >$ttyoutput
@@ -720,19 +786,15 @@ function CheckThemesUpdates() {
   # Load cached outdated themes from current collection
   if [[ -e "./data/outdatedthemes.cache" ]]; then
     source ./data/outdatedthemes.cache
-    # Sort the arrays
-    sorted_online=($(printf "%s\n" "${onlinethemes[@]}" | LC_COLLATE=C sort -f))
-    sorted_cached=($(printf "%s\n" "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f))
     # Find outdated themes
-    outdatedthemes=($(comm -12 <(printf '%s\n' "${sorted_online[@]}") <(printf '%s\n' "${sorted_cached[@]}")))
-    #outdatedthemes=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f)))
+    printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f > "$tmp_onlinethemes"
+    printf '%s\n' "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f > "$cached_outdatedthemes"
+    outdatedthemes=($(compare_files -12 "$tmp_onlinethemes" "$cached_outdatedthemes"))
   fi
   # Check for online update only if necessary (installed and not already cached)
-  # Sort the arrays
-  sorted_online=($(printf "%s\n" "${onlinethemes[@]}" | LC_COLLATE=C sort -f))
-  sorted_outdated=($(printf "%s\n" "${cached_outdatedthemes[@]}" | LC_COLLATE=C sort -f))
-  unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}") <(printf '%s\n' "${onlinethemes[@]}")))
-  #unchecked_themes=($(comm -13 <(printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f)))
+  printf '%s\n' "${outdatedthemes[@]}" | LC_COLLATE=C sort -f > "$tmp_outdatedthemes"
+  printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f > "$tmp_onlinethemes"
+  unchecked_themes=($(compare_files -13 "$tmp_outdatedthemes" "$tmp_onlinethemes"))
   #DEBUG
   if [[ "$debug" == "on" ]]; then
     echo "***** CheckThemesUpdates *****" >> ./debug/debug_themes.txt
@@ -941,7 +1003,7 @@ function CheckGalleryUpdates() {
 function SetGalleryRes() {
   local device_res
 
-  device_res=$(xdpyinfo | awk '/dimensions/{print $2}')
+  device_res=$(xrandr | grep '*' | awk '{ print $1 }')
   if [[ "${gallery_res[*]}" =~ "${device_res}" ]]; then
     gallery_user_res=$device_res
   else
@@ -1363,17 +1425,11 @@ function ChangeLogMenu() {
   local choice
   local retval
   local themes
-  local sorted_online
-  local sorted_installed
 
   if [[ -z $1 ]]; then
-    # Sort the arrays
-    sorted_online=($(printf "%s\n" "${onlinethemes[@]}" | LC_COLLATE=C sort -f))
-    sorted_installed=($(printf "%s\n" "${installedthemes[@]}" | LC_COLLATE=C sort -f))
-    # Find common elements
-    themes=$(comm -12 <(printf '%s\n' "${sorted_online[@]}") <(printf '%s\n' "${sorted_installed[@]}"))
-    #Broken pipe error when onlinethemes is too long
-    #themes=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f > "$tmp_onlinethemes"
+    printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f > "$tmp_installedthemes"
+    themes=($(compare_files -12 "$tmp_onlinethemes" "$tmp_installedthemes"))
     for theme in "${themes[@]}"; do
       options+=($theme "See Changelog")
     done
@@ -1424,17 +1480,12 @@ function UninstallMenu() {
   local cmd
   local choice
   local retval
-  local sorted_online
-  local sorted_installed
 
   if [[ -z "$1" ]]; then
     # Uninstall managed themes
-    # Sort the arrays
-    sorted_online=($(printf "%s\n" "${onlinethemes[@]}" | LC_COLLATE=C sort -f))
-    sorted_installed=($(printf "%s\n" "${installedthemes[@]}" | LC_COLLATE=C sort -f))
-    # Find managed themes
-    themes2remove=$(comm -12 <(printf '%s\n' "${sorted_online[@]}") <(printf '%s\n' "${sorted_installed[@]}"))
-    #themes2remove=($(comm -12 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f > "$tmp_onlinethemes"
+    printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f > "$tmp_installedthemes"
+    themes2remove=($(compare_files -12 "$tmp_onlinethemes" "$tmp_installedthemes"))
     for theme in "${themes2remove[@]}"; do
       options+=(${theme#es-theme-} "Uninstall")
     done
@@ -1442,12 +1493,9 @@ function UninstallMenu() {
     title="[ Remove Themes ]"
   else
     # Uninstall non managed themes
-    # Sort the arrays
-    sorted_online=($(printf "%s\n" "${onlinethemes[@]}" | LC_COLLATE=C sort -f))
-    sorted_installed=($(printf "%s\n" "${installedthemes[@]}" | LC_COLLATE=C sort -f))
-    # Find non managed themes
-    themes2remove=$(comm -13 <(printf '%s\n' "${sorted_online[@]}") <(printf '%s\n' "${sorted_installed[@]}"))
-    #themes2remove=($(comm -13 <(printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f)))
+    printf '%s\n' "${onlinethemes[@]}" | LC_COLLATE=C sort -f > "$tmp_onlinethemes"
+    printf '%s\n' "${installedthemes[@]}" | LC_COLLATE=C sort -f > "$tmp_installedthemes"
+    themes2remove=($(compare_files -13 "$tmp_onlinethemes" "$tmp_installedthemes"))
     for theme in "${themes2remove[@]}"; do
       options+=(${theme#es-theme-} "Uninstall")
     done
