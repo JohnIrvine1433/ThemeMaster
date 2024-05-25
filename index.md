@@ -29,7 +29,7 @@ Following devices are supported : Gameforce Chi, Powkiddy RGB10 RGB10 Max/3, RGB
 - You can force quit ThemeMaster by pressing Select + Start.
 
 ### Image viewer
-While displaying a preview picture (when not available, the theme info from GitHub will be displayed instead)
+While displaying a preview picture (when not available, theme's details will be displayed instead)
 - Controls are : X to quit displaying a picture, Y to rotate a picture.
 NB : at the moment, this functionality is not available on ROCKNIX. 
 
