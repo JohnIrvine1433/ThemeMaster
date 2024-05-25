@@ -1,5 +1,9 @@
+v4.10.0
+- Add support for ROCKNIX
+- Add support for RG-ARC
+- Various code improvments
 v4.9.0
-- Add comm fallback function (for OS missing coreutils)
+- Add comm fallback function
 - Fix printf SGR errors
 - Fix temp debug files copy
 v4.8.1

@@ -12,18 +12,10 @@ function PostInstallUpdater() {
   local temp_array1
   local temp_array2
   local updater_tty
-  local updater_2_version="4.9.0"
+  local updater_2_version="4.10.0"
   local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${updater_2_version}/ThemeMaster.nfo.zip"
 
-  #ttyoutput global variable added from 4.3.0
-  if [[ -z "$ttyoutput" ]]; then
-    updater_tty="/dev/tty1"
-  else
-    updater_tty=$ttyoutput
-  fi
-
-  dialog --clear
-  dialog --infobox "Processing post-installation ..." 5 50 >$updater_tty
+  dialog --clear --infobox "Processing post-installation ..." 5 50
 
 ####################################
 # FORWARD COMPATIBLE MODIFICATIONS #
@@ -70,11 +62,13 @@ function PostInstallUpdater() {
   #Add variable to manage tty output
   #From 4.6.0
   #Add variables to manage UI dialog boxes size
+  #From 4.10.0
+  #Remove variable to manage tty output
   admin_collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie")
   user_collections=($(comm -13 <(printf '%s\n' "${admin_collections[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${collections[@]}" | LC_COLLATE=C sort -f)))
   new_collections=("${admin_collections[@]}" "${user_collections[@]}")
 
-  echo "app_conf_version=\"4.6.0\"" >ThemeMaster.cfg
+  echo "app_conf_version=\"4.10.0\"" >ThemeMaster.cfg
   echo "app_prerelease=\"${app_prerelease}\"" >>ThemeMaster.cfg
   echo "debug=\"${debug}\"" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
@@ -86,11 +80,6 @@ function PostInstallUpdater() {
   echo "collections=(${new_collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
   echo "gallery_user_res=\"${gallery_user_res}\"" >>ThemeMaster.cfg
-  if [[ -z "$ttyoutput" ]]; then
-    echo "ttyoutput=\"\"" >>ThemeMaster.cfg
-  else
-    echo "ttyoutput=\"${ttyoutput}\"" >>ThemeMaster.cfg
-  fi
   echo "nblines=\"${nblines}\"" >>ThemeMaster.cfg
   echo "nbcols=\"${nbcols}\"" >>ThemeMaster.cfg
 
@@ -131,5 +120,5 @@ fi
   nbchanges=${temp%:*}
   nbchanges=$((nbchanges-1))
   changes=$(head -n $nbchanges changelog)
-  dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1 >$updater_tty
+  dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1
 }
