@@ -1,6 +1,6 @@
-ThemeMaster is an EmulationStation theme manager for small screen devices running [ArkOS](https://github.com/christianhaitian/arkos), [RetroOZ](https://github.com/southoz/RetroOZ), [TheRA](https://techtoytinker.com/theretroarena), [JELOS](https://github.com/JustEnoughLinuxOS/distribution), [UnofficialOS](https://github.com/RetroGFX/UnofficialOS) or [NostixOS](https://github.com/NostixOS/Nostix).
+ThemeMaster is an EmulationStation theme manager for small screen devices running [ArkOS](https://github.com/christianhaitian/arkos), [RetroOZ](https://github.com/southoz/RetroOZ), [TheRA](https://techtoytinker.com/theretroarena), [JELOS](https://github.com/JustEnoughLinuxOS/distribution), [UnofficialOS](https://github.com/RetroGFX/UnofficialOS), [NostixOS](https://github.com/NostixOS/Nostix) or [ROCKNIX](https://github.com/ROCKNIX/distribution).
 
-Following devices are supported : Gameforce Chi, Powkiddy RGB10 RGB10 Max/3, RGB30, X55 and XU10, Anbernic RG351P/M/V RG552 and RG503, RK2020, Odroid-go Advance, Super and Ultra units.
+Following devices are supported : Gameforce Chi, Powkiddy RGB10 RGB10 Max/3, RGB30, X55 and XU10, Anbernic RG351P/M/V RG552, RG503 and RG-ARC, RK2020, Odroid-go Advance, Super and Ultra units.
 
 # User Guide
 ## Installation
@@ -18,9 +18,9 @@ Following devices are supported : Gameforce Chi, Powkiddy RGB10 RGB10 Max/3, RGB
 ### RetroOZ (0.50 - Beta - 2 July or newer)
 - Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools` (or directly in /opt/system/Tools).
 
-### JELOS
+### JELOS, ROCKNIX
 - Place *ThemeMaster.sh* and *ThemeMaster* folder in `/storage/roms/ports`.
-- Run ThemeMaster from JELOS Ports menu.
+- Run ThemeMaster from Ports menu.
 
 ## Controls
 ### Navigation
@@ -29,7 +29,9 @@ Following devices are supported : Gameforce Chi, Powkiddy RGB10 RGB10 Max/3, RGB
 - You can force quit ThemeMaster by pressing Select + Start.
 
 ### Image viewer
+While displaying a preview picture (when not available, the theme info from GitHub will be displayed instead)
 - Controls are : X to quit displaying a picture, Y to rotate a picture.
+NB : at the moment, this functionality is not available on ROCKNIX. 
 
 ## Modes
 ### Theme Gallery mode (default one)
