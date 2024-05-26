@@ -12,7 +12,8 @@ _____ _
 An EmulationStation theme manager for small screen devices running [ArkOS](https://github.com/christianhaitian/arkos), [RetroOZ](https://github.com/southoz/RetroOZ), [TheRA](https://techtoytinker.com/theretroarena), [JELOS](https://github.com/JustEnoughLinuxOS/distribution),  [UnofficialOS](https://github.com/RetroGFX/UnofficialOS), [NostixOS](https://github.com/NostixOS/Nostix) or [ROCKNIX](https://github.com/ROCKNIX/distribution).
 
 Following devices are supported : 
-- Gameforce Chi; Powkiddy RGB10, RGB10 Max/3, RGB30, X55 and XU10
+- Gameforce Chi
+- Powkiddy RGB10, RGB10 Max/3, RGB30, X55 and XU10
 - Anbernic RG351P/M/V, RG552, RG503 and RG-ARC
 - RK2020
 - Odroid-go Advance, Super and Ultra units
