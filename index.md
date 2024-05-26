@@ -36,6 +36,7 @@ Following devices are supported :
 ### Theme's preview
 (not available on ROCKNIX)
 - Controls are : X to quit displaying a picture, Y to rotate a picture.
+
 NB : theme's description from GitHub will be displayed when no preview is available.
 
 ## Modes
