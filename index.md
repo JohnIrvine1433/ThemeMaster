@@ -1,6 +1,11 @@
 ThemeMaster is an EmulationStation theme manager for small screen devices running [ArkOS](https://github.com/christianhaitian/arkos), [RetroOZ](https://github.com/southoz/RetroOZ), [TheRA](https://techtoytinker.com/theretroarena), [JELOS](https://github.com/JustEnoughLinuxOS/distribution), [UnofficialOS](https://github.com/RetroGFX/UnofficialOS), [NostixOS](https://github.com/NostixOS/Nostix) or [ROCKNIX](https://github.com/ROCKNIX/distribution).
 
-Following devices are supported : Gameforce Chi, Powkiddy RGB10 RGB10 Max/3, RGB30, X55 and XU10, Anbernic RG351P/M/V RG552, RG503 and RG-ARC, RK2020, Odroid-go Advance, Super and Ultra units.
+Following devices are supported : 
+- Gameforce Chi
+- Powkiddy RGB10 RGB10 Max/3, RGB30, X55 and XU10
+- Anbernic RG351P/M/V RG552, RG503 and RG-ARC
+- RK2020
+- Odroid-go Advance, Super and Ultra units
 
 # User Guide
 ## Installation
@@ -28,10 +33,10 @@ Following devices are supported : Gameforce Chi, Powkiddy RGB10 RGB10 Max/3, RGB
 - Select key exits ThemeMaster.
 - You can force quit ThemeMaster by pressing Select + Start.
 
-### Image viewer
-While displaying a preview picture (when not available, theme's details will be displayed instead)
+### Theme's preview
+(not available on ROCKNIX)
 - Controls are : X to quit displaying a picture, Y to rotate a picture.
-NB : at the moment, this functionality is not available on ROCKNIX. 
+NB : theme's description from GitHub will be displayed when no preview is available.
 
 ## Modes
 ### Theme Gallery mode (default one)
