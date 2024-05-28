@@ -14,8 +14,6 @@ sudo_prefix="sudo"
 if [[ "$EUID" -eq 0 ]]; then
   sudo_prefix=""
 fi
-export DIALOG=$(tty)
-$sudo_prefix chmod 666 "$(tty)" 2>> ./ThemeMaster.log
 $sudo_prefix chmod 666 /dev/uinput 2>> ./ThemeMaster.log
 shopt -s extglob # required for extented pattern recognition
 app_location="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -27,7 +25,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.10.0"
+current_app_version="4.10.1"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -254,6 +252,7 @@ function InitLoader() {
   local isitogs
   local isitchi
   local param_device=""
+  local current_OS=""
 
   # Splashcreen
   if [ -e "ThemeMaster.nfo" ]; then
@@ -265,7 +264,18 @@ function InitLoader() {
   #
   # Loading
   #
-  echo "Loading parameters ..."
+  echo "Loading ..."
+  # Setting up input an output for dialog management
+  current_OS=$(get_current_OS)
+  if [ -t 1 ]; then
+    $sudo_prefix chmod 666 "$(tty)" 2>> ./ThemeMaster.log
+  elif [[ ( $current_OS == *"JELOS"* || $current_OS == *"UnofficialOS"* ) &&  "${UI_SERVICE}" = "weston.service" ]]; then
+    exec </dev/tty >/dev/tty
+    $sudo_prefix chmod 666 /dev/tty 2>> ./ThemeMaster.log
+  else
+    exec </dev/tty1 >/dev/tty1
+    $sudo_prefix chmod 666 /dev/tty1 2>> ./ThemeMaster.log
+  fi
   #Make sure data folder is created
   mkdir -p ./data 2>> ./ThemeMaster.log
   # Parameters
@@ -274,12 +284,12 @@ function InitLoader() {
     #Make sure envrionnement variables are set (see SetEnvironment )
     if [[ -z "$themes_location" || -z "$temp_ram_folder" || -z "$nblines" ]]; then
       echo "Setting environment ..."
-      SetEnvironment
+      SetEnvironment "$current_OS"
       SaveSettings
     fi
   else
     echo "Setting environment ..."
-    SetEnvironment
+    SetEnvironment "$current_OS"
     SaveSettings
   fi
 
@@ -365,8 +375,11 @@ function InitLoader() {
 function SetEnvironment() {
   local current_OS
   local plymouth
+  local current_OS="$1"
 
-  current_OS=$(get_current_OS)
+  if [[ $current_OS == "" ]]; then
+    current_OS=$(get_current_OS)
+  fi
 
   if [[ -z "$current_OS" ]]; then
     SaveSettings
@@ -858,7 +871,7 @@ function LoadGitHubThemes() {
     wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/users/${github_user}/repos"
     wget_result $? "InitLoader"
   fi
-  onlinethemes=($(grep '\"name\": \"es-theme' "/tmp/ThemeMaster_wget.output"  | sed -e 's/\"name\": \"\(.*\)\",/\1/'))
+  onlinethemes=($(grep '"name": "es-theme' "/tmp/ThemeMaster_wget.output"  | sed -e 's/\"name\": \"\(.*\)\",/\1/'))
   IFS=$SAVEIFS
   onlinethemes=("${onlinethemes[@]/#+([[:blank:]])/}") # remove leading space/tab from each element
   onlinethemes=("${onlinethemes[@]/%+([[:blank:]])/}") # remove trailing space/tab from each element
@@ -1223,7 +1236,7 @@ function InstallSubMenu {
     if [[ $description == *"null,"* ]]; then
       description="** No information available **"
     fi
-    dialog --clear --backtitle "$mode_title" --title " [ ${theme#es-theme-} ] " --msgbox "About:\n ${description}" 10 50 2>&1
+    dialog --clear --backtitle "$mode_title" --title " [ ${theme#es-theme-} ] " --msgbox "** No preview available **\nAbout:\n ${description}" 10 50 2>&1
     if [ "$mode" == "A" ]; then
       InstallMenu "$theme"
     else

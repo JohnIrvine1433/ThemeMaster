@@ -14,5 +14,5 @@ if [ "${UI_SERVICE}" = "weston.service" ]; then
 elif [ "${UI_SERVICE}" = "sway.service essway.service" ]; then
   foot -F ./ThemeMaster 2>&1 | tee -a ./ThemeMaster.log
 else
-  bash ThemeMaster 2>&1 | tee -a ./ThemeMaster.log
+  bash ./ThemeMaster 2>&1 | tee -a ./ThemeMaster.log
 fi
