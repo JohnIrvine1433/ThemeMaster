@@ -12,7 +12,9 @@ function PostInstallUpdater() {
   local temp_array1
   local temp_array2
   local updater_tty
-  local updater_2_version="4.10.1"
+  local updater_2_version="4.11.0"
+  local sorted_versions
+  local first_version
   local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${updater_2_version}/ThemeMaster.nfo.zip"
 
   dialog --clear --infobox "Processing post-installation ..." 5 50
@@ -93,8 +95,11 @@ function PostInstallUpdater() {
   fi
 
 #4.2.0
-  #Update ThemeGallery sourcing, files reset
-  if [ $current_app_version \< "4.2.0" ]; then
+#4.11.0
+  #Update ThemeGallery sourcing if current version is older than 4.11.0
+  sorted_versions=$(printf "%s\n%s" "$current_app_version" "4.11.0" | sort -V)
+  first_version=$(echo "$sorted_versions" | head -n 1)
+  if [ "$first_version" = "$current_app_version" ]; then
     rm -f ./data/gallery.db
     rm -f ./data/gallery.version
   fi

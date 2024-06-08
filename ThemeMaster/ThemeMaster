@@ -25,7 +25,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.10.1"
+current_app_version="4.11.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -60,11 +60,13 @@ changelog=()
 themes_updates_checked=0
 github_user=""
 # Gallery mode variables
-gallery_res=("480x320" "640x480" "854x480" "960x544")
+gallery_res=("480x320" "640x480" "854x480" "960x544" "720x720")
+gallery_720x720=()
 gallery_960x544=()
 gallery_854x480=()
 gallery_640x480=()
 gallery_480x320=()
+gallery_720x720_untested=()
 gallery_960x544_untested=()
 gallery_854x480_untested=()
 gallery_640x480_untested=()
@@ -892,20 +894,28 @@ function LoadGallery() {
   local _640
   local _854
   local _960
+  local _720
 
   unset onlinethemes
+  unset gallery_720x720
   unset gallery_960x544
   unset gallery_854x480
   unset gallery_640x480
   unset gallery_480x320
+  unset gallery_720x720_untested
   unset gallery_960x544_untested
   unset gallery_854x480_untested
   unset gallery_640x480_untested
   unset gallery_480x320_untested
   {
   read
-  while read -r author theme _480 _640 _854 _960
+  while read -r author theme _480 _640 _854 _960 _720
   do
+    if [[ "$_720" == "Yes" ]]; then
+      gallery_720x720+=("$theme")
+    elif [[ "$_720" == "Untested" ]]; then
+      gallery_720x720_untested+=("$theme")
+    fi
     if [[ "$_960" == "Yes" ]]; then
       gallery_960x544+=("$theme")
     elif [[ "$_960" == "Untested" ]]; then
@@ -941,6 +951,7 @@ function UpdateGalleryDB() {
   local _640
   local _854
   local _960
+  local _720
   local _XXX #unused variable allowing for asynchronous update between ThemeMaster and EmulationStation-OGA-Theme-Gallery when a new screen size is added to the gallery
   local account
   local theme_repo
@@ -960,11 +971,11 @@ function UpdateGalleryDB() {
   echo "*Account* *Repository* *480x320* *640x480* *854x480* *960x544*" > ./data/gallery.db
   SAVEIFS=$IFS
   IFS='|'
-  while read -r temp1 temp preview_url _480 _640 _854 _960 _XXX
+  while read -r temp1 temp preview_url _480 _640 _854 _960 _720 _XXX
   do
     account=$(echo $temp | awk -F"/" '{print $4}')
     theme_repo=$(echo $temp | awk -F"/" '{print $5}')
-    echo "${account} ${theme_repo} ${_480} ${_640} ${_854} ${_960}" >> ./data/gallery.db
+    echo "${account} ${theme_repo} ${_480} ${_640} ${_854} ${_960} ${_720}" >> ./data/gallery.db
     if [ ! -e "./data/${theme_repo}.png" ]; then
       wget -nv -a "/tmp/ThemeMaster_wget.log" -O "./data/${theme_repo}.png" $preview_url
       wget_return=$?
@@ -1202,13 +1213,10 @@ function InstallSubMenu {
   local filter="$2"
   local description
   local retval
-  local current_OS=""
-
-  current_OS=$(get_current_OS)
 
   theme=${theme/HELP /}
   theme="es-theme-""$theme"
-  if [[ -e "./data/${theme}.png" ]] && [[ $current_OS != *"ROCKNIX"* ]]; then
+  if [[ -e "./data/${theme}.png" ]] ; then
     clear
     if [[ "$debug" == "on" ]]; then
       ./image-viewer ${app_location}ThemeMaster/data/${theme}.png &>> ./debug/image_viewer.log
@@ -1216,6 +1224,10 @@ function InstallSubMenu {
     else
       ./image-viewer ${app_location}ThemeMaster/data/${theme}.png &> /dev/null
     fi
+    # Force wayland to reset display
+    clear
+    echo ""
+    sleep 0.5
     if [ "$mode" == "A" ]; then
       InstallMenu "$theme"
     else
