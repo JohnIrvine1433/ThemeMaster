@@ -16,6 +16,7 @@ Following devices are supported :
 - Powkiddy RGB10, RGB10 Max/3, RGB30, X55 and XU10
 - Anbernic RG351P/M/V, RG552, RG503 and RG-ARC
 - RK2020
+- R36S
 - Odroid-go Advance, Super and Ultra units
 
 See the [ThemeMaster's page](https://johnirvine1433.github.io/ThemeMaster/) for more information and installation guide.
