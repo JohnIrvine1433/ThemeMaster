@@ -25,7 +25,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="4.11.0"
+current_app_version="4.11.1"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -89,7 +89,8 @@ get_current_OS() {
     fi
     echo "$current_OS"
 }
-# Function to mimic the 'comm' command 
+
+# Function to mimic the 'comm' command
 comm_fallback() {
     local opt1="$1"
     local file1="$2"
@@ -296,32 +297,32 @@ function InitLoader() {
   fi
 
   # Controls management
-  echo "Lauching joypad ..."
-  if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
+  if [ -e "paramcontrols.txt" ]; then
+    echo "Manual controls paramaters loaded ..."
+    param_device="paramcontrols"
+  elif [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
     param_device="anbernic"
   elif [[ -e "/dev/input/by-path/platform-singleadc-joypad-event-joystick" ]]; then
-     param_device="rg552"
+    param_device="singleadc"
+  elif [[ -e "/dev/input/by-path/platform-rocknix-singleadc-joypad-event-joystick" ]]; then
+    param_device="rocknix-singleadc"
   elif [[ -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
-    param_device="oga"
+    param_device="odroidgo2"
   elif [[ -e "/dev/input/by-path/platform-odroidgo3-joypad-event-joystick" ]]; then
-    param_device="ogs"
+    param_device="odroidgo3"
   elif [[ -e "/dev/input/by-path/platform-gou_joypad-joystick" ]]; then
-    param_device="ogu"
+    param_device="gou"
   elif [[ -e "/dev/input/by-path/platform-gameforce-gamepad-event-joystick" ]]; then
-    param_device="chi"
+    param_device="gameforce"
   elif [[ -e "/dev/input/by-path/platform-zed_joystick-event-joystick" ]]; then
-    param_device="x55"
+    param_device="zed"
   elif [[ -e "/dev/input/by-path/platform-xu10-joypad-event-joystick" ]]; then
     param_device="xu10"
   elif [[ -e "/dev/input/by-path/platform-rg_arc_joypad-event-joystick" ]]; then
     param_device="rgarc"
   else
-    if [ -e "paramcontrols.txt" ]; then
-      param_device="paramcontrols"
-    else
-      dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1
-      exit
-    fi
+    dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, device not recognised. Please report for additional support." 15 50 2>&1
+    exit
   fi
   #Launch joypad
   if [[ "$debug" == "on" ]]; then
