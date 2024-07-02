@@ -1,9 +1,11 @@
 ThemeMaster is an EmulationStation theme manager for small screen devices running [ArkOS](https://github.com/christianhaitian/arkos), [RetroOZ](https://github.com/southoz/RetroOZ), [TheRA](https://techtoytinker.com/theretroarena), [JELOS](https://github.com/JustEnoughLinuxOS/distribution), [UnofficialOS](https://github.com/RetroGFX/UnofficialOS), [NostixOS](https://github.com/NostixOS/Nostix) or [ROCKNIX](https://github.com/ROCKNIX/distribution).
 
-Following devices are supported : 
+ThemeMaster needs to map the device's D-pad and buttons to keys that can be used with the 'dialog' function which requires a specific implementation for every input driver. 
+Please report for additional support if your input driver is not recognised. 
+Example of devices currenlty supported :
 - Gameforce Chi
-- Powkiddy RGB10 RGB10 Max/3, RGB30, X55 and XU10
-- Anbernic RG351P/M/V RG552, RG503 and RG-ARC
+- Powkiddy RGB10, RGB10 Max/3, RGB30, X55 and XU10
+- Anbernic RG351P/M/V, RG552, RG503 and RG-ARC
 - RK2020
 - R36S
 - Odroid-go Advance, Super and Ultra units
@@ -35,7 +37,6 @@ Following devices are supported :
 - You can force quit ThemeMaster by pressing Select + Start.
 
 ### Theme's preview
-(not available on ROCKNIX)
 - Controls are : X to quit displaying a picture, Y to rotate a picture.
 
 NB : theme's description from GitHub will be displayed when no preview is available.
@@ -63,8 +64,7 @@ In **GitHub repository** mode, ThemeMaster creates a live theme’s collection b
 
 # Credits
 ThemeMaster reused some external code to emulated keyboards and to display pictures :
-- 'tm-joypad' binary is based on [AnberPorts-Joystick](https://github.com/krishenriksen/AnberPorts-Joystick) by [Kris Henriksen](https://github.com/krishenriksen),
-- 'image-viewer' binary is based on [Image Viewer](https://github.com/RICCIARDI-Adrien/Image_Viewer) by [Adrien Ricciardi](https://github.com/RICCIARDI-Adrien).
+- 'tm-joypad' binary is based on [AnberPorts-Joystick](https://github.com/krishenriksen/AnberPorts-Joystick) by [Kris Henriksen](https://github.com/krishenriksen)
 
 ## Background
 Original script [ArkThemes](https://github.com/TadMSTR/ArkThemes) was developed for [ArkOS](https://github.com/christianhaitian/arkos) by [TadMSTR](https://github.com/TadMSTR) based on [AnberPorts](https://github.com/krishenriksen/AnberPorts) with contributions from **choo t** and **JohnIrvine**.
