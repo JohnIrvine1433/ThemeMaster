@@ -13,21 +13,21 @@ Here some few devices being supported :
 # User Guide
 ## Installation
 - First, download the latest version of ThemeMaster from [here](https://api.github.com/repos/JohnIrvine1433/ThemeMaster/zipball).
-- Open the zip file and extract the *ThemeMaster.sh* file and *ThemeMaster* folder.
+- Open the zip file and extract the `ThemeMaster.sh` file and `ThemeMaster` folder.
 
 ### ArkOS (021-02-13 or newer)
-- Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools`.
+- Place `ThemeMaster.sh` and `ThemeMaster` folder in `/roms/tools`.
    - NB : on RG351V, if SD2 is being used for roms, installation must be in `/roms2/tools/`.
 - Run ThemeMaster from ArkOS Options > Tools menu.
 
 ### TheRA
-- Place *ThemeMaster.sh* and *ThemeMaster* folder in `/opt/tools`.
+- Place `ThemeMaster.sh` and `ThemeMaster` folder in `/opt/tools`.
 
 ### RetroOZ (0.50 - Beta - 2 July or newer)
-- Place *ThemeMaster.sh* and *ThemeMaster* folder in `/roms/tools` (or directly in /opt/system/Tools).
+- Place `ThemeMaster.sh` and `ThemeMaster` folder in `/roms/tools` (or directly in /opt/system/Tools).
 
 ### JELOS, ROCKNIX
-- Place *ThemeMaster.sh* and *ThemeMaster* folder in `/storage/roms/ports`.
+- Place `ThemeMaster.sh` and `ThemeMaster` folder in `/storage/roms/ports`.
 - Run ThemeMaster from Ports menu.
 
 ## Controls
