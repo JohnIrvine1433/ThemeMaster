@@ -1,3 +1,10 @@
+v5.0.0
+- Add support for themes not starting with es-theme in Gallery
+- Add rocknix-joypad controls
+- Set resolution at first startup
+- Implement workarounds for image viewer
+- Fix default DIALOGRC
+- Various improvments
 v4.11.1
 - Fix singleadc with rocknix
 - Fix paramcontrols
