@@ -11,11 +11,13 @@ function PostInstallUpdater() {
   local nbchanges
   local temp_array1
   local temp_array2
-  local updater_2_version="4.2.0"
+  local updater_tty
+  local updater_2_version="5.0.0"
+  local sorted_versions
+  local first_version
   local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${updater_2_version}/ThemeMaster.nfo.zip"
 
-  dialog --clear
-  dialog --infobox "Processing post-installation ..." 5 50 >/dev/tty1
+  dialog --clear --infobox "Processing post-installation ..." 5 50
 
 ####################################
 # FORWARD COMPATIBLE MODIFICATIONS #
@@ -37,9 +39,11 @@ function PostInstallUpdater() {
 #
   #from v3.0.0
   mkdir -p ./data/
-  for file in *.log; do
-    mv -- "$file" "./data/${file%.log}.version"
-  done
+  if [ $current_app_version \< "3.0.0" ]; then
+    for file in *.log; do
+      mv -- "$file" "./data/${file%.log}.version"
+    done
+  fi
 #
 # ThemeMaster configuration file changes
 #
@@ -56,11 +60,17 @@ function PostInstallUpdater() {
   #do not overwrite manually added collections
   #From 4.2.0
   #Add gallery_user_res (Theme Gammery mode now relies on device's resolution)
+  #From 4.3.0
+  #Add variable to manage tty output
+  #From 4.6.0
+  #Add variables to manage UI dialog boxes size
+  #From 4.10.0
+  #Remove variable to manage tty output
   admin_collections=("Jetup13" "CodyV59" "farfenkugell" "EmuELEC" "RetroPie")
   user_collections=($(comm -13 <(printf '%s\n' "${admin_collections[@]}" | LC_COLLATE=C sort -f) <(printf '%s\n' "${collections[@]}" | LC_COLLATE=C sort -f)))
   new_collections=("${admin_collections[@]}" "${user_collections[@]}")
 
-  echo "app_conf_version=\"4.1.0\"" >ThemeMaster.cfg
+  echo "app_conf_version=\"4.10.0\"" >ThemeMaster.cfg
   echo "app_prerelease=\"${app_prerelease}\"" >>ThemeMaster.cfg
   echo "debug=\"${debug}\"" >>ThemeMaster.cfg
   echo "mode=\"${mode}\"" >>ThemeMaster.cfg
@@ -72,18 +82,27 @@ function PostInstallUpdater() {
   echo "collections=(${new_collections[@]})" >>ThemeMaster.cfg
   echo "app_colorscheme=\"${app_colorscheme}\"" >>ThemeMaster.cfg
   echo "gallery_user_res=\"${gallery_user_res}\"" >>ThemeMaster.cfg
+  echo "nblines=\"${nblines}\"" >>ThemeMaster.cfg
+  echo "nbcols=\"${nbcols}\"" >>ThemeMaster.cfg
 
 ##########################
 # ONE SHOT MODIFICATIONS #
 ##########################
 #3.1.0 and 4.0.0
   #Fix cached_outdatedthemes, file reset
-  #rm -f ./data/outdatedthemes.cache
+  if [ $current_app_version \< "4.0.0" ]; then
+    rm -f ./data/outdatedthemes.cache
+  fi
 
 #4.2.0
-  #Update ThemeGallery sourcing, files reset
-  rm -f ./data/gallery.db
-  rm -f ./data/gallery.version
+#4.11.0
+  #Update ThemeGallery sourcing if current version is older than 4.11.0
+  sorted_versions=$(printf "%s\n%s" "$current_app_version" "4.11.0" | sort -V)
+  first_version=$(echo "$sorted_versions" | head -n 1)
+  if [ "$first_version" = "$current_app_version" ]; then
+    rm -f ./data/gallery.db
+    rm -f ./data/gallery.version
+  fi
 
 ################
 # POST INSTALL #
@@ -91,17 +110,14 @@ function PostInstallUpdater() {
 
 if [ -e "ThemeMaster.nfo" ]; then
   #Downloading logo asset only to count down installations
-  wget -O - "$ASSET_URL" > /dev/null
+  wget -a /tmp/ThemeMaster_wget.log -O - "$ASSET_URL" > /dev/null
 else
   #Downloading and install logo asset
-  mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
-  wget -nv "$ASSET_URL" -O ${temp_ram_folder}app_update_temp/asset.zip
+  wget -a /tmp/ThemeMaster_wget.log "$ASSET_URL" -O ${temp_ram_folder}app_update_temp/asset.zip
   #Unzipping archives
   unzip -qo ${temp_ram_folder}app_update_temp/asset.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
-  #Overwritting existing files
-  cp -rf ${temp_ram_folder}app_update_temp/ThemeMaster.nfo $app_location
-  #Deleting temporary files...
-  rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
+  #Copying logo file
+  cp -f ${temp_ram_folder}app_update_temp/ThemeMaster.nfo $app_location/ThemeMaster/
 fi
 
 #Display changelog
@@ -109,5 +125,5 @@ fi
   nbchanges=${temp%:*}
   nbchanges=$((nbchanges-1))
   changes=$(head -n $nbchanges changelog)
-  dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1 >/dev/tty1
+  dialog --clear --backtitle "ThemeMaster - System" --title "What's new is this new release?" --msgbox "$changes" 10 50 2>&1
 }

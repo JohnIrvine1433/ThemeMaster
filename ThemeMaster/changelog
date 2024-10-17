@@ -1,3 +1,65 @@
+v5.0.0
+- Add support for themes not starting with es-theme in Gallery
+- Add rocknix-joypad controls
+- Set resolution at first startup
+- Implement workarounds for image viewer
+- Fix default DIALOGRC
+- Various improvments
+v4.11.1
+- Fix singleadc with rocknix
+- Fix paramcontrols
+v4.11.0
+- Add 720x720 gallery
+- Add preview on ROCKNIX
+v4.10.1
+- Fix dialog output on ArkOS
+- Minor code improvments
+v4.10.0
+- Add support for ROCKNIX
+- Add support for RG-ARC
+- Various code improvments
+v4.9.0
+- Add comm fallback function
+- Fix printf SGR errors
+- Fix temp debug files copy
+v4.8.1
+- Fix preview display on JELOS & NostixOS
+- Fix broken pipe when sorting long arrays
+- Fix wget error message
+v4.8.0
+- Add support for NostixOS
+- Reset cached data from advanced settings
+- Fix app update
+v4.7.0
+- Add support for XU10
+- Add manual configuration to tm-joypad
+- Ensure execute access on weston
+- Updates to debug mode
+- Minor improvements
+v4.6.1
+- Fix output log on weston
+v4.6.0
+- Adjust UI dialog boxes to screen size
+v4.5.0
+- Add support for OGU and RBGB10 Max 3
+v4.4.2
+- Fix looping update
+v4.4.1
+- Fix lauching on weston devices
+v4.4.0
+- Add support for PowKiddy X55
+v4.3.0
+- Add support for Weston on JELOS
+- Add support for UnofficialOS
+- Minor improvements
+v4.2.2
+- Append wget log file for debug
+- Fix updater
+v4.2.1
+- Add an option in Theme Gallery mode for unsupported resolutions
+- Fix updater and logo asset installation
+- Updates to debug mode
+- Minor improvements and fixes
 v4.2.0
 - All screen sizes from EmulationStation-OGA-Theme-Gallery are now managed
 - Themes in Theme Gallery are pre-filtered by resolution
@@ -8,7 +70,7 @@ v4.1.0
 - Add support for RG552
 - Add support for JELOS
 - Manually added collections are no longer overwritten
-- Unnecessary Splashscreen added :p
+- Add unnecessary splashscreen :p
 - Various code improvements
 v4.0.3
 - Fix internet checking
