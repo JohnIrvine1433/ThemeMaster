@@ -1,3 +1,7 @@
+v5.2.0
+- Add support for Retroid Pocket 5
+- Add support for OGU on ROCKNIX
+- Fix joypad for ROCKNIX on x55
 v5.1.1
 - Fix updater
 v5.1.0
