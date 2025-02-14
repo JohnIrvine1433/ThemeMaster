@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="5.2.0"
+current_app_version="5.3.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -254,7 +254,7 @@ function InitLoader() {
   local isitoga
   local isitogs
   local isitchi
-  local param_device=""
+  local param_device="paramcontrols"
 
   # Splashcreen
   if [ -e "ThemeMaster.nfo" ]; then
@@ -270,37 +270,271 @@ function InitLoader() {
   # Controls management
   if [ -e "paramcontrols.txt" ]; then
     echo "Manual controls paramaters loaded ..." >> ./ThemeMaster.log
-    param_device="paramcontrols"
   elif [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
-    param_device="anbernic"
+cat > paramcontrols.txt <<EOL
+back_key = 311
+start_key = 310
+a_key = 304
+b_key = 305
+x_key = 306
+y_key = 307
+up_key = 17
+down_key = 17
+left_key = 16
+right_key = 16
+l1_key = 308
+l2_key = 314
+r1_key = 309
+r2_key = 315
+inputstr = /dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick
+handler = anbernic
+EOL
+echo "Manual controls paramaters initiased to anbernic." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-singleadc-joypad-event-joystick" ]]; then
-    param_device="singleadc"
+cat > paramcontrols.txt <<EOL
+back_key = 314
+start_key = 315
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 312
+r1_key = 311
+r2_key = 313
+inputstr = /dev/input/by-path/platform-singleadc-joypad-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to singleadc." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-rocknix-singleadc-joypad-event-joystick" ]]; then
-    param_device="rocknix-singleadc"
+cat > paramcontrols.txt <<EOL
+back_key = 314
+start_key = 315
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 312
+r1_key = 311
+r2_key = 313
+inputstr = /dev/input/by-path/platform-rocknix-singleadc-joypad-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to rocknix-singleadc." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-rocknix-joypad-event-joystick" ]]; then
-    param_device="rocknix-joypad"
+cat > paramcontrols.txt <<EOL
+back_key = 704
+start_key = 709
+a_key = 304
+b_key = 305
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 312
+r1_key = 311
+r2_key = 313
+inputstr = /dev/input/by-path/platform-rocknix-joypad-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to rocknix-joypad." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
-    param_device="odroidgo2"
+cat > paramcontrols.txt <<EOL
+back_key = 704
+start_key = 709
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 706
+r1_key = 311
+r2_key = 707
+inputstr = /dev/input/by-path/platform-odroidgo2-joypad-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to odroiggo2." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-odroidgo3-joypad-event-joystick" ]]; then
-    param_device="odroidgo3"
+cat > paramcontrols.txt <<EOL
+back_key = 704
+start_key = 705
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 311
+r1_key = 312
+r2_key = 313
+inputstr = /dev/input/by-path/platform-odroidgo3-joypad-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to odroidgo3." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-odroid-go-ultra-joypad-event-joystick" ]]; then
-    param_device="odroidgou"
+cat > paramcontrols.txt <<EOL
+back_key = 704
+start_key = 709
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 312
+r1_key = 311
+r2_key = 313
+inputstr = /dev/input/by-path/platform-odroid-go-ultra-joypad-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to odroid-go-ultra." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-gou_joypad-joystick" ]]; then
-    param_device="gou"
+cat > paramcontrols.txt <<EOL
+back_key = 704
+start_key = 709
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 312
+r1_key = 311
+r2_key = 313
+inputstr = /dev/input/by-path/platform-gou_joypad-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to gou." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-gameforce-gamepad-event-joystick" ]]; then
-    param_device="gameforce"
+cat > paramcontrols.txt <<EOL
+back_key = 314
+start_key = 315
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 312
+r1_key = 311
+r2_key = 313
+inputstr = /dev/input/by-path/platform-gameforce-gamepad-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to gameforce." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-zed_joystick-event-joystick" ]]; then
-    param_device="zed"
+cat > paramcontrols.txt <<EOL
+back_key = 704
+start_key = 709
+a_key = 304
+b_key = 305
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 312
+r1_key = 311
+r2_key = 313
+inputstr = /dev/input/by-path/platform-zed_joystick-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to zed." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-xu10-joypad-event-joystick" ]]; then
-    param_device="xu10"
+cat > paramcontrols.txt <<EOL
+back_key = 314
+start_key = 315
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 312
+r1_key = 311
+r2_key = 313
+inputstr = /dev/input/by-path/platform-xu10-joypad-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to xu10." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-rg_arc_joypad-event-joystick" ]]; then
-    param_device="rgarc"
+cat > paramcontrols.txt <<EOL
+back_key = 314
+start_key = 315
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 312
+r1_key = 311
+r2_key = 313
+inputstr = /dev/input/by-path/platform-rg_arc_joypad-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to rg_arc." >> ./ThemeMaster.log
   elif [[ -e "/dev/input/by-path/platform-888000.serial-event-mouse" ]]; then
-    param_device="rp5"
+cat > paramcontrols.txt <<EOL
+back_key = 314
+start_key = 315
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 317
+r1_key = 311
+r2_key = 318
+inputstr = /dev/input/by-path/platform-888000.serial-event-mouse
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to rp5." >> ./ThemeMaster.log
   else
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, input driver not recognised. Please report for additional support." 15 50 2>&1
     exit
   fi
+  
   $sudo_prefix ./tm-joypad ThemeMaster $param_device > /dev/null 2>> ./ThemeMaster.log &
 
   echo "Setting up environment ..."
@@ -335,7 +569,7 @@ function InitLoader() {
   fi
   #Workaround for window initialisation on weston
   if [[ "${UI_SERVICE}" = "sway.service essway.service" ]]; then
-    ./image-viewer "$(find ./data -name '*.png' -print -quit)" &
+    ./tm-viewer "$(find ./data -name '*.png' -print -quit)" &
     PID=$!
     sleep 1
     kill $PID
@@ -1287,18 +1521,10 @@ function InstallSubMenu {
   theme=$(theme_decode "$theme")
   if [[ -e "./data/${theme}.png" ]] ; then
     clear
-    if [[ $current_OS == *"ArkOS"* ]]; then
-      if [[ "$debug" == "on" ]]; then
-        ./image-viewer-legacy ${app_location}ThemeMaster/data/${theme}.png &>> ./debug/image_viewer.log
-      else
-        ./image-viewer-legacy ${app_location}ThemeMaster/data/${theme}.png &> /dev/null
-      fi
+    if [[ "$debug" == "on" ]]; then
+      ./tm-viewer ${app_location}ThemeMaster/data/${theme}.png &>> ./debug/image_viewer.log
     else
-      if [[ "$debug" == "on" ]]; then
-        ./image-viewer ${app_location}ThemeMaster/data/${theme}.png &>> ./debug/image_viewer.log
-      else
-        ./image-viewer ${app_location}ThemeMaster/data/${theme}.png &> /dev/null
-      fi
+      ./tm-viewer ${app_location}ThemeMaster/data/${theme}.png &> /dev/null
     fi
     # Force wayland to reset display
     clear

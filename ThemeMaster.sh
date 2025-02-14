@@ -7,7 +7,7 @@
 cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/ThemeMaster"
 chmod +x ./ThemeMaster
 chmod +x ./tm-joypad
-chmod +x ./image-viewer
+chmod +x ./tm-viewer
 echo "$(date)" > ./ThemeMaster.log
 if [ "${UI_SERVICE}" = "weston.service" ]; then
   run './ThemeMaster 2>&1 | tee -a ./ThemeMaster.log'

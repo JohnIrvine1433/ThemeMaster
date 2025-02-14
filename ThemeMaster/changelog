@@ -1,3 +1,7 @@
+v5.3.0
+- Build a new image viewer
+- Change input control management
+- Fix glibc compatibility issues on ArkOS
 v5.2.0
 - Add support for Retroid Pocket 5
 - Add support for OGU on ROCKNIX
