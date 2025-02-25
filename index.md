@@ -14,6 +14,7 @@ Here some few devices being supported :
 ## Installation
 - First, download the latest version of ThemeMaster from [here](https://api.github.com/repos/JohnIrvine1433/ThemeMaster/zipball).
 - Open the zip file and extract the `ThemeMaster.sh` file and `ThemeMaster` folder.
+- Place the files according to your OS, please make sure that ThemeMaster.sh has execute permission (chmod +x)
 
 ### ArkOS (021-02-13 or newer)
 - Place `ThemeMaster.sh` and `ThemeMaster` folder in `/roms/tools`.
