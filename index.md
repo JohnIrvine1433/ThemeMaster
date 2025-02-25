@@ -5,7 +5,7 @@ Please report for additional support if your input driver is not recognised.
 Here some few devices being supported :
 - Gameforce Chi
 - Powkiddy RGB10, RGB10 Max/3, RGB30, X55 and XU10
-- Anbernic RG351P/M/V, RG552, RG503 and RG-ARC
+- Anbernic RG351P/M/V, RG353M, RG552, RG503 and RG-ARC
 - RK2020
 - R36S
 - Odroid-go Advance, Super and Ultra units
@@ -17,7 +17,7 @@ Here some few devices being supported :
 
 ### ArkOS (021-02-13 or newer)
 - Place `ThemeMaster.sh` and `ThemeMaster` folder in `/roms/tools`.
-   - NB : on RG351V, if SD2 is being used for roms, installation must be in `/roms2/tools/`.
+   - NB : on devices with two SD slots, if SD2 is being used for roms, installation must be in `/roms2/tools/`.
 - Run ThemeMaster from ArkOS Options > Tools menu.
 
 ### TheRA
