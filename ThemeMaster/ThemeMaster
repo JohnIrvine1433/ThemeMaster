@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="5.3.0"
+current_app_version="5.4.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -569,6 +569,7 @@ echo "Manual controls paramaters initiased to rp5." >> ./ThemeMaster.log
   fi
   #Workaround for window initialisation on weston
   if [[ "${UI_SERVICE}" = "sway.service essway.service" ]]; then
+    echo "Force window intialisation on weston..." >> ./ThemeMaster.log
     ./tm-viewer "$(find ./data -name '*.png' -print -quit)" &
     PID=$!
     sleep 1
@@ -879,6 +880,7 @@ function SaveSettings() {
 #
 function InstallTheme() {
   local theme=$1
+  local batch=$2
   local theme_display
   local latest
   local REP_URL
@@ -907,6 +909,15 @@ function InstallTheme() {
   if [[ $? -ne 0 ]]; then
       wget_error=$(wget_result)
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
+      if [ -n "$batch" ]; then
+        # Batch installation
+        if dialog --backtitle "$mode_title" --yes-label "Yes" --no-label "No" --yesno "Do you want to abort batch installation?" 15 50 2>&1; then
+          # Yes selected. Aborting installation.
+          return 1
+        else
+          return 0
+        fi
+      fi
   else
     latest=$(sed '/\"date\":/!d;q' "/tmp/ThemeMaster_wget.output"  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
     REP_URL="https://api.github.com/repos/${github_user}/${theme}/zipball"
@@ -1371,6 +1382,7 @@ function BrowseMenu() {
   local nb=0
   local gallery_size=gallery_${gallery_user_res}[@]
   local gallery_size_untested=gallery_${gallery_user_res}_untested[@]
+  local exit_status
 
   # Make sure resolution is set for ThemeGallery
   if [[ -z "$gallery_user_res" ]]; then
@@ -1457,7 +1469,11 @@ function BrowseMenu() {
       for choice in "${choices[@]}"; do
         mode_title="Batch processing : theme $i / ${#choices[@]}"
         theme=$(theme_decode "$choice")
-        InstallTheme "$theme"
+        InstallTheme "$theme" "batch"
+        exit_status=$?
+        if [ "$exit_status" -eq 1 ]; then
+          break  # Exit the loop
+        fi
         i=$((i+1))
       done
       mode_title="$mode_title_saved"
@@ -1480,7 +1496,11 @@ function BrowseMenu() {
       for theme in "${onlinethemes[@]}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
-          InstallTheme "$theme"
+          InstallTheme "$theme" "batch"
+          exit_status=$?
+          if [ "$exit_status" -eq 1 ]; then
+            break  # Exit the loop
+          fi
           i=$((i+1))
         fi
       done
@@ -1488,7 +1508,11 @@ function BrowseMenu() {
       for theme in "${!gallery_size[@]}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
-          InstallTheme "$theme"
+          InstallTheme "$theme" "batch"
+          exit_status=$?
+          if [ "$exit_status" -eq 1 ]; then
+            break  # Exit the loop
+          fi
           i=$((i+1))
         fi
       done
@@ -1496,7 +1520,11 @@ function BrowseMenu() {
       for theme in "${!gallery_size_untested[@]}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
-          InstallTheme "$theme"
+          InstallTheme "$theme" "batch"
+          exit_status=$?
+          if [ "$exit_status" -eq 1 ]; then
+            break  # Exit the loop
+          fi
           i=$((i+1))
         fi
       done
@@ -1613,7 +1641,11 @@ function InstallMenu() {
       for choice in "${choices[@]}"; do
         mode_title="Batch processing : theme $i / ${#choices[@]}"
         theme=$(theme_decode "$choice")
-        InstallTheme "$theme"
+        InstallTheme "$theme" "batch"
+        exit_status=$?
+        if [ "$exit_status" -eq 1 ]; then
+          break  # Exit the loop
+        fi
         i=$((i+1))
       done
       mode_title="$mode_title_saved"
@@ -1631,7 +1663,11 @@ function InstallMenu() {
     for theme in "${onlinethemes[@]}"; do
       if [ ! -d "${themes_location}$theme" ]; then
         mode_title="Batch processing : theme $i / $nb"
-        InstallTheme "$theme"
+        InstallTheme "$theme" "batch"
+        exit_status=$?
+        if [ "$exit_status" -eq 1 ]; then
+          break  # Exit the loop
+        fi
         i=$((i+1))
       fi
     done
@@ -1742,7 +1778,11 @@ function UpdateMenu() {
     mode_title_saved="$mode_title"
     for theme in "${outdatedthemes[@]}"; do
       mode_title="Batch processing : theme $i / $nb"
-      InstallTheme "$theme"
+      InstallTheme "$theme" "batch"
+      exit_status=$?
+      if [ "$exit_status" -eq 1 ]; then
+        break  # Exit the loop
+      fi
       i=$((i+1))
     done
     bmode_title="$mode_title_saved"
