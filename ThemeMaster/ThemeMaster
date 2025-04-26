@@ -911,7 +911,7 @@ function InstallTheme() {
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
       if [ -n "$batch" ]; then
         # Batch installation
-        if dialog --backtitle "$mode_title" --yes-label "Yes" --no-label "No" --yesno "Do you want to abort batch installation?" 15 50 2>&1; then
+        if dialog --backtitle "$mode_title" --yes-label "Yes" --no-label "No" --yesno "Do you want to abort batch processing?" 8 50 2>&1; then
           # Yes selected. Aborting installation.
           return 1
         else
@@ -1110,6 +1110,7 @@ function CheckThemesUpdates() {
       if [[ $? -ne 0 ]]; then
         wget_error=$(wget_result)
         dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
+        themes_updates_checked=1
         eval $comingfrom
       fi
       latest=$(sed '/\"date\":/!d;q' "/tmp/ThemeMaster_wget.output"  | sed -e 's/\"date\": \"//' | sed -e 's/\"//' | sed -e 's/ *//')
@@ -1726,6 +1727,7 @@ function UpdateMenu() {
   local nb=0
   local i=1
   local mode_title_saved
+  local exit_status
 
   if [[ $themes_updates_checked -eq 0 ]]; then
     CheckThemesUpdates "UpdateMenu"
@@ -1785,7 +1787,7 @@ function UpdateMenu() {
       fi
       i=$((i+1))
     done
-    bmode_title="$mode_title_saved"
+    mode_title="$mode_title_saved"
     UpdateMenu
     ;;
   *)
