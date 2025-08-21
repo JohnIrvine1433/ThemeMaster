@@ -18,6 +18,7 @@ Example of devices currently supported :
 - Anbernic RG351P/M/V, RG552, RG503 and RG-ARC
 - RK2020
 - R36S
+- K36, K36S
 - Odroid-go Advance, Super and Ultra units
 
 See the [ThemeMaster's page](https://johnirvine1433.github.io/ThemeMaster/) for more information and installation guide.
