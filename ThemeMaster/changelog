@@ -1,3 +1,5 @@
+v5.5.0
+- Add support for K36/K36S
 v5.4.0
 - Add a feature to abort failing batch install
 - Fix looping check for updates scenario

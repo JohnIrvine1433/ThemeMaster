@@ -530,6 +530,26 @@ inputstr = /dev/input/by-path/platform-888000.serial-event-mouse
 handler = generic
 EOL
 echo "Manual controls paramaters initiased to rp5." >> ./ThemeMaster.log
+  elif [[ -e "/dev/input/by-path/platform-play_joystick-event-joystick" ]]; then
+cat > paramcontrols.txt <<EOL
+back_key = 314
+start_key = 315
+a_key = 305
+b_key = 304
+x_key = 307
+y_key = 308
+up_key = 544
+down_key = 545
+left_key = 546
+right_key = 547
+l1_key = 310
+l2_key = 312
+r1_key = 311
+r2_key = 313
+inputstr = /dev/input/by-path/platform-play_joystick-event-joystick
+handler = generic
+EOL
+echo "Manual controls paramaters initiased to play_joystick." >> ./ThemeMaster.log
   else
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Controls can't be loaded, input driver not recognised. Please report for additional support." 15 50 2>&1
     exit
