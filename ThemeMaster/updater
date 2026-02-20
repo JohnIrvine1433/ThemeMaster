@@ -12,7 +12,7 @@ function PostInstallUpdater() {
   local temp_array1
   local temp_array2
   local updater_tty
-  local updater_2_version="5.5.1"
+  local updater_2_version="5.6.0"
   local sorted_versions
   local first_version
   local ASSET_URL="https://github.com/${github_app_owner}/${github_app_repo}/releases/download/${updater_2_version}/ThemeMaster.nfo.zip"

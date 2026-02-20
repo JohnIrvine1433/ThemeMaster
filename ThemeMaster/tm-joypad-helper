@@ -1,0 +1,119 @@
+#!/bin/bash
+#
+# ThemeMaster
+# https://github.com/JohnIrvine1433/ThemeMaster
+# Description : paramcontrols.txt creation helper
+
+export TERM=linux
+sudo_prefix="sudo"
+# check whether sudo is needed
+if [[ "$EUID" -eq 0 ]]; then
+  sudo_prefix=""
+fi
+
+files=()
+# Get inputfile or iterate through all files in /dev/input/by-path/
+echo "Executing controls helper"
+if [ -z "$1" ]; then
+    echo "The script will attempt to find the correct input file from /dev/input/by-path"
+    echo "This may take some time depending on the number of files."
+    files=($(ls /dev/input/by-path/))
+else
+    echo "The script will rely on the provided input file: $1"
+    files+=("$1")
+fi
+output_file="paramcontrols.txt"
+log_file="tm-joypad-helper.log"
+temp_output="tm-joypad-helper.tmp"
+
+# Create a mapping for button name conversion
+declare -A button_map=(
+    ["BTN_SELECT"]="back_key"
+    ["BTN_START"]="start_key"
+    ["BTN_EAST"]="a_key"
+    ["BTN_SOUTH"]="b_key"
+    ["BTN_NORTH"]="x_key"
+    ["BTN_WEST"]="y_key"
+    ["BTN_DPAD_UP"]="up_key"
+    ["BTN_DPAD_DOWN"]="down_key"
+    ["BTN_DPAD_LEFT"]="left_key"
+    ["BTN_DPAD_RIGHT"]="right_key"
+    ["BTN_TL"]="l1_key"
+    ["BTN_TL2"]="l2_key"
+    ["BTN_TR"]="r1_key"
+    ["BTN_TR2"]="r2_key"
+)
+
+> "$log_file"
+> "$temp_output"
+
+# Iterate through each file
+for file in "${files[@]}"; do
+    selected_file="/dev/input/by-path/$file"
+    echo "Testing $selected_file..." 
+    echo "Testing $selected_file..." >> "$log_file"
+
+    # Run evtest on the selected file and save output to the temporary file
+    $sudo_prefix timeout 5 evtest "$selected_file" >> "$temp_output" 2>&1
+
+    # Check if evtest produced any output
+    if [ ! -s "$temp_output" ]; then
+        echo "No output from evtest for $selected_file. Skipping..." >> "$log_file"
+        continue
+    fi
+
+    # Initialize a list to track matched buttons
+    matched_buttons=()
+
+    # Clear the output file
+    > "$output_file"
+
+    # Parse the output file to extract event codes and names, then convert names
+    while IFS= read -r line; do
+        # Use awk to extract code and name
+        if echo "$line" | grep -q "Event code"; then
+            code=$(echo "$line" | awk '{print $3}')
+            name=$(echo "$line" | awk '{print $4}' | sed 's/[()]//g')
+            if [[ -n "${button_map[$name]}" ]]; then
+                echo "${button_map[$name]} = $code" >> "$output_file"
+                matched_buttons+=("$name")
+            fi
+        fi
+    done < "$temp_output"
+
+    # Check if all buttons in button_map were matched
+    missing_buttons=()
+    for button in "${!button_map[@]}"; do
+        if ! printf '%s\n' "${matched_buttons[@]}" | grep -q "$button"; then
+            missing_buttons+=("$button")
+        fi
+    done
+
+    # If all buttons are matched, append the two requested lines and exit successfully
+    if [ "${#missing_buttons[@]}" -eq 0 ]; then
+        echo "All buttons matched for $selected_file. Generating parameter file..."  >> "$log_file"
+        echo "inputstr = $selected_file" >> "$output_file"
+        echo "handler = generic" >> "$output_file"
+
+        echo "Results saved to paramcontrols.txt"
+
+        # Clean up and exit successfully
+        rm "$temp_output"
+        sleep 2
+        exit 0
+    else
+        echo "Missing buttons for $selected_file: ${missing_buttons[*]}" >> "$log_file"
+        rm "$output_file"
+    fi
+done
+
+# If no file matched all buttons, exit with an error
+if [ -z "$1" ]; then
+    echo "Error: No input file in /dev/input/by-path/ matched all required buttons."
+else
+    echo "Error: the provided input file does not match all required buttons."
+fi
+echo "Please report for additional support."
+echo "Provide the following files: $temp_output , $log_file"
+sleep 10
+exit 1
