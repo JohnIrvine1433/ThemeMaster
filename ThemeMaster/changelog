@@ -1,5 +1,6 @@
 v5.6.0
-- Create tm-joypad-helper for unsupported controls
+- Automate identification of unimplemented controls (relies on tm-joypad-helper)
+- Add support for R36Max/Plus
 v5.5.1
 - Fix update failure
 v5.5.0

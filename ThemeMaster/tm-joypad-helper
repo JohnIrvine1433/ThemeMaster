@@ -4,13 +4,6 @@
 # https://github.com/JohnIrvine1433/ThemeMaster
 # Description : paramcontrols.txt creation helper
 
-export TERM=linux
-sudo_prefix="sudo"
-# check whether sudo is needed
-if [[ "$EUID" -eq 0 ]]; then
-  sudo_prefix=""
-fi
-
 files=()
 # Get inputfile or iterate through all files in /dev/input/by-path/
 echo "Executing controls helper"
@@ -23,8 +16,9 @@ else
     files+=("$1")
 fi
 output_file="paramcontrols.txt"
-log_file="tm-joypad-helper.log"
-temp_output="tm-joypad-helper.tmp"
+mkdir -p ./helper 2>> ./ThemeMaster.log
+log_file="./helper/tm-joypad-helper.log"
+temp_output="./helper/tm-joypad-helper.tmp"
 
 # Create a mapping for button name conversion
 declare -A button_map=(
