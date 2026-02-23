@@ -1,6 +1,7 @@
 v5.6.0
 - Automate identification of unimplemented controls (relies on tm-joypad-helper)
 - Add support for R36Max/Plus
+- Fix install error for all themes option
 v5.5.1
 - Fix update failure
 v5.5.0
