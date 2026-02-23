@@ -1549,7 +1549,7 @@ function BrowseMenu() {
         fi
       done
     elif [[ "$filter" == "${gallery_user_res}verified" ]]; then
-      for theme in "${!gallery_size[@]}"; do
+      for theme in "${!gallery_size}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
           InstallTheme "$theme" "batch"
@@ -1561,7 +1561,7 @@ function BrowseMenu() {
         fi
       done
     elif [[ "$filter" == "${gallery_user_res}untested" ]]; then
-      for theme in "${!gallery_size_untested[@]}"; do
+      for theme in "${!gallery_size_untested}"; do
         if [ ! -d "${themes_location}$theme" ]; then
           mode_title="Batch processing : theme $i / $nb"
           InstallTheme "$theme" "batch"
