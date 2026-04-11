@@ -1,3 +1,5 @@
+v5.7.0
+- BusyBox compatibility (wget, unzip)
 v5.6.0
 - Automate identification of unimplemented controls (relies on tm-joypad-helper)
 - Add support for R36Max/Plus

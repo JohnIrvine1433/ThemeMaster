@@ -26,7 +26,7 @@ app_location="${app_location%ThemeMaster}"
 # ThemeMaster Reference
 github_app_owner="JohnIrvine1433"
 github_app_repo="ThemeMaster"
-current_app_version="5.6.0"
+current_app_version="5.7.0"
 # Default app settings (overwritten by ThemeMaster.cfg)
 app_conf_version="" #Empty by default, managed through updater
 app_prerelease="off" #Do not use prerelease versions
@@ -777,7 +777,7 @@ function CheckAppUpdates() {
     sleep 1
   fi
   #Get latest ThemeMaster tag version
-  wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases"
+  wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_app_owner}/${github_app_repo}/releases" 2>&1 >> /tmp/ThemeMaster_wget.log
   if [[ $? -ne 0 ]]; then
       wget_error=$(wget_result)
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
@@ -860,7 +860,7 @@ function UpdateApp() {
   sleep 1
   mkdir -p ${temp_ram_folder}app_update_temp #create a temp folder in RAM
   #Download release
-  wget -nv -a "/tmp/ThemeMaster_wget.log" "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip
+  wget -nv "$UPDATE_URL" -O ${temp_ram_folder}app_update_temp/update.zip 2>&1 >> /tmp/ThemeMaster_wget.log
   if [[ $? -ne 0 ]]; then
       wget_error=$(wget_result)
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
@@ -948,7 +948,7 @@ function InstallTheme() {
   fi
   dialog --clear --backtitle "$mode_title" --infobox "$theme_display installation is about to start..." 8 50
   sleep 1
-  wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+  wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits" 2>&1 >> /tmp/ThemeMaster_wget.log
   if [[ $? -ne 0 ]]; then
       wget_error=$(wget_result)
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
@@ -973,11 +973,10 @@ function InstallTheme() {
     # wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+K \." | stdbuf -oL grep -o "[0-9]\+" | stdbuf -oL awk "{print int(\$1*100/$estimated_size)}" | dialog --gauge "Downloading package..." 10 50 0
     # Display download progress directly form wget
     wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox "Downloading $theme_display package..." 10 50
-    if unzip -qt "${temp_ram_folder}theme_update_temp/update.zip" | grep 'No errors detected'; then
+    # Attempt to extract the zip file directly
+    if unzip -qo "${temp_ram_folder}theme_update_temp/update.zip" -d "${temp_ram_folder}theme_update_temp/"; then
+      # If extraction succeeds, proceed with installation
       dialog --backtitle "$mode_title" --infobox "$theme_display installation in progress..." 8 50
-      #Unzipping archive
-      # sudo
-      unzip -qo "${temp_ram_folder}theme_update_temp/update.zip" -d "${temp_ram_folder}theme_update_temp/" #unzip directly in RAM
       #Extract the folder's name created from the archive
       temp=$(find ${temp_ram_folder}theme_update_temp -maxdepth 1 -type d -name "${github_user}*")
       temp="${temp##*/}"
@@ -1008,7 +1007,7 @@ function InstallTheme() {
       #Install failed
       #Deleting temporary files
       rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
-      dialog --clear --backtitle "ThemeMaster - System" --msgbox "Theme's installation have failed because the archive did not download correctly. Check your connection and try again." 15 50 2>&1
+      dialog --clear --backtitle "ThemeMaster - System" --msgbox "Theme's installation have failed because of an issue with the archive file. Check your connection and try again." 15 50 2>&1
     fi
   fi
 }
@@ -1081,7 +1080,7 @@ function GetChangeLog() {
   fi
   SAVEIFS=$IFS
   IFS=$'\n'
-  wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+  wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits" 2>&1 >> /tmp/ThemeMaster_wget.log
   if [[ $? -ne 0 ]]; then
       wget_error=$(wget_result)
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
@@ -1149,7 +1148,7 @@ function CheckThemesUpdates() {
         get_github_user $theme
       fi
       dialog --infobox "Checking for themes updates... Please wait !\n$theme" 5 50
-      wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+      wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits" 2>&1 >> /tmp/ThemeMaster_wget.log
       if [[ $? -ne 0 ]]; then
         wget_error=$(wget_result)
         dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
@@ -1199,11 +1198,11 @@ function LoadGitHubThemes() {
 
   SAVEIFS=$IFS
   IFS=$'\n'
-  wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/users/${github_user}/repos"
+  wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/users/${github_user}/repos" 2>&1 >> /tmp/ThemeMaster_wget.log
   wget_return=$?
   #Give a retry
   if [[ $wget_return -ne 0 ]]; then
-    wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/users/${github_user}/repos"
+    wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/users/${github_user}/repos" 2>&1 >> /tmp/ThemeMaster_wget.log
     if [[ $? -ne 0 ]]; then
       wget_error=$(wget_result)
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
@@ -1296,11 +1295,11 @@ function UpdateGalleryDB() {
   local wget_error
 
   dialog --infobox "Updating Gallery data... Please wait !\n" 5 50
-  wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
+  wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md" 2>&1 >> /tmp/ThemeMaster_wget.log
   wget_return=$?
   #Give a retry
   if [[ $wget_return -ne 0 ]]; then
-    wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md"
+    wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://raw.githubusercontent.com/Jetup13/Emulationstation-OGA-Theme-Gallery/main/README.md" 2>&1 >> /tmp/ThemeMaster_wget.log
     if [[ $? -ne 0 ]]; then
       wget_error=$(wget_result)
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
@@ -1319,11 +1318,11 @@ function UpdateGalleryDB() {
     theme_repo=$(echo $temp | awk -F"/" '{print $5}')
     echo "${account} ${theme_repo} ${_480} ${_640} ${_854} ${_960} ${_720}" >> ./data/gallery.db
     if [ ! -e "./data/${theme_repo}.png" ]; then
-      wget -nv -a "/tmp/ThemeMaster_wget.log" -O "./data/${theme_repo}.png" $preview_url
+      wget -nv -O "./data/${theme_repo}.png" $preview_url 2>&1 >> /tmp/ThemeMaster_wget.log
       wget_return=$?
       #Give a retry
       if [[ $wget_return -ne 0 ]]; then
-        wget -nv -a "/tmp/ThemeMaster_wget.log" -O "./data/${theme_repo}.png" $preview_url
+        wget -nv -O "./data/${theme_repo}.png" $preview_url 2>&1 >> /tmp/ThemeMaster_wget.log
         if [[ $? -ne 0 ]]; then
           wget_error=$(wget_result)
           dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
@@ -1342,11 +1341,11 @@ function CheckGalleryUpdates() {
   local wget_error
 
   #Update Gallery data
-  wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits"
+  wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits" 2>&1 >> /tmp/ThemeMaster_wget.log
   wget_return=$?
   #Give a retry
   if [[ $wget_return -ne 0 ]]; then
-    wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits"
+    wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/Jetup13/Emulationstation-OGA-Theme-Gallery/commits" 2>&1 >> /tmp/ThemeMaster_wget.log
     if [[ $? -ne 0 ]]; then
       wget_error=$(wget_result)
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
@@ -1616,7 +1615,7 @@ function InstallSubMenu {
     if [[ $mode == "B" ]]; then
       get_github_user $theme
     fi
-    wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}"
+    wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}" 2>&1 >> /tmp/ThemeMaster_wget.log
     if [[ $? -ne 0 ]]; then
       wget_error=$(wget_result)
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
@@ -1736,7 +1735,7 @@ function UpdateSubMenu {
   if [[ $mode == "B" ]]; then
     get_github_user $theme
   fi
-  wget -nv -a "/tmp/ThemeMaster_wget.log" -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits"
+  wget -nv -O "/tmp/ThemeMaster_wget.output" --no-check-certificate "https://api.github.com/repos/${github_user}/${theme}/commits" 2>&1 >> /tmp/ThemeMaster_wget.log
   if [[ $? -ne 0 ]]; then
     wget_error=$(wget_result)
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
