@@ -866,9 +866,8 @@ function UpdateApp() {
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
       eval $comingfrom
   fi
-  if unzip -qt ${temp_ram_folder}app_update_temp/update.zip | grep 'No errors detected'; then
-    #Unzipping archives
-    unzip -qo ${temp_ram_folder}app_update_temp/update.zip -d ${temp_ram_folder}app_update_temp/ #unzip directly in RAM
+  if unzip -qo "${temp_ram_folder}app_update_temp/update.zip" -d "${temp_ram_folder}app_update_temp/"; then
+    # If extraction succeeds, proceed with installation
     #Getting unzipped package folder's name - when using api for zipball
     #package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
     #package_folder="${package_folder##*/}"
@@ -973,7 +972,6 @@ function InstallTheme() {
     # wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+K \." | stdbuf -oL grep -o "[0-9]\+" | stdbuf -oL awk "{print int(\$1*100/$estimated_size)}" | dialog --gauge "Downloading package..." 10 50 0
     # Display download progress directly form wget
     wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox "Downloading $theme_display package..." 10 50
-    # Attempt to extract the zip file directly
     if unzip -qo "${temp_ram_folder}theme_update_temp/update.zip" -d "${temp_ram_folder}theme_update_temp/"; then
       # If extraction succeeds, proceed with installation
       dialog --backtitle "$mode_title" --infobox "$theme_display installation in progress..." 8 50
