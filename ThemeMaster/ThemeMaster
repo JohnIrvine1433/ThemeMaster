@@ -866,7 +866,8 @@ function UpdateApp() {
       dialog --clear --backtitle "ThemeMaster - System" --msgbox "Cannot proceed, error while executing wget : $wget_error" 10 50 2>&1
       eval $comingfrom
   fi
-  if unzip -qo "${temp_ram_folder}app_update_temp/update.zip" -d "${temp_ram_folder}app_update_temp/"; then
+  if unzip -qt "${temp_ram_folder}app_update_temp/update.zip" | grep 'No errors detected'; then
+    unzip -qo "${temp_ram_folder}app_update_temp/update.zip" -d "${temp_ram_folder}app_update_temp/"
     # If extraction succeeds, proceed with installation
     #Getting unzipped package folder's name - when using api for zipball
     #package_folder=$(find ${temp_ram_folder}app_update_temp -maxdepth 1 -type d -name "${github_app_owner}*")
@@ -884,10 +885,13 @@ function UpdateApp() {
     dialog --clear --backtitle "ThemeMaster - System" --msgbox "ThemeMaster successfully updated !\nQuit and relaunch ThemeMaster." 10 50 2>&1
     exit
   else
+    echo "UpdateApp() unzip failure:" >> ./ThemeMaster.log
+    unzip -qt "${temp_ram_folder}app_update_temp/update.zip" &>> ./ThemeMaster.log
+
     #Deleting temporary files...
     rm -rf ${temp_ram_folder}app_update_temp #remove the temp folder from RAM
 
-    dialog --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Update have failed because the downloaded archive couldn't be extracted." 20 50 2>&1
+    dialog --backtitle "ThemeMaster - System" --yes-label "Try again" --no-label "Quit ThemeMaster" --yesno "Update have failed because of an issue with the archive file, check ThemeMaster.log" 20 50 2>&1
     retval=$?
     case $retval in
     0)
@@ -972,8 +976,8 @@ function InstallTheme() {
     # wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL grep -o "[0-9]\+K \." | stdbuf -oL grep -o "[0-9]\+" | stdbuf -oL awk "{print int(\$1*100/$estimated_size)}" | dialog --gauge "Downloading package..." 10 50 0
     # Display download progress directly form wget
     wget -q --show-progress "$REP_URL" -O ${temp_ram_folder}theme_update_temp/update.zip 2>&1 | stdbuf -oL sed -E 's/\.\.+/---/g'| dialog --progressbox "Downloading $theme_display package..." 10 50
-    if unzip -qo "${temp_ram_folder}theme_update_temp/update.zip" -d "${temp_ram_folder}theme_update_temp/"; then
-      # If extraction succeeds, proceed with installation
+    if unzip -qt "${temp_ram_folder}theme_update_temp/update.zip" | grep 'No errors detected'; then
+      unzip -qo "${temp_ram_folder}theme_update_temp/update.zip" -d "${temp_ram_folder}theme_update_temp/"
       dialog --backtitle "$mode_title" --infobox "$theme_display installation in progress..." 8 50
       #Extract the folder's name created from the archive
       temp=$(find ${temp_ram_folder}theme_update_temp -maxdepth 1 -type d -name "${github_user}*")
@@ -1002,10 +1006,11 @@ function InstallTheme() {
       dialog --backtitle "$mode_title" --infobox "$theme_display successfully installed!" 8 50
       sleep 1
     else
-      #Install failed
+      echo "InstallTheme() unzip failure:" >> ./ThemeMaster.log
+      unzip -qt "${temp_ram_folder}theme_update_temp/update.zip" &>> ./ThemeMaster.log
       #Deleting temporary files
       rm -rf ${temp_ram_folder}theme_update_temp #remove the temp folder from RAM
-      dialog --clear --backtitle "ThemeMaster - System" --msgbox "Theme's installation have failed because of an issue with the archive file. Check your connection and try again." 15 50 2>&1
+      dialog --clear --backtitle "ThemeMaster - System" --msgbox "Theme's installation have failed because of an issue with the archive file, check ThemeMaster.log" 15 50 2>&1
     fi
   fi
 }
